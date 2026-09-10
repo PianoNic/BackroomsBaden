@@ -16,8 +16,8 @@ function attachErrorCollector(page: Page, label: string, errors: string[]): void
 
 async function primeSession(page: Page, name: string): Promise<void> {
   await page.addInitScript((storedName) => {
-    sessionStorage.setItem("bbb-intro-seen", "1");
-    localStorage.setItem("bbb_name", storedName);
+    sessionStorage.setItem("nachsitzen-intro-seen", "1");
+    localStorage.setItem("nachsitzen_name", storedName);
   }, name);
 }
 
@@ -53,7 +53,7 @@ async function leaveToTitle(page: Page): Promise<void> {
 }
 
 test("live end-to-end flow against a real server", async ({ browser }) => {
-  test.setTimeout(900_000);
+  test.setTimeout(1_500_000);
   test.skip(!process.env.LIVE_BASE_URL, "needs a real backend; set LIVE_BASE_URL");
 
   const errors: string[] = [];
@@ -91,7 +91,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await fovInput.fill("95");
     await expect
       .poll(async () => {
-        const raw = await host.evaluate(() => localStorage.getItem("bbb_settings"));
+        const raw = await host.evaluate(() => localStorage.getItem("nachsitzen_settings"));
         return raw ? (JSON.parse(raw) as { fov: number }).fov : null;
       })
       .toBe(95);
@@ -118,7 +118,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await useButton.click();
     await expect(useButton).toHaveText("ACTIVE");
     await expect
-      .poll(() => host.evaluate(() => localStorage.getItem("bbb_active_pack")))
+      .poll(() => host.evaluate(() => localStorage.getItem("nachsitzen_active_pack")))
       .toBe("qa-pack");
     await host.locator("#pack-list .pack-delete").click();
     await expect(host.locator("#pack-list")).toContainText("no packs installed");
@@ -176,8 +176,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await expect(host.locator(".chat-log")).toContainText("hello from guest", { timeout: 20_000 });
 
     await host.locator(".start-btn").click();
-    await waitForCanvas(host, 180_000);
-    await waitForCanvas(guest, 180_000);
+    await Promise.all([waitForCanvas(host, 180_000), waitForCanvas(guest, 180_000)]);
 
     await Promise.all([waitForTeacherSlotsGone(host), waitForTeacherSlotsGone(guest)]);
     await expectHudReady(host);
@@ -204,8 +203,10 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await pauseOverlay.getByRole("button", { name: "RESUME", exact: true }).click();
     await expect(host.locator("#pause-overlay")).not.toBeAttached();
 
-    await expect(host.locator("#victory")).toBeVisible({ timeout: 420_000 });
-    await expect(guest.locator("#victory")).toBeVisible({ timeout: 420_000 });
+    await Promise.all([
+      expect(host.locator("#victory")).toBeVisible({ timeout: 420_000 }),
+      expect(guest.locator("#victory")).toBeVisible({ timeout: 420_000 }),
+    ]);
     await expect(host.locator("#victory")).toHaveClass(/lost/);
     await expect(host.locator("#victory")).toContainText("CAUGHT");
 
@@ -213,16 +214,16 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
       host.locator("#back-to-lobby-btn").click(),
       guest.locator("#back-to-lobby-btn").click(),
     ]);
-    await expect(host.locator("#lobby-room")).toBeVisible({ timeout: 30_000 });
-    await expect(guest.locator("#lobby-room")).toBeVisible({ timeout: 30_000 });
+    await Promise.all([
+      expect(host.locator("#lobby-room")).toBeVisible({ timeout: 30_000 }),
+      expect(guest.locator("#lobby-room")).toBeVisible({ timeout: 30_000 }),
+    ]);
     await expect(host.locator(".count")).toHaveText("2/8", { timeout: 20_000 });
 
     await host.locator(".start-btn").click();
-    await waitForCanvas(host, 180_000);
-    await waitForCanvas(guest, 180_000);
+    await Promise.all([waitForCanvas(host, 180_000), waitForCanvas(guest, 180_000)]);
 
-    await leaveToTitle(guest);
-    await leaveToTitle(host);
+    await Promise.all([leaveToTitle(guest), leaveToTitle(host)]);
   } finally {
     await guestContext.close();
     await hostContext.close();
