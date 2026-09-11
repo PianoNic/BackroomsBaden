@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from mediatorx import IQuery, IQueryHandler
 
@@ -16,10 +17,14 @@ class GetCosmeticCatalogHandler(IQueryHandler[GetCosmeticCatalogQuery, list[Cosm
         self._catalog = catalog
 
     async def handle(self, query: GetCosmeticCatalogQuery) -> list[CosmeticItemDto]:
+        featured = self._catalog.featured_ids(datetime.now(timezone.utc).date())
         return [
             CosmeticItemDto(
                 id=it.id, category=it.category, name=it.name, price=it.price,
                 rarity=it.rarity, asset_ref=it.asset_ref, default=it.default,
+                attach=it.attachment.to_dto() if it.attachment is not None else None,
+                featured=it.id in featured,
+                unlock=it.unlock,
             )
             for it in self._catalog.items()
         ]

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.domain.cosmetics.cosmetic_attachment import CosmeticAttachment
+
 
 @dataclass(frozen=True)
 class CosmeticItem:
@@ -12,3 +14,5 @@ class CosmeticItem:
     rarity: str  # common | rare | epic | legendary
     asset_ref: str
     default: bool = False
+    attachment: CosmeticAttachment | None = None
+    unlock: str = ""
