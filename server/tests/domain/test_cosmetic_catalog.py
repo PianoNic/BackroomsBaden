@@ -40,7 +40,10 @@ def test_to_dto_keys_and_length():
     dtos = catalog.to_dto()
     assert len(dtos) == len(catalog.items())
     for dto in dtos:
-        assert list(dto.keys()) == ["id", "category", "name", "price", "rarity", "assetRef", "default"]
+        assert list(dto.keys()) == [
+            "id", "category", "name", "price", "rarity", "assetRef", "default",
+            "attach", "featured", "unlock",
+        ]
 
 
 def test_every_item_category_is_known_and_ids_are_unique():

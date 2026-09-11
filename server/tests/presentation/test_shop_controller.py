@@ -63,13 +63,16 @@ def api_client_factory(account_engine):
     return _build, PeeweeAccountRepository(account_engine), PeeweeProfileRepository(account_engine)
 
 
-async def test_catalog_returns_items_with_seven_keys_in_order(api_client_factory):
+async def test_catalog_returns_items_with_ten_keys_in_order(api_client_factory):
     build_client, _accounts, _profiles = api_client_factory
     async with build_client() as client:
         resp = await client.get("/shop/catalog")
         body = resp.json()
         assert isinstance(body, list)
-        assert list(body[0].keys()) == ["id", "category", "name", "price", "rarity", "assetRef", "default"]
+        assert list(body[0].keys()) == [
+            "id", "category", "name", "price", "rarity", "assetRef", "default",
+            "attach", "featured", "unlock",
+        ]
 
 
 async def test_shop_me_for_guest_returns_defaults(api_client_factory):

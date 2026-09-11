@@ -4,15 +4,27 @@ Prices and categories live here so the client can never fake them. `asset_ref`
 is category-polymorphic and interpreted client-side:
   - body        -> a hex colour ("" = the default sampled colour)
   - facePattern -> a texture path under client `public/`
-  - hat         -> a procedural mesh key ("cone", "halo", "gradcap", "crown")
+  - hat         -> a procedural mesh key ("cone", "halo", "gradcap", "crown"),
+                   or a `models/...` glTF path (see below)
+  - backpack    -> a procedural mesh key, a `models/...` glTF path, or "" (none)
+  - mask        -> a procedural mesh key, a `models/...` glTF path, or "" (none)
+  - handitem    -> a `models/...` glTF path, or "" (the default held chair)
   - title       -> "text|#hexcolor"
-`default` items are free and auto-owned by everyone (including guests).
+  A ref that starts with `models/` is a glTF asset path: the client loads it
+  as `/${assetRef}.glb`. Everything else stays whatever its category expects.
+`default` items are free and auto-owned by everyone (including guests). Items
+with a non-empty `unlock` are never purchasable — they are granted for free to
+any account holding that achievement id (see `ids_unlocked_by`).
 """
 from __future__ import annotations
 
-from app.domain.cosmetics.cosmetic_item import CosmeticItem
+from datetime import date, datetime, timezone
 
-CATEGORIES = ("body", "facePattern", "hat", "title")
+from app.domain.cosmetics.cosmetic_attachment import CosmeticAttachment
+from app.domain.cosmetics.cosmetic_item import CosmeticItem
+from app.domain.cosmetics.daily_selection import DailyFeaturedSelection
+
+CATEGORIES = ("body", "facePattern", "hat", "title", "backpack", "mask", "handitem")
 
 _ITEMS: list[CosmeticItem] = [
     # --- body themes ---
@@ -61,6 +73,103 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem("title_vip", "title", "VIP", 1000, "epic", "VIP|#ffd24a"),
     CosmeticItem("title_veteran", "title", "Backrooms Veteran", 1200, "epic", "Backrooms Veteran|#c9a227"),
     CosmeticItem("title_king", "title", "Pausenkönig", 1800, "legendary", "Pausenkönig|#ffd24a"),
+    # --- backpacks (worn on the back, local space +Z) ---
+    CosmeticItem("backpack_none", "backpack", "Ohne Rucksack", 0, "common", "", True),
+    CosmeticItem(
+        "backpack_schul", "backpack", "Schulrucksack", 200, "common", "schulrucksack",
+        attachment=CosmeticAttachment(x=0.0, y=0.10, z=0.34, scale=1.0),
+    ),
+    CosmeticItem(
+        "backpack_turnbeutel", "backpack", "Turnbeutel", 250, "common", "turnbeutel",
+        attachment=CosmeticAttachment(x=0.0, y=0.05, z=0.32, scale=0.9),
+    ),
+    CosmeticItem(
+        "backpack_koffer", "backpack", "Retro-Koffer", 450, "rare",
+        "models/cosmetics/backpack_koffer",
+        attachment=CosmeticAttachment(x=0.0, y=0.05, z=0.35, scale=0.9),
+    ),
+    CosmeticItem(
+        "backpack_abfallsack", "backpack", "Abfallsack", 500, "rare",
+        "models/cosmetics/backpack_abfallsack",
+        attachment=CosmeticAttachment(x=0.0, y=0.05, z=0.34, scale=1.0),
+    ),
+    CosmeticItem(
+        "backpack_karton", "backpack", "Umzugskarton", 800, "epic",
+        "models/cosmetics/backpack_karton",
+        attachment=CosmeticAttachment(x=0.0, y=0.15, z=0.36, scale=0.85),
+    ),
+    CosmeticItem(
+        "backpack_schwimmweste", "backpack", "Schwimmweste", 900, "epic",
+        "models/cosmetics/backpack_schwimmweste",
+        attachment=CosmeticAttachment(x=0.0, y=0.15, z=0.30, scale=1.0),
+    ),
+    CosmeticItem(
+        "backpack_zement", "backpack", "Zementsack", 1400, "legendary",
+        "models/cosmetics/backpack_zement",
+        attachment=CosmeticAttachment(x=0.0, y=0.05, z=0.34, scale=0.8),
+    ),
+    CosmeticItem(
+        "backpack_sani", "backpack", "Sanitätsrucksack", 0, "epic",
+        "models/pickups/medkit", unlock="ach_medic",
+        attachment=CosmeticAttachment(x=0.0, y=0.15, z=0.32, scale=1.2),
+    ),
+    # --- masks (worn on the face, local space -Z) ---
+    CosmeticItem("mask_none", "mask", "Ohne Maske", 0, "common", "", True),
+    CosmeticItem(
+        "mask_schutzbrille", "mask", "Schutzbrille", 250, "common", "schutzbrille",
+        attachment=CosmeticAttachment(x=0.0, y=0.25, z=-0.33, scale=1.0),
+    ),
+    CosmeticItem(
+        "mask_papiertuete", "mask", "Papiertüte", 400, "rare", "papiertuete",
+        attachment=CosmeticAttachment(x=0.0, y=0.20, z=-0.30, scale=1.0),
+    ),
+    CosmeticItem(
+        "mask_rennbrille", "mask", "Rennbrille", 0, "rare", "rennbrille",
+        unlock="ach_speedrun",
+        attachment=CosmeticAttachment(x=0.0, y=0.25, z=-0.33, scale=1.0),
+    ),
+    CosmeticItem(
+        "mask_gas", "mask", "Gasmaske", 1200, "legendary", "models/pickups/goggles",
+        attachment=CosmeticAttachment(x=0.0, y=0.22, z=-0.32, scale=1.0),
+    ),
+    # --- hats (new glTF hat alongside the procedural ones above) ---
+    CosmeticItem(
+        "hat_fischer", "hat", "Fischerhut", 700, "epic",
+        "models/cosmetics/hat_fischer",
+        attachment=CosmeticAttachment(x=0.0, y=0.85, z=0.0, scale=1.0),
+    ),
+    # --- hand items (first-person held-chair viewmodel, camera space) ---
+    CosmeticItem("handitem_stuhl", "handitem", "Standard-Stuhl", 0, "common", "", True),
+    CosmeticItem(
+        "handitem_besen", "handitem", "Hausmeister-Besen", 300, "common",
+        "models/cosmetics/handitem_besen",
+        attachment=CosmeticAttachment(x=0.25, y=-0.20, z=0.40, scale=1.0),
+    ),
+    CosmeticItem(
+        "handitem_lupe", "handitem", "Lupe", 400, "rare",
+        "models/cosmetics/handitem_lupe",
+        attachment=CosmeticAttachment(x=0.22, y=-0.18, z=0.35, scale=1.0),
+    ),
+    CosmeticItem(
+        "handitem_taschenlampe", "handitem", "Taschenlampe", 550, "rare",
+        "models/cosmetics/handitem_taschenlampe",
+        attachment=CosmeticAttachment(x=0.24, y=-0.19, z=0.38, scale=1.0),
+    ),
+    CosmeticItem(
+        "handitem_werkzeugkoffer", "handitem", "Werkzeugkoffer", 800, "epic",
+        "models/cosmetics/handitem_werkzeugkoffer",
+        attachment=CosmeticAttachment(x=0.26, y=-0.22, z=0.42, scale=0.85),
+    ),
+    CosmeticItem(
+        "handitem_megafon", "handitem", "Megafon", 1500, "legendary",
+        "models/cosmetics/handitem_megafon",
+        attachment=CosmeticAttachment(x=0.25, y=-0.20, z=0.40, scale=1.1),
+    ),
+    CosmeticItem(
+        "handitem_signal", "handitem", "Signal-Lampe", 0, "epic",
+        "models/cosmetics/handitem_signal", unlock="ach_houdini",
+        attachment=CosmeticAttachment(x=0.25, y=-0.20, z=0.40, scale=1.0),
+    ),
 ]
 
 
@@ -68,6 +177,7 @@ class CosmeticCatalog:
     def __init__(self) -> None:
         self._items = _ITEMS
         self._by_id = {it.id: it for it in _ITEMS}
+        self._daily_selection = DailyFeaturedSelection()
 
     def get(self, cosmetic_id: str | None) -> CosmeticItem | None:
         if cosmetic_id is None:
@@ -83,12 +193,22 @@ class CosmeticCatalog:
     def default_equipped(self) -> dict[str, str]:
         return {it.category: it.id for it in self._items if it.default}
 
+    def ids_unlocked_by(self, achievement_ids: set[str]) -> set[str]:
+        return {it.id for it in self._items if it.unlock and it.unlock in achievement_ids}
+
+    def featured_ids(self, day: date) -> set[str]:
+        return self._daily_selection.select(self._items, day)
+
     def to_dto(self) -> list[dict]:
+        featured = self.featured_ids(datetime.now(timezone.utc).date())
         return [
             {
                 "id": it.id, "category": it.category, "name": it.name,
                 "price": it.price, "rarity": it.rarity,
                 "assetRef": it.asset_ref, "default": it.default,
+                "attach": it.attachment.to_dto() if it.attachment is not None else None,
+                "featured": it.id in featured,
+                "unlock": it.unlock,
             }
             for it in self._items
         ]
