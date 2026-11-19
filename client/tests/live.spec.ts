@@ -14,11 +14,12 @@ function attachErrorCollector(page: Page, label: string, errors: string[]): void
   });
 }
 
-async function primeSession(page: Page, name: string): Promise<void> {
-  await page.addInitScript((storedName) => {
+async function primeSession(page: Page, name: string, cameraOff: boolean): Promise<void> {
+  await page.addInitScript((args) => {
     sessionStorage.setItem("nachsitzen-intro-seen", "1");
-    localStorage.setItem("nachsitzen_name", storedName);
-  }, name);
+    localStorage.setItem("nachsitzen_name", args.storedName);
+    if (args.cameraOff) localStorage.setItem("nachsitzen_settings", JSON.stringify({ cameraMode: "off" }));
+  }, { storedName: name, cameraOff });
 }
 
 async function waitForCanvas(page: Page, timeout: number): Promise<void> {
@@ -53,10 +54,14 @@ async function leaveToTitle(page: Page): Promise<void> {
 }
 
 test("live end-to-end flow against a real server", async ({ browser }) => {
-  test.setTimeout(1_500_000);
+  test.setTimeout(1_800_000);
   test.skip(!process.env.LIVE_BASE_URL, "needs a real backend; set LIVE_BASE_URL");
 
   const errors: string[] = [];
+  const started = Date.now();
+  const mark = (label: string): void => {
+    console.log(`[live] ${label} @${((Date.now() - started) / 1000).toFixed(1)}s`);
+  };
 
   const hostContext = await browser.newContext({ permissions: ["microphone", "camera"] });
   const guestContext = await browser.newContext({ permissions: ["microphone", "camera"] });
@@ -68,8 +73,8 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     attachErrorCollector(host, "host", errors);
     attachErrorCollector(guest, "guest", errors);
 
-    await primeSession(host, "qa-host");
-    await primeSession(guest, "qa-guest");
+    await primeSession(host, "qa-host", false);
+    await primeSession(guest, "qa-guest", true);
 
     await host.goto("/");
 
@@ -77,6 +82,14 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await expect(host.locator("#info-overlay")).toBeVisible();
     await host.getByRole("button", { name: "SCHLIESSEN", exact: true }).click();
     await expect(host.locator("#info-overlay")).not.toBeAttached();
+
+    await host.getByRole("button", { name: /NEWS/ }).click();
+    await expect(host.locator(".news-panel")).toBeVisible();
+    await expect(host.locator("#news-tab-announcements")).toBeVisible();
+    await expect(host.locator("#news-tab-changelog")).toBeVisible();
+    await host.locator("#news-tab-changelog").click();
+    await expect(host.locator("#news-panel-changelog")).toBeVisible();
+    await host.locator(".screen-back").click();
 
     await host.getByRole("button", { name: "SHOP", exact: true }).click();
     await expect(host.locator(".bb-cardgrid")).toBeVisible({ timeout: 15_000 });
@@ -95,6 +108,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
         return raw ? (JSON.parse(raw) as { fov: number }).fov : null;
       })
       .toBe(95);
+    mark("menu pass");
 
     await host.locator("#pack-editor-open").click();
     await expect(host.locator("#pack-editor")).toBeVisible({ timeout: 30_000 });
@@ -123,10 +137,12 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await host.locator("#pack-list .pack-delete").click();
     await expect(host.locator("#pack-list")).toContainText("no packs installed");
     await host.locator(".screen-back").click();
+    mark("pack install/use/delete");
 
     await host.getByRole("button", { name: "TUTORIAL", exact: true }).click();
     await expect(host.locator(".tut-item canvas")).toHaveCount(12);
     await host.locator(".screen-back").click();
+    mark("tutorial");
 
     await host.getByRole("button", { name: "PLAY", exact: true }).click();
     await host.locator(".create-lobby").click();
@@ -143,6 +159,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await hostChatInput.fill("hello from host");
     await hostChatInput.press("Enter");
     await expect(host.locator(".chat-log")).toContainText("hello from host");
+    mark("lobby created");
 
     await host.locator("#lobby-room").getByRole("button", { name: "SETTINGS", exact: true }).click();
     await expect(host.locator("#lobby-admin-overlay")).toBeVisible();
@@ -174,9 +191,11 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await guestChatInput.fill("hello from guest");
     await guestChatInput.press("Enter");
     await expect(host.locator(".chat-log")).toContainText("hello from guest", { timeout: 20_000 });
+    mark("guest joined");
 
     await host.locator(".start-btn").click();
     await Promise.all([waitForCanvas(host, 180_000), waitForCanvas(guest, 180_000)]);
+    mark("round 1 world ready");
 
     await Promise.all([waitForTeacherSlotsGone(host), waitForTeacherSlotsGone(guest)]);
     await expectHudReady(host);
@@ -202,6 +221,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await expect(camButton).not.toHaveText(camLabelBefore ?? "", { timeout: 15_000 });
     await pauseOverlay.getByRole("button", { name: "RESUME", exact: true }).click();
     await expect(host.locator("#pause-overlay")).not.toBeAttached();
+    mark("pause menu done");
 
     await Promise.all([
       expect(host.locator("#victory")).toBeVisible({ timeout: 420_000 }),
@@ -209,6 +229,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     ]);
     await expect(host.locator("#victory")).toHaveClass(/lost/);
     await expect(host.locator("#victory")).toContainText("CAUGHT");
+    mark("endgame shown");
 
     await Promise.all([
       host.locator("#back-to-lobby-btn").click(),
@@ -219,11 +240,14 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
       expect(guest.locator("#lobby-room")).toBeVisible({ timeout: 30_000 }),
     ]);
     await expect(host.locator(".count")).toHaveText("2/8", { timeout: 20_000 });
+    mark("both back in lobby");
 
     await host.locator(".start-btn").click();
     await Promise.all([waitForCanvas(host, 180_000), waitForCanvas(guest, 180_000)]);
+    mark("round 2 world ready");
 
     await Promise.all([leaveToTitle(guest), leaveToTitle(host)]);
+    mark("back on title");
   } finally {
     await guestContext.close();
     await hostContext.close();
