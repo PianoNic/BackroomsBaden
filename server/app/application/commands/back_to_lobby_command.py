@@ -28,6 +28,7 @@ class BackToLobbyHandler(ICommandHandler[BackToLobbyCommand, bool]):
         if lobby.phase not in ("won", "lost"):
             return False
         self._reset_runtime_state(lobby)
+        lobby.issue_admin_resume_token()
         return True
 
     def _reset_runtime_state(self, lobby: Lobby) -> None:

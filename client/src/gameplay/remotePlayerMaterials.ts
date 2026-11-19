@@ -14,6 +14,7 @@ import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
 import { VideoTexture } from "@babylonjs/core/Materials/Textures/videoTexture";
+import "@babylonjs/core/Engines/Extensions/engine.videoTexture";
 import {
   activeScene, basicMaterial, box, cone, cylinder, group, lambertMaterial, sphere, torus,
 } from "../rendering/babylon";

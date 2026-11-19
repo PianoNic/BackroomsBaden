@@ -1,5 +1,6 @@
 import type { ClientPacket, LobbyStatePkt, ServerPacket, WorldInit } from "./protocol";
 import { getWsTicket } from "./auth";
+import { ADMIN_RESUME_KEY } from "../ui/menu/state/storageKeys";
 
 const HTTP_BASE = import.meta.env.VITE_SERVER_URL ?? "";
 const WS_ORIGIN = HTTP_BASE
@@ -31,6 +32,11 @@ export async function connect(lobbyId: string, password?: string): Promise<Lobby
   const params = new URLSearchParams();
   if (password) params.set("pwd", password);
   if (ticket) params.set("token", ticket);
+  const resume = sessionStorage.getItem(ADMIN_RESUME_KEY);
+  if (resume) {
+    sessionStorage.removeItem(ADMIN_RESUME_KEY);
+    params.set("resume", resume);
+  }
   const qs = params.toString();
   const url = qs ? `${BASE_URL}/${lobbyId}?${qs}` : `${BASE_URL}/${lobbyId}`;
   const ws = new WebSocket(url);
