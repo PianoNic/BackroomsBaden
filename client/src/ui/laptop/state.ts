@@ -1,4 +1,5 @@
 import { signal } from "@preact/signals";
+import { PointerLockGate } from "../../core/pointerLockGate";
 import type { NetClient } from "../../net/client";
 import type { GambleResultPkt, LaptopChallenge, LaptopGame } from "../../net/protocol";
 
@@ -35,7 +36,7 @@ export function openLaptop(
   id: string, game: LaptopGame, done: boolean, challenge?: LaptopChallenge,
 ): void {
   if (laptopId.value) return;
-  if (document.pointerLockElement) document.exitPointerLock();
+  PointerLockGate.releaseForGame();
   laptopId.value = id;
   laptopGame.value = game;
   laptopDone.value = done;

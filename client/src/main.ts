@@ -13,6 +13,8 @@ import { hideLoading, setLoading, showLoading, yieldToPaint } from "./ui/loading
 import { showTeacherSlots } from "./ui/teacherSlots";
 import { resolveTeacherImage } from "./core/texturePacks";
 import { imagePreloader } from "./core/imagePreload";
+import { PointerLockGate } from "./core/pointerLockGate";
+import { endgame } from "./ui/menu/state/overlays";
 import { showPauseMenu } from "./ui/pauseMenu";
 import { captureInput } from "./core/inputCapture";
 import { startAmbient, unlockAudio } from "./core/audio";
@@ -198,8 +200,13 @@ async function main(): Promise<void> {
     if (!document.pointerLockElement) enterGame();
   });
   document.addEventListener("pointerlockchange", () => {
-    if (document.pointerLockElement !== ctx.canvas && !s.laptop.isOpen()) {
-      if (document.getElementById("victory")) return; // game-over UI is showing
+    if (document.pointerLockElement === ctx.canvas) {
+      PointerLockGate.reset();
+      return;
+    }
+    if (PointerLockGate.consumeGameRelease()) return;
+    if (!s.laptop.isOpen()) {
+      if (endgame.value) return;
       openPause();
     }
   });
