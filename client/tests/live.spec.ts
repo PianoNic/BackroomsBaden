@@ -234,10 +234,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await expect(host.locator("#victory")).toContainText("CAUGHT");
     mark("endgame shown");
 
-    await Promise.all([
-      host.locator("#back-to-lobby-btn").click(),
-      guest.locator("#back-to-lobby-btn").click(),
-    ]);
+    await host.locator("#back-to-lobby-btn").click();
     await Promise.all([
       expect(host.locator("#lobby-room")).toBeVisible({ timeout: 30_000 }),
       expect(guest.locator("#lobby-room")).toBeVisible({ timeout: 30_000 }),
