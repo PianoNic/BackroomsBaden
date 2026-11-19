@@ -68,7 +68,7 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "backpack_schul", "backpack", "Schulrucksack", 200, "common",
         "models/cosmetics/backpack_rucksack",
-        attachment=CosmeticAttachment(x=0, y=-0.02, z=0.3, scale=0.6, yaw=-1.5708),
+        attachment=CosmeticAttachment(x=0, y=0.08, z=0.47, scale=0.45, yaw=-1.5708),
     ),
     CosmeticItem(
         "backpack_turnbeutel", "backpack", "Turnbeutel", 250, "common", "models/cosmetics/backpack_turnbeutel",
@@ -120,7 +120,7 @@ _ITEMS: list[CosmeticItem] = [
     ),
     CosmeticItem(
         "mask_gas", "mask", "Gasmaske", 1200, "legendary", "models/pickups/goggles",
-        attachment=CosmeticAttachment(x=0, y=0.5, z=-0.27, scale=1.2, yaw=3.1416),
+        attachment=CosmeticAttachment(x=0, y=0.62, z=-0.22, scale=0.9, yaw=3.1416),
     ),
     CosmeticItem(
         "hat_fischer", "hat", "Fischerhut", 700, "epic",
@@ -131,32 +131,32 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "handitem_besen", "handitem", "Hausmeister-Besen", 300, "common",
         "models/cosmetics/handitem_besen",
-        attachment=CosmeticAttachment(x=0.3, y=-0.45, z=-0.8, scale=0.5, pitch=-0.35),
+        attachment=CosmeticAttachment(x=0, y=-0.52, z=-0.7, scale=0.28),
     ),
     CosmeticItem(
         "handitem_lupe", "handitem", "Lupe", 400, "rare",
         "models/cosmetics/handitem_lupe",
-        attachment=CosmeticAttachment(x=0.3, y=-0.4, z=-0.6, scale=1.6, yaw=-0.4, pitch=-0.2),
+        attachment=CosmeticAttachment(x=0.05, y=-0.47, z=-0.7, scale=1.3, yaw=-0.4, pitch=-0.2),
     ),
     CosmeticItem(
         "handitem_taschenlampe", "handitem", "Taschenlampe", 550, "rare",
         "models/cosmetics/handitem_taschenlampe",
-        attachment=CosmeticAttachment(x=0.3, y=-0.3, z=-0.6, scale=1.6),
+        attachment=CosmeticAttachment(x=0, y=-0.4, z=-0.7, scale=1.6, yaw=0.7, pitch=0.15),
     ),
     CosmeticItem(
         "handitem_werkzeugkoffer", "handitem", "Werkzeugkoffer", 800, "epic",
         "models/cosmetics/handitem_werkzeugkoffer",
-        attachment=CosmeticAttachment(x=0.3, y=-0.28, z=-0.65, scale=0.8, yaw=0.9),
+        attachment=CosmeticAttachment(x=0.02, y=-0.45, z=-0.7, scale=0.6, yaw=0.9),
     ),
     CosmeticItem(
         "handitem_megafon", "handitem", "Megafon", 1500, "legendary",
         "models/cosmetics/handitem_megafon",
-        attachment=CosmeticAttachment(x=0.3, y=-0.3, z=-0.6, scale=1.2, yaw=-1.35, pitch=0.1),
+        attachment=CosmeticAttachment(x=0.02, y=-0.43, z=-0.7, scale=1.1, yaw=-0.96),
     ),
     CosmeticItem(
         "handitem_signal", "handitem", "Signal-Lampe", 0, "epic",
         "models/cosmetics/handitem_signal", unlock="ach_houdini",
-        attachment=CosmeticAttachment(x=0.3, y=-0.3, z=-0.6, scale=0.9, yaw=1.5708, pitch=0.15),
+        attachment=CosmeticAttachment(x=0, y=-0.4, z=-0.7, scale=0.9, yaw=0.9, pitch=0.3),
     ),
 ]
 

@@ -10,7 +10,10 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   reporter: "list",
-  use: { trace: "off" },
+  use: {
+    trace: process.env.CI ? "retain-on-failure" : "off",
+    screenshot: process.env.CI ? "only-on-failure" : "off",
+  },
   projects: [
     {
       name: "chromium",
