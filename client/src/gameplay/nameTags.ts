@@ -3,11 +3,12 @@ import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { EquippedCosmetics } from "../net/protocol";
 import { Mesh, StandardMaterial, activeScene, group, plane } from "../rendering/babylon";
 import { resolveCosmetic } from "./cosmetics";
+import { NameTagPlacement } from "./nameTagPlacement";
 import { parseTitleRef, rarityColor } from "./cosmeticStyle";
 
 const TEX_W = 512;
-const TEX_H = 192;
-const PLANE_W = 3.2;
+const TEX_H = 168;
+const PLANE_W = 2.4;
 const PLANE_H = PLANE_W * (TEX_H / TEX_W);
 const CLEARANCE = 0.28;
 const FALLBACK_OFFSET = 1.15;
@@ -68,7 +69,7 @@ export class NameTags {
         tag.mesh.setEnabled(inRange);
       }
       if (!inRange) continue;
-      tag.mesh.position.set(pos.x, pos.y + tag.offsetY, pos.z);
+      tag.mesh.position.set(pos.x, NameTagPlacement.centerY(pos.y + tag.offsetY, PLANE_H), pos.z);
     }
   }
 
@@ -134,7 +135,7 @@ function drawNameTag(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  const nameY = title ? TEX_H * 0.34 : TEX_H * 0.5;
+  const nameY = title ? TEX_H * 0.33 : TEX_H * 0.5;
   ctx.font = "bold 88px sans-serif";
   ctx.lineWidth = 12;
   ctx.strokeStyle = "rgba(0,0,0,0.85)";
@@ -143,7 +144,7 @@ function drawNameTag(
   ctx.fillText(name, TEX_W / 2, nameY, TEX_W - 24);
 
   if (title) {
-    const titleY = TEX_H * 0.76;
+    const titleY = TEX_H * 0.74;
     ctx.font = "italic bold 58px sans-serif";
     ctx.lineWidth = 9;
     ctx.strokeStyle = "rgba(0,0,0,0.85)";
