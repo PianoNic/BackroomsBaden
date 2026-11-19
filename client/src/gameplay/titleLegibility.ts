@@ -1,6 +1,6 @@
 export class TitleLegibility {
-  static readonly MIN_LUMINANCE = 0.72;
-  static readonly MAX_LIGHTNESS = 0.88;
+  static readonly MIN_LUMINANCE = 0.82;
+  static readonly MAX_LIGHTNESS = 0.92;
   static readonly MIN_SATURATION = 0.55;
 
   static legible(hex: string): string {

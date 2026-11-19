@@ -138,25 +138,32 @@ function drawNameTag(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  const nameY = title ? TEX_H * 0.33 : TEX_H * 0.5;
+  const nameY = title ? TEX_H * 0.3 : TEX_H * 0.5;
   ctx.font = "bold 88px sans-serif";
   ctx.lineWidth = 12;
   ctx.strokeStyle = "rgba(0,0,0,0.85)";
+  ctx.strokeText(name, TEX_W / 2, nameY, TEX_W - 24);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#ffffff";
   ctx.strokeText(name, TEX_W / 2, nameY, TEX_W - 24);
   ctx.fillStyle = "#ffffff";
   ctx.fillText(name, TEX_W / 2, nameY, TEX_W - 24);
 
   if (title) {
-    const titleY = TEX_H * 0.74;
-    ctx.font = "bold 70px sans-serif";
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = "rgba(0,0,0,0.85)";
+    const titleY = TEX_H * 0.72;
+    ctx.font = "bold 74px sans-serif";
+    const fill = TitleLegibility.legible(title.color);
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = "rgba(0,0,0,0.9)";
     ctx.strokeText(title.text, TEX_W / 2, titleY, TEX_W - 24);
-    ctx.fillStyle = TitleLegibility.legible(title.color);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = fill;
+    ctx.strokeText(title.text, TEX_W / 2, titleY, TEX_W - 24);
+    ctx.fillStyle = fill;
     ctx.fillText(title.text, TEX_W / 2, titleY, TEX_W - 24);
-    const half = ctx.measureText(title.text).width / 2;
+    const half = Math.min(ctx.measureText(title.text).width, TEX_W - 24) / 2;
     ctx.fillStyle = accent;
-    ctx.fillRect(TEX_W / 2 - half, titleY + 36, half * 2, 5);
+    ctx.fillRect(TEX_W / 2 - half, titleY + 38, half * 2, 4);
   }
 
   tex.update(false);

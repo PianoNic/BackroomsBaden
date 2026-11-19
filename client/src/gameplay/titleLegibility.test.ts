@@ -7,7 +7,7 @@ const CATALOG_COLORS = [
 
 describe("TitleLegibility", () => {
   it.each(CATALOG_COLORS)("lifts %s to a readable luminance", (hex) => {
-    expect(TitleLegibility.luminance(TitleLegibility.legible(hex))).toBeGreaterThanOrEqual(0.6);
+    expect(TitleLegibility.luminance(TitleLegibility.legible(hex))).toBeGreaterThanOrEqual(0.65);
   });
 
   it.each(CATALOG_COLORS)("keeps the hue of %s", (hex) => {
@@ -17,7 +17,7 @@ describe("TitleLegibility", () => {
 
   it("lifts the dull dark gold clearly above its original brightness", () => {
     const lifted = TitleLegibility.luminance(TitleLegibility.legible("#c9a227"));
-    expect(lifted).toBeGreaterThan(TitleLegibility.luminance("#c9a227") * 1.15);
+    expect(lifted).toBeGreaterThan(0.7);
   });
 
   it("keeps even a white title dimmer than a white name", () => {
@@ -25,7 +25,7 @@ describe("TitleLegibility", () => {
   });
 
   it("leaves colours that are already bright almost untouched", () => {
-    const bright = "#ffe066";
+    const bright = "#ffea99";
     expect(TitleLegibility.legible(bright)).toBe(bright);
   });
 });
