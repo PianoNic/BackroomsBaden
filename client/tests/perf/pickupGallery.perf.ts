@@ -50,15 +50,37 @@ class PickupGallery {
     }, at);
   }
 
+  private async aim(distance: number, at: Found): Promise<number> {
+    return this.session.page.evaluate(({ d, a }) => {
+      const dev = (window as unknown as DevWindow).nachsitzenDev;
+      const scene = dev.camera.getScene();
+      let sum = 0;
+      let count = 0;
+      for (const m of scene.meshes) {
+        if (!m.isEnabled() || !m.isVisible || m.getTotalVertices() === 0) continue;
+        const p = m.getAbsolutePosition();
+        if (Math.hypot(p.x - a.x, p.z - a.z) > 0.3 || p.y < 0.2 || p.y > 1.0) continue;
+        sum += p.y;
+        count++;
+      }
+      const targetY = count > 0 ? sum / count : 0.45;
+      dev.player.position.y = 0.8;
+      dev.player.pitch = Math.atan2(targetY - 0.8, d);
+      return targetY;
+    }, { d: distance, a: at });
+  }
+
   async run(): Promise<void> {
     await this.probe.brighten();
     const found = await this.locate();
     await this.session.page.waitForTimeout(1500);
     for (const [kind, at] of found) {
-      const view = this.planner.facing(`pickup-${kind}`, at.x, at.z, 0.9, 0.1);
+      const view = this.planner.facing(`pickup-${kind}`, at.x, at.z, 0.7, 0.45);
       if (!view) continue;
-      await this.probe.place(view, 20);
-      this.report[kind] = { at, meshes: await this.meshesNear(at) };
+      await this.probe.place(view, 5);
+      const targetY = await this.aim(0.7, at);
+      await this.session.page.waitForTimeout(400);
+      this.report[kind] = { at, targetY, meshes: await this.meshesNear(at) };
       await this.probe.screenshot(this.env.screenshotPath(`pickup-${kind}`));
     }
   }
