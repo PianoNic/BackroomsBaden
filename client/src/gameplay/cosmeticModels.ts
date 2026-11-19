@@ -6,9 +6,10 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
-import { Texture } from "@babylonjs/core/Materials/Textures/texture";
+import type { BaseTexture } from "@babylonjs/core/Materials/Textures/baseTexture";
 import { activeScene, group } from "../rendering/babylon";
 import { ModelMaterialFactory } from "../rendering/modelMaterials";
+import { RetroTextureStyle } from "../rendering/retroTextureStyle";
 
 export class CosmeticModelCache {
   private scene: Scene | null = null;
@@ -71,18 +72,16 @@ export class CosmeticModelCache {
     for (const mesh of container.meshes) {
       mesh.isVisible = false;
       mesh.isPickable = false;
-      let mat = mesh.material;
-      if (mat instanceof PBRMaterial) {
-        mat = this.materials.standardFor(mat);
-        mesh.material = mat;
-      }
-      if (mat && !seen.has(mat)) {
-        seen.add(mat);
-        const tex = (mat as { diffuseTexture?: Texture | null }).diffuseTexture;
-        if (tex) tex.updateSamplingMode(Texture.NEAREST_SAMPLINGMODE);
-        mat.freeze();
-      }
+      const source = mesh.material;
+      if (source instanceof PBRMaterial) mesh.material = this.materials.standardFor(source);
+      const mat = mesh.material;
+      if (!mat || seen.has(mat)) continue;
+      seen.add(mat);
+      const texture = (mat as { diffuseTexture?: BaseTexture | null }).diffuseTexture;
+      if (texture) RetroTextureStyle.apply(texture);
+      mat.freeze();
     }
+    this.materials.releaseSources(container);
   }
 
   private reset(): void {
