@@ -94,7 +94,10 @@ export function makeGamePacketHandler(d: GamePacketDeps): (pkt: ServerPacket) =>
   return (pkt) => routePacket({
     player_join: (p) => { d.remotes.add(p); d.webcam.addPeer(p.id); },
     player_avatar: (p) => d.remotes.setAvatar(p.id, p.avatar),
-    player_cosmetic: (p) => d.remotes.setCosmetic(p.id, p.equipped),
+    player_cosmetic: (p) => {
+      d.remotes.setCosmetic(p.id, p.equipped);
+      if (p.id === d.init.selfId) d.chairs.setHandItem(p.equipped);
+    },
     player_leave: (p) => {
       d.remotes.remove(p.id);
       d.webcam.removePeer(p.id);
