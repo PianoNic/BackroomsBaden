@@ -16,6 +16,7 @@ export type LobbyStatePkt = {
   status: "waiting" | "running" | "ended";
   maxPlayers: number; hasPassword: boolean;
   adminId: string | null;
+  adminResumeToken?: string;
   selfId: string;
   selectedTeachers: string[] | null;
   roster: RosterEntry[];

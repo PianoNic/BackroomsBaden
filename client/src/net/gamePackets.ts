@@ -30,6 +30,7 @@ import type { Ambience } from "../rendering/pipeline";
 import { AMBIENCE } from "../rendering/ambience";
 import { playSfx, playSfxNear } from "../core/audio";
 import { music } from "../core/music";
+import { ADMIN_RESUME_KEY } from "../ui/menu/state/storageKeys";
 import { hideHideOverlay, showHideOverlay } from "../ui/hideOverlay";
 import { showBanner } from "../ui/banner";
 import {
@@ -141,6 +142,7 @@ export function makeGamePacketHandler(d: GamePacketDeps): (pkt: ServerPacket) =>
       // sessionStorage hint in title.ts lands us in the same lobby's
       // waiting room.
       if (isEndgameVisible() && p.status === "waiting") {
+        if (p.adminResumeToken) sessionStorage.setItem(ADMIN_RESUME_KEY, p.adminResumeToken);
         clearEndgameOverlay();
         location.reload();
       }
