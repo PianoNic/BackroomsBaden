@@ -19,8 +19,8 @@ from pathlib import Path
 from PIL import Image
 
 USER_AGENT = "Mozilla/5.0"
-TEXTURE_MAX_PX = 512
-COSMETIC_TEXTURE_MAX_PX = 256
+TEXTURE_MAX_PX = 256
+TEXTURE_MIN_PX = 8
 TEXTURE_QUALITY = 85
 SUB_CELL_METRES = 0.5
 
@@ -837,24 +837,113 @@ class PolyHavenInfo:
         return name
 
 
-class TextureDownscaler:
-    def __init__(self, max_px: int = TEXTURE_MAX_PX, quality: int = TEXTURE_QUALITY):
+class PowerOfTwo:
+    @staticmethod
+    def floor(value: int, minimum: int = TEXTURE_MIN_PX) -> int:
+        return max(minimum, 1 << (max(1, value).bit_length() - 1))
+
+
+class PsxTextureSize:
+    def __init__(self, max_px: int = TEXTURE_MAX_PX):
         self.max_px = max_px
+
+    def target(self, width: int, height: int) -> tuple[int, int]:
+        ratio = min(1.0, self.max_px / max(width, height))
+        return (
+            min(width, PowerOfTwo.floor(int(width * ratio))),
+            min(height, PowerOfTwo.floor(int(height * ratio))),
+        )
+
+
+class GltfMaterialStripper:
+    REMOVED_SLOTS = ("normalTexture", "occlusionTexture")
+    REMOVED_PBR_SLOTS = ("metallicRoughnessTexture",)
+
+    def strip(self, source: Path, dest: Path) -> list[str]:
+        document = json.loads(source.read_text(encoding="utf-8"))
+        for material in document.get("materials", []):
+            for slot in self.REMOVED_SLOTS:
+                material.pop(slot, None)
+            pbr = material.setdefault("pbrMetallicRoughness", {})
+            for slot in self.REMOVED_PBR_SLOTS:
+                pbr.pop(slot, None)
+            pbr["metallicFactor"] = 0.0
+            pbr["roughnessFactor"] = 1.0
+        kept = self._compact(document)
+        dest.write_text(json.dumps(document), encoding="utf-8")
+        return kept
+
+    @staticmethod
+    def _referenced_textures(document: dict) -> set[int]:
+        used: set[int] = set()
+
+        def walk(node) -> None:
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key.endswith("Texture") and isinstance(value, dict) and "index" in value:
+                        used.add(value["index"])
+                    else:
+                        walk(value)
+            elif isinstance(node, list):
+                for item in node:
+                    walk(item)
+
+        walk(document.get("materials", []))
+        return used
+
+    def _compact(self, document: dict) -> list[str]:
+        textures = document.get("textures", [])
+        used = sorted(self._referenced_textures(document))
+        texture_map = {old: new for new, old in enumerate(used)}
+        images_used = sorted({textures[i]["source"] for i in used if "source" in textures[i]})
+        image_map = {old: new for new, old in enumerate(images_used)}
+        new_textures = []
+        for old in used:
+            texture = dict(textures[old])
+            if "source" in texture:
+                texture["source"] = image_map[texture["source"]]
+            new_textures.append(texture)
+
+        def remap(node) -> None:
+            if isinstance(node, dict):
+                for key, value in node.items():
+                    if key.endswith("Texture") and isinstance(value, dict) and "index" in value:
+                        value["index"] = texture_map[value["index"]]
+                    else:
+                        remap(value)
+            elif isinstance(node, list):
+                for item in node:
+                    remap(item)
+
+        remap(document.get("materials", []))
+        images = document.get("images", [])
+        kept_images = [images[i] for i in images_used]
+        if new_textures:
+            document["textures"] = new_textures
+            document["images"] = kept_images
+        else:
+            document.pop("textures", None)
+            document.pop("images", None)
+            document.pop("samplers", None)
+        return [image["uri"] for image in kept_images if "uri" in image]
+
+
+class TextureDownscaler:
+    def __init__(self, sizer: PsxTextureSize | None = None, quality: int = TEXTURE_QUALITY):
+        self.sizer = sizer or PsxTextureSize()
         self.quality = quality
 
-    def process(self, asset_root: Path) -> None:
-        textures_dir = asset_root / "textures"
-        if not textures_dir.is_dir():
-            return
-        for path in sorted(textures_dir.glob("*")):
+    def process(self, asset_root: Path, uris: list[str]) -> None:
+        for uri in uris:
+            path = asset_root / uri
             if not path.is_file():
                 continue
             image = Image.open(path)
-            if max(image.size) <= self.max_px:
+            image.load()
+            target = self.sizer.target(image.width, image.height)
+            if target == image.size:
                 continue
-            width = min(self.max_px, image.width)
-            height = min(self.max_px, image.height)
-            resized = image.convert("RGB").resize((width, height), Image.LANCZOS)
+            resized = image.convert("RGB").resize(target, Image.LANCZOS)
             resized.save(path, "JPEG", quality=self.quality)
 
 
@@ -925,12 +1014,14 @@ class ModelProcessor:
         downloader: Downloader,
         packer: GltfPacker,
         downscaler: TextureDownscaler,
+        stripper: GltfMaterialStripper,
     ):
         self.spec = spec
         self.output_path = output_root / spec.category / f"{spec.prop_type}.glb"
         self.downloader = downloader
         self.packer = packer
         self.downscaler = downscaler
+        self.stripper = stripper
 
     def is_complete(self) -> bool:
         return self.output_path.exists() and self.output_path.stat().st_size > 0
@@ -972,8 +1063,11 @@ class ModelProcessor:
         asset = AssetFactory.create(self.spec, self.downloader)
 
         if force or not self.is_complete():
-            main_gltf = asset.fetch_gltf()
-            self.downscaler.process(self.downloader.cache_dir / asset.cache_name)
+            source_gltf = asset.fetch_gltf()
+            asset_root = source_gltf.parent
+            main_gltf = asset_root / f"{self.spec.asset}.psx.gltf"
+            kept = self.stripper.strip(source_gltf, main_gltf)
+            self.downscaler.process(asset_root, kept)
             extra_args = []
             if self.spec.hinge_node:
                 extra_args.append("-kn")
@@ -1128,7 +1222,7 @@ class ModelFetcher:
         self.downloader = Downloader(self.cache_dir)
         self.packer = GltfPacker(self.client_dir)
         self.downscaler = TextureDownscaler()
-        self.cosmetic_downscaler = TextureDownscaler(COSMETIC_TEXTURE_MAX_PX)
+        self.stripper = GltfMaterialStripper()
         self.author_cache = AuthorCache(self.cache_dir / "authors.json")
         self.info = PolyHavenInfo(self.downloader, self.author_cache)
 
@@ -1174,8 +1268,7 @@ class ModelFetcher:
         errors = []
         specs = COSMETIC_MANIFEST if self.cosmetics_only else MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST
         for spec in specs:
-            downscaler = self.cosmetic_downscaler if spec.category == COSMETICS_CATEGORY else self.downscaler
-            processor = ModelProcessor(spec, self.output_root, self.downloader, self.packer, downscaler)
+            processor = ModelProcessor(spec, self.output_root, self.downloader, self.packer, self.downscaler, self.stripper)
             try:
                 result = processor.process(self.force)
                 results.append(result)
