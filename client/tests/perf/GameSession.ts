@@ -1,7 +1,7 @@
 import type { BrowserContext, Page } from "@playwright/test";
 import type { PickupKind, WorldInit } from "../../src/net/protocol";
 import { PerfEnvironment } from "./PerfEnvironment";
-import { PointerLockGuard } from "./PointerLockGuard";
+import { PointerLockStub } from "../pointerLockStub";
 
 export class GameSession {
   private main!: Page;
@@ -16,7 +16,7 @@ export class GameSession {
   }
 
   async start(): Promise<WorldInit> {
-    await PointerLockGuard.install(this.context);
+    await PointerLockStub.install(this.context);
     const created = await this.context.request.post("/lobbies", {
       data: { name: "perf", maxPlayers: 8 },
     });
