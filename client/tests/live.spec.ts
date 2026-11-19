@@ -43,6 +43,7 @@ async function expectHudReady(page: Page): Promise<void> {
 }
 
 async function releasePointerLockAndOpenPause(page: Page): Promise<void> {
+  await expect(page.locator("#loading")).toBeHidden({ timeout: 120_000 });
   await page.locator("#app canvas").click();
   await page.evaluate(() => document.exitPointerLock());
   await expect(page.locator("#pause-overlay")).toBeVisible({ timeout: 15_000 });
