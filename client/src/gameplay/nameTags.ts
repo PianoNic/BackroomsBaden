@@ -5,6 +5,7 @@ import { Mesh, StandardMaterial, activeScene, group, plane } from "../rendering/
 import { resolveCosmetic } from "./cosmetics";
 import { NameTagPlacement } from "./nameTagPlacement";
 import { parseTitleRef, rarityColor } from "./cosmeticStyle";
+import { TitleLegibility } from "./titleLegibility";
 
 const TEX_W = 512;
 const TEX_H = 168;
@@ -145,15 +146,15 @@ function drawNameTag(
 
   if (title) {
     const titleY = TEX_H * 0.74;
-    ctx.font = "italic bold 58px sans-serif";
-    ctx.lineWidth = 9;
+    ctx.font = "bold 70px sans-serif";
+    ctx.lineWidth = 6;
     ctx.strokeStyle = "rgba(0,0,0,0.85)";
     ctx.strokeText(title.text, TEX_W / 2, titleY, TEX_W - 24);
-    ctx.fillStyle = title.color;
+    ctx.fillStyle = TitleLegibility.legible(title.color);
     ctx.fillText(title.text, TEX_W / 2, titleY, TEX_W - 24);
     const half = ctx.measureText(title.text).width / 2;
     ctx.fillStyle = accent;
-    ctx.fillRect(TEX_W / 2 - half, titleY + 34, half * 2, 5);
+    ctx.fillRect(TEX_W / 2 - half, titleY + 36, half * 2, 5);
   }
 
   tex.update(false);
