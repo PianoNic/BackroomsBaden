@@ -23,6 +23,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         baseURL: LIVE_BASE_URL ?? `http://localhost:${DEV_PORT}`,
+        actionTimeout: 30_000,
         launchOptions: {
           args: [
             "--use-fake-device-for-media-stream",
