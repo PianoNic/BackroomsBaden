@@ -110,13 +110,14 @@ class CosmeticGallery implements GalleryApi {
     this.lockers?.group.dispose(false, false);
     this.doors?.group.dispose(false, false);
     this.doors = null;
+    const tagDoors = this.remotes.attachDoors(GalleryLayouts.CELL);
     this.world = null;
     this.lockers = null;
     this.layout = null;
     if (!name) return;
     this.layout = name === "distant" ? GalleryLayouts.distant() : GalleryLayouts.build(name);
     this.world = buildWorld(this.layout.grid, [], []);
-    if (this.layout.door) this.doors = new Doors([this.layout.door], []);
+    if (this.layout.door) this.doors = new Doors([this.layout.door], [], tagDoors);
     if (this.layout.locker) this.lockers = new Lockers([this.layout.locker]);
   }
 
