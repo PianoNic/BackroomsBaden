@@ -27,7 +27,7 @@ export class Ambience {
   private readonly imageProcessing: ImageProcessingConfiguration;
   private readonly colorCurves: ColorCurves;
 
-  private fogDensity = AMBIENCE.fog.density;
+  private fogEnd = AMBIENCE.fog.end;
   private vignetteWeight = AMBIENCE.vignette.weight;
   private saturation = AMBIENCE.tone.saturation;
   private readonly baseExposure = AMBIENCE.tone.exposure;
@@ -44,9 +44,10 @@ export class Ambience {
     this.scene = scene;
     this.canvas = canvas;
 
-    scene.fogMode = Scene.FOGMODE_EXP2;
+    scene.fogMode = Scene.FOGMODE_LINEAR;
     scene.fogColor = color3(AMBIENCE.fog.color);
-    scene.fogDensity = this.fogDensity;
+    scene.fogStart = AMBIENCE.fog.start;
+    scene.fogEnd = this.fogEnd;
 
     const imageProcessing = scene.imageProcessingConfiguration;
     imageProcessing.isEnabled = true;
@@ -95,13 +96,13 @@ export class Ambience {
     const cues = AMBIENCE.cues;
 
     const breath = Math.sin(elapsed * 2 * Math.PI * fog.breathHz);
-    let fogTarget = fog.density + breath * fog.breathAmount;
+    let fogTarget = fog.end + breath * fog.breathAmount;
     let vignetteTarget = vignette.weight
       + Math.sin(elapsed * 2 * Math.PI * vignette.breathHz) * vignette.breathAmount;
 
     const t = clamp01((AMBIENCE.chase.radius - threatDistance) / AMBIENCE.chase.radius);
     if (t > 0) {
-      fogTarget = fogTarget + (fog.chaseDensity - fogTarget) * t;
+      fogTarget = fogTarget + (fog.chaseEnd - fogTarget) * t;
       vignetteTarget = vignetteTarget + (vignette.chaseWeight - vignetteTarget) * t;
     }
 
@@ -113,13 +114,13 @@ export class Ambience {
       lerpRate = cues.hiddenLerp;
     }
 
-    this.fogDensity = expLerp(this.fogDensity, fogTarget, fog.lerp, dt);
+    this.fogEnd = expLerp(this.fogEnd, fogTarget, fog.lerp, dt);
     this.vignetteWeight = this.catchAnticipationArmed
       ? AMBIENCE.vignette.weight
       : expLerp(this.vignetteWeight, vignetteTarget, lerpRate, dt);
     this.saturation = expLerp(this.saturation, saturationTarget, lerpRate, dt);
 
-    this.scene.fogDensity = this.fogDensity;
+    this.scene.fogEnd = this.fogEnd;
     this.imageProcessing.vignetteWeight = this.vignetteWeight;
     this.colorCurves.globalSaturation = this.saturation;
 

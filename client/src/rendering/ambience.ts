@@ -2,8 +2,8 @@ import type { RoomArchetype } from "../world/rooms";
 
 export const AMBIENCE = {
   tone: {
-    exposure: 0.78,
-    contrast: 1.28,
+    exposure: 1.2,
+    contrast: 1.1,
     saturation: 62,
     shadowsHue: 150,
     shadowsDensity: 34,
@@ -13,23 +13,25 @@ export const AMBIENCE = {
     highlightsDensity: 16,
   },
   vignette: {
-    weight: 2.8,
+    weight: 1.9,
     stretch: 0.35,
     color: 0x05060a,
     breathHz: 0.08,
     breathAmount: 0.5,
-    chaseWeight: 5.2,
+    chaseWeight: 4.6,
   },
   fog: {
     color: 0x11150e,
-    density: 0.085,
+    start: 6,
+    end: 28,
     breathHz: 0.05,
-    breathAmount: 0.006,
-    chaseDensity: 0.088,
+    breathAmount: 1.2,
+    chaseEnd: 20,
     lerp: 1.6,
   },
   ambientLight: {
-    skyColor: 0xb7b3a0,
+    skyColor: 0xddd9c2,
+    groundColor: 0x8d8974,
     intensity: 1.0,
     minFactor: 0.14,
     radius: 12,
