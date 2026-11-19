@@ -5,6 +5,7 @@ import { Mesh, StandardMaterial, activeScene, group, plane } from "../rendering/
 import { resolveCosmetic } from "./cosmetics";
 import { NameTagPlacement } from "./nameTagPlacement";
 import { parseTitleRef, rarityColor } from "./cosmeticStyle";
+import { HatSlice } from "./hatSlice";
 import { TitleLegibility } from "./titleLegibility";
 
 const TEX_W = 512;
@@ -24,6 +25,8 @@ type Tag = {
   inRange: boolean;
   hiddenByOwner: boolean;
   top: number;
+  owner: Mesh | null;
+  radii: Map<string, number>;
 };
 
 export class NameTags {
@@ -70,7 +73,9 @@ export class NameTags {
         tag.mesh.setEnabled(inRange);
       }
       if (!inRange) continue;
-      const placed = NameTagPlacement.place(pos.y + tag.top, PLANE_H, CLEARANCE);
+      const placed = NameTagPlacement.place(
+        pos.y + tag.top, PLANE_H, CLEARANCE, (bottom) => this.radiusAt(tag, bottom),
+      );
       const toCamera = Math.hypot(-dx, -dz);
       const push = toCamera > 1e-3 ? Math.min(placed.forward, toCamera * 0.5) / toCamera : 0;
       tag.mesh.position.set(pos.x - dx * push, placed.centerY, pos.z - dz * push);
@@ -102,10 +107,21 @@ export class NameTags {
     this.group.add(mesh);
     const tag: Tag = {
       mesh, tex, material, lastKey: "", inRange: false, hiddenByOwner: false,
-      top: FALLBACK_TOP,
+      top: FALLBACK_TOP, owner: null, radii: new Map(),
     };
     this.tags.set(id, tag);
     return tag;
+  }
+
+  private radiusAt(tag: Tag, bottomY: number): number {
+    if (!tag.owner) return 0;
+    const key = bottomY.toFixed(3);
+    let radius = tag.radii.get(key);
+    if (radius === undefined) {
+      radius = HatSlice.maxRadius(tag.owner, bottomY);
+      tag.radii.set(key, radius);
+    }
+    return radius;
   }
 
   private refreshOffset(tag: Tag, owner: Mesh): void {
@@ -116,6 +132,8 @@ export class NameTags {
       top = 0;
     }
     tag.top = top > 0 ? top : FALLBACK_TOP;
+    tag.owner = owner;
+    tag.radii.clear();
   }
 
   private redraw(tag: Tag, name: string, equipped: EquippedCosmetics): void {

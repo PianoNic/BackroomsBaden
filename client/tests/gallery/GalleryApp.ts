@@ -11,6 +11,7 @@ import { CosmeticSlots } from "../../src/gameplay/cosmeticSlots";
 import { cosmeticModels } from "../../src/gameplay/cosmeticModels";
 import { EyeHeight } from "../../src/gameplay/eyeHeight";
 import { ensureCatalog, resolveCosmetic } from "../../src/gameplay/cosmetics";
+import { HatSlice } from "../../src/gameplay/hatSlice";
 import { LeakProbe } from "./LeakProbe";
 
 type Vec3 = [number, number, number];
@@ -24,8 +25,8 @@ export type GalleryApi = {
   eyeHeights: { standing: number; crouching: number };
   setCamera(position: Vec3, target: Vec3): void;
   frames(count: number): Promise<void>;
-  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null; tagForward: number } | null;
-  setWall(on: boolean): void;
+  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null; tagForward: number; tagBottomRadius: number } | null;
+  setWall(on: boolean, centerZ?: number): void;
 };
 
 class CosmeticGallery implements GalleryApi {
@@ -94,15 +95,15 @@ class CosmeticGallery implements GalleryApi {
     });
   }
 
-  setWall(on: boolean): void {
+  setWall(on: boolean, centerZ = -3): void {
     this.wall?.dispose(false, true);
     this.wall = null;
     if (!on) return;
     this.wall = box(8, 3, 0.2, lambertMaterial(0x8a8a78), "galleryWall");
-    this.wall.position.set(0, 1.5, -3);
+    this.wall.position.set(0, 1.5, centerZ);
   }
 
-  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null; tagForward: number } | null {
+  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null; tagForward: number; tagBottomRadius: number } | null {
     const body = this.remotes.getMesh("p1");
     const root = body?.getChildren().find((node) => node.name === "cosmetics");
     if (!body || !root) return null;
@@ -120,14 +121,16 @@ class CosmeticGallery implements GalleryApi {
     const tagMesh = this.ctx.scene.getMeshByName("nameTag_p1");
     let tag: [number, number] | null = null;
     let tagForward = 0;
+    let tagBottomRadius = 0;
     if (tagMesh) {
       tagForward = Math.hypot(tagMesh.position.x - origin.x, tagMesh.position.z - origin.z);
       tagMesh.computeWorldMatrix(true);
       const tagBox = tagMesh.getBoundingInfo().boundingBox;
       tag = [tagBox.minimumWorld.y - origin.y, tagBox.maximumWorld.y - origin.y];
+      tagBottomRadius = HatSlice.maxRadius(body, tagBox.minimumWorld.y);
     }
     return {
-      tag, tagForward,
+      tag, tagForward, tagBottomRadius,
       min: [min.x - origin.x, min.y - origin.y, min.z - origin.z],
       max: [max.x - origin.x, max.y - origin.y, max.z - origin.z],
     };

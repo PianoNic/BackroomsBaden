@@ -25,6 +25,14 @@ export class TagShots {
     return { name: `${name}_${distance}m`, position, target, crop: distance > 4 };
   }
 
+  static orbit(name: string, distance: number, degrees: number): CameraShot {
+    const target: Vec3 = [0, TagShots.FOCUS, 0];
+    const eye = TagShots.FOCUS + 0.1;
+    const angle = (degrees * Math.PI) / 180;
+    const position: Vec3 = [distance * Math.sin(angle), eye, -distance * Math.cos(angle)];
+    return { name: `${name}_${distance}m`, position, target, crop: false };
+  }
+
   async show(equipped: EquippedCosmetics): Promise<void> {
     await this.page.evaluate(
       (eq) => (window as unknown as { cosmeticGallery: GalleryApi }).cosmeticGallery.showRemote(eq),
