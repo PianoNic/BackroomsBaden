@@ -1,6 +1,5 @@
 import argparse
 import datetime
-import http.cookiejar
 import io
 import json
 import os
@@ -16,6 +15,8 @@ from pathlib import Path
 from typing import Optional
 
 from PIL import Image, ImageChops
+
+from asset_sources import ArchiveExtractor, ItchDownloader
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 ALBEDO_FILE = "albedo.webp"
@@ -129,69 +130,6 @@ class Downloader:
         raise RuntimeError(f"failed to download {url}: {last_error}")
 
 
-class ItchDownloader:
-    MIN_INTERVAL_S = 6.0
-
-    def __init__(self, page_url: str, cache_dir: Path):
-        self.page_url = page_url.rstrip("/")
-        self.cache_dir = cache_dir
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        jar = http.cookiejar.CookieJar()
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
-        self.opener.addheaders = [("User-Agent", USER_AGENT)]
-        self.last_request = 0.0
-
-    def _throttle(self) -> None:
-        remaining = self.MIN_INTERVAL_S - (time.monotonic() - self.last_request)
-        if remaining > 0:
-            time.sleep(remaining)
-        self.last_request = time.monotonic()
-
-    def _text(self, url: str, form: Optional[dict] = None) -> str:
-        self._throttle()
-        body = urllib.parse.urlencode(form).encode() if form is not None else None
-        request = urllib.request.Request(url, data=body, headers={"Referer": self.page_url})
-        with self.opener.open(request, timeout=90) as response:
-            return response.read().decode("utf-8", "replace")
-
-    @staticmethod
-    def _csrf_token(html: str) -> str:
-        match = re.search(r'name="csrf_token"\s+value="([^"]+)"', html)
-        if match is None:
-            match = re.search(r'value="([^"]+)"\s+name="csrf_token"', html)
-        if match is None:
-            raise RuntimeError("csrf_token not found on itch.io page")
-        return match.group(1)
-
-    @staticmethod
-    def _upload_id(html: str, filename: str) -> str:
-        for block in re.finditer(r'<div class="upload">.*?</div>\s*</div>', html, re.S):
-            if filename in block.group(0):
-                found = re.search(r'data-upload_id="(\d+)"', block.group(0))
-                if found:
-                    return found.group(1)
-        raise RuntimeError(f"upload {filename} not listed on the itch.io download page")
-
-    def fetch(self, filename: str) -> Path:
-        dest = self.cache_dir / filename
-        if dest.exists() and dest.stat().st_size > 0:
-            return dest
-        token = self._csrf_token(self._text(self.page_url + "/purchase"))
-        download_url = json.loads(self._text(self.page_url + "/download_url", {"csrf_token": token}))["url"]
-        page = self._text(download_url)
-        token = self._csrf_token(page)
-        upload_id = self._upload_id(page, filename)
-        cdn_url = json.loads(self._text(f"{self.page_url}/file/{upload_id}", {"csrf_token": token}))["url"]
-        tmp = dest.with_suffix(dest.suffix + ".part")
-        self._throttle()
-        with self.opener.open(urllib.request.Request(cdn_url), timeout=120) as response, open(tmp, "wb") as out:
-            shutil.copyfileobj(response, out)
-        if tmp.stat().st_size == 0:
-            raise RuntimeError("empty download from itch.io CDN")
-        tmp.replace(dest)
-        return dest
-
-
 class PackArchive:
     ALLOWED_SUFFIXES = (".png", ".txt")
     MAX_MEMBER_BYTES = 4 * 1024 * 1024
@@ -202,22 +140,7 @@ class PackArchive:
         self.extract_dir = extract_dir
 
     def extract(self) -> None:
-        if self.extract_dir.exists():
-            shutil.rmtree(self.extract_dir)
-        self.extract_dir.mkdir(parents=True)
-        base = self.extract_dir.resolve()
-        with zipfile.ZipFile(self.zip_path) as archive:
-            for member in archive.infolist():
-                if member.is_dir() or not member.filename.lower().endswith(self.ALLOWED_SUFFIXES):
-                    continue
-                if member.file_size > self.MAX_MEMBER_BYTES:
-                    raise RuntimeError(f"{member.filename}: member too large")
-                target = (base / member.filename).resolve()
-                if base != target and base not in target.parents:
-                    raise RuntimeError(f"{member.filename}: path escapes the extraction directory")
-                target.parent.mkdir(parents=True, exist_ok=True)
-                with archive.open(member) as source, open(target, "wb") as out:
-                    shutil.copyfileobj(source, out)
+        ArchiveExtractor(self.ALLOWED_SUFFIXES, self.MAX_MEMBER_BYTES).extract(self.zip_path, self.extract_dir)
 
     def texture_path(self, source: PackSource) -> Path:
         return self.extract_dir / self.info.root / source.look / source.family / f"{source.material}.png"

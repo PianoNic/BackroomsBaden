@@ -18,6 +18,11 @@ from pathlib import Path
 
 from PIL import Image
 
+from asset_sources import ArchiveExtractor as PackArchiveExtractor
+from asset_sources import DirectDownloader
+from asset_sources import ItchDownloader as PackItchDownloader
+from model_converters import GlbUnpacker, ObjToGltf, SceneEditor
+
 USER_AGENT = "Mozilla/5.0"
 TEXTURE_MAX_PX = 256
 TEXTURE_MIN_PX = 8
@@ -39,6 +44,8 @@ class ModelSpec:
     hinge_side: str | None = None
     hinge_open_rad: float | None = None
     aggressive_simplify: bool = False
+    source: "PackSource | None" = None
+    pre_yaw: float = 0.0
 
     def __post_init__(self) -> None:
         if self.scale_y is None:
@@ -110,22 +117,12 @@ class ItchSpec(ModelSpec):
 
 MANIFEST: tuple[ModelSpec, ...] = (
     ModelSpec("student_desk", "SchoolDesk_01", "furniture", 1.0, 0.5),
-    ModelSpec("chair", "SchoolChair_01", "furniture", 1.0, 0.45),
-    ModelSpec("bookshelf", "Shelf_01", "furniture", 1.0, yaw_offset=math.pi),
-    ModelSpec("desk", "metal_office_desk", "furniture", 1.0, 0.6),
-    ModelSpec("side_table", "side_table_01", "furniture", 1.0, 0.7),
-    ModelSpec("sofa", "Sofa_01", "furniture", 1.0, yaw_offset=math.pi),
     ModelSpec("bench", "painted_wooden_bench", "furniture", 1.0, yaw_offset=math.pi),
     ModelSpec("cafeteria_table", "dining_table", "furniture", 1.0),
-    ModelSpec("cupboard", "drawer_cabinet", "furniture", 1.0, 0.1, yaw_offset=math.pi),
     ModelSpec("trash_can", "industrial_pastic_container", "clutter", 0.75, 0.13, aggressive_simplify=True),
     ModelSpec("recycle_bin", "plastic_crate_02", "clutter", 0.95, 0.25, aggressive_simplify=True),
     ModelSpec("pylon", "WetFloorSign_01", "clutter", 1.0),
     ModelSpec("mop_bucket", "wooden_bucket_01", "clutter", 1.0, 0.37),
-    ModelSpec("plant", "potted_plant_04", "clutter", 3.2, 0.17, aggressive_simplify=True),
-    ModelSpec("papers", "office_notepads", "clutter", 0.4),
-    ModelSpec("books_pile", "binder_notebook", "clutter", 0.7, 0.1),
-    ModelSpec("clock", "wall_clock", "wall", 1.0, 0.5, yaw_offset=math.pi),
     ModelSpec("fire_extinguisher", "korean_fire_extinguisher_01", "wall", 1.0, 0.2, yaw_offset=math.pi),
     ModelSpec("microscope", "industrial_microscope", "lab", 0.95, 0.2, yaw_offset=math.pi),
     ModelSpec("bunsen_burner", "bunsen_burner", "lab", 1.0, 0.25),
@@ -289,6 +286,102 @@ SKETCHFAB_MANIFEST: tuple[SketchfabSpec, ...] = (
         "would replace the procedural exit_sign prop",
     ),
 )
+
+
+@dataclass(frozen=True)
+class PackInfo:
+    pack_id: str
+    name: str
+    author: str
+    page_url: str
+    licence: str
+    licence_quote: str
+    suffixes: tuple[str, ...]
+    archive: str
+    itch_listing: str | None = None
+    direct_url: str | None = None
+
+
+@dataclass(frozen=True)
+class PackSource:
+    pack_id: str
+    member: str
+    node: str | None = None
+
+
+PACKS: dict[str, PackInfo] = {
+    "psx_office": PackInfo(
+        "psx_office", "PSX style office pack", "valsekamerplant",
+        "https://valsekamerplant.itch.io/psx-style-opulent-office", "CC0 1.0",
+        "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos.",
+        (".glb",), "psx-office-pack.zip", itch_listing="psx office pack",
+    ),
+    "psx_derelict": PackInfo(
+        "psx_derelict", "PSX Derelict Furniture (Standard)", "Daniel Jurys",
+        "https://daniel-jurys.itch.io/psx-derelict-furniture", "CC0 1.0",
+        "Licence: Creative Commons Zero v1.0 Universal",
+        (".glb",), "PSX-Derelict-Furniture-Standard.zip", itch_listing="PSX-Derelict-Furniture-Standard.zip",
+    ),
+}
+
+
+ITCH_MANIFEST: tuple[ModelSpec, ...] = (
+    ModelSpec(
+        "chair", "chair", "furniture", 1.0, yaw_offset=math.pi,
+        source=PackSource("psx_derelict", "PSX-Derelict-Furniture-Standard/glb/chair.glb"),
+    ),
+    ModelSpec(
+        "desk", "desk2_weathered", "furniture", 0.88, yaw_offset=math.pi,
+        source=PackSource("psx_office", "OFFICE/desks/desk2_weathered.glb"),
+    ),
+    ModelSpec(
+        "bookshelf", "book_case_small", "furniture", 0.83,
+        source=PackSource("psx_office", "OFFICE/book_things/book_case_small.glb"),
+    ),
+    ModelSpec(
+        "cupboard", "file_cabinet_largest", "furniture", 0.78,
+        source=PackSource("psx_office", "OFFICE/file_cabinets/file_cabinet_largest.glb"),
+    ),
+    ModelSpec(
+        "side_table", "file_cabinet_smallest", "furniture", 1.0,
+        source=PackSource("psx_office", "OFFICE/file_cabinets/file_cabinet_smallest.glb"),
+    ),
+    ModelSpec(
+        "sofa", "couch", "furniture", 1.0, yaw_offset=math.pi, pre_yaw=-math.pi / 2,
+        source=PackSource("psx_derelict", "PSX-Derelict-Furniture-Standard/glb/couch.glb"),
+    ),
+    ModelSpec(
+        "clock", "wall_clock", "wall", 0.53,
+        source=PackSource("psx_office", "OFFICE/extras/wall_clock.glb"),
+    ),
+    ModelSpec(
+        "plant", "vase", "clutter", 2.2,
+        source=PackSource("psx_derelict", "PSX-Derelict-Furniture-Standard/glb/vase.glb"),
+    ),
+    ModelSpec(
+        "papers", "paper_stack", "clutter", 1.0,
+        source=PackSource("psx_office", "OFFICE/stationary/paper_stack.glb"),
+    ),
+    ModelSpec(
+        "books_pile", "books_alt", "clutter", 0.8,
+        source=PackSource("psx_office", "OFFICE/book_things/books_alt.glb"),
+    ),
+    ModelSpec(
+        "fridge", "fridge", "appliances", 0.85,
+        source=PackSource("psx_derelict", "PSX-Derelict-Furniture-Standard/glb/fridge.glb"),
+    ),
+    ModelSpec(
+        "vending_machine", "coffee_machine", "appliances", 0.8,
+        source=PackSource("psx_office", "OFFICE/extras/coffee_machine.glb"),
+    ),
+    ModelSpec(
+        "water_dispenser", "water_cooler", "appliances", 1.0,
+        source=PackSource("psx_office", "OFFICE/extras/water_cooler.glb"),
+    ),
+)
+
+
+OPENGAMEART_MANIFEST: tuple[ModelSpec, ...] = ()
 
 
 _IDENTITY = (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0)
@@ -800,6 +893,62 @@ class AssetFactory:
         return PolyHavenAsset(spec, downloader)
 
 
+class PackStore:
+    MAX_MEMBER_BYTES = 16 * 1024 * 1024
+
+    def __init__(self, cache_dir: Path):
+        self.cache_dir = cache_dir
+        self.archive_dir = cache_dir / "archives"
+        self.extract_root = cache_dir / "packs"
+        self._itch: dict[str, PackItchDownloader] = {}
+
+    def root(self, pack: PackInfo) -> Path:
+        extract_dir = self.extract_root / pack.pack_id
+        if extract_dir.is_dir() and any(extract_dir.iterdir()):
+            return extract_dir
+        archive = self._download(pack)
+        PackArchiveExtractor(pack.suffixes, self.MAX_MEMBER_BYTES).extract(archive, extract_dir)
+        return extract_dir
+
+    def _download(self, pack: PackInfo) -> Path:
+        if pack.itch_listing:
+            downloader = self._itch.setdefault(pack.pack_id, PackItchDownloader(pack.page_url, self.archive_dir))
+            return downloader.fetch(pack.itch_listing, pack.archive)
+        return DirectDownloader(self.archive_dir).fetch(pack.direct_url, pack.archive)
+
+
+class PackAsset:
+    def __init__(self, spec: ModelSpec, store: PackStore, client_dir: Path):
+        self.spec = spec
+        self.store = store
+        self.client_dir = client_dir
+
+    def fetch_gltf(self) -> Path:
+        source = self.spec.source
+        info = PACKS[source.pack_id]
+        member = self.store.root(info) / source.member
+        if not member.is_file():
+            raise RuntimeError(f"{source.member} not found in pack {info.pack_id}")
+        work = self.store.cache_dir / "work" / self.spec.prop_type
+        if work.exists():
+            shutil.rmtree(work)
+        work.mkdir(parents=True)
+        stem = self.spec.asset
+        suffix = member.suffix.lower()
+        if suffix == ".glb":
+            gltf = GlbUnpacker().unpack(member, work, stem)
+        elif suffix == ".fbx":
+            glb = work / "fbx" / f"{stem}.glb"
+            Fbx2GltfConverter(self.store.cache_dir).convert(member, glb)
+            gltf = GlbUnpacker().unpack(glb, work, stem)
+        elif suffix == ".obj":
+            gltf = ObjToGltf().convert(member, work, stem)
+        else:
+            raise RuntimeError(f"unsupported model format {suffix}")
+        SceneEditor().edit(gltf, source.node, self.spec.pre_yaw)
+        return gltf
+
+
 class AuthorCache:
     def __init__(self, path: Path):
         self.path = path
@@ -848,6 +997,8 @@ class PsxTextureSize:
         self.max_px = max_px
 
     def target(self, width: int, height: int) -> tuple[int, int]:
+        if max(width, height) <= self.max_px:
+            return (width, height)
         ratio = min(1.0, self.max_px / max(width, height))
         return (
             min(width, PowerOfTwo.floor(int(width * ratio))),
@@ -870,6 +1021,9 @@ class GltfMaterialStripper:
                 pbr.pop(slot, None)
             pbr["metallicFactor"] = 0.0
             pbr["roughnessFactor"] = 1.0
+            if material.get("alphaMode") == "BLEND":
+                material["alphaMode"] = "MASK"
+                material["alphaCutoff"] = 0.5
         kept = self._compact(document)
         dest.write_text(json.dumps(document), encoding="utf-8")
         return kept
@@ -946,6 +1100,10 @@ class TextureDownscaler:
             target = self.sizer.target(image.width, image.height)
             if target == image.size:
                 continue
+            if path.suffix.lower() == ".png":
+                mode = "RGBA" if "A" in image.getbands() else "RGB"
+                image.convert(mode).resize(target, Image.NEAREST).save(path, "PNG")
+                continue
             resized = image.convert("RGB").resize(target, Image.LANCZOS)
             resized.save(path, "JPEG", quality=self.quality)
 
@@ -1018,7 +1176,11 @@ class ModelProcessor:
         packer: GltfPacker,
         downscaler: TextureDownscaler,
         stripper: GltfMaterialStripper,
+        packs: PackStore | None = None,
+        client_dir: Path | None = None,
     ):
+        self.packs = packs
+        self.client_dir = client_dir
         self.spec = spec
         self.output_path = output_root / spec.category / f"{spec.prop_type}.glb"
         self.downloader = downloader
@@ -1062,11 +1224,23 @@ class ModelProcessor:
                 file=sys.stderr,
             )
 
+    @staticmethod
+    def _as_gltf(source: Path) -> Path:
+        if source.suffix.lower() != ".glb":
+            return source
+        unpacked = source.parent / "unpacked"
+        if unpacked.exists():
+            shutil.rmtree(unpacked)
+        return GlbUnpacker().unpack(source, unpacked, source.stem)
+
     def process(self, force: bool) -> ModelResult:
-        asset = AssetFactory.create(self.spec, self.downloader)
+        if self.spec.source is not None:
+            asset = PackAsset(self.spec, self.packs, self.client_dir)
+        else:
+            asset = AssetFactory.create(self.spec, self.downloader)
 
         if force or not self.is_complete():
-            source_gltf = asset.fetch_gltf()
+            source_gltf = self._as_gltf(asset.fetch_gltf())
             asset_root = source_gltf.parent
             main_gltf = asset_root / f"{self.spec.asset}.psx.gltf"
             kept = self.stripper.strip(source_gltf, main_gltf)
@@ -1118,13 +1292,34 @@ class LicenseGenerator:
         lines.append("# Model Licenses")
         lines.append("")
         lines.append(
-            "Every model in this directory is CC0 1.0 from Poly Haven, Poly Pizza or itch.io and "
-            "requires no attribution to use, modify or redistribute; the tables below "
-            "credit the original authors anyway."
+            "Every model in this directory is CC0 1.0 - from Poly Haven, Poly Pizza, itch.io or the "
+            "retro model packs listed below - and requires no attribution to use, modify or "
+            "redistribute; the tables credit the original authors anyway."
         )
         lines.append("")
+        lines.append("## Poly Haven")
+        lines.append("")
         lines.extend(self.TABLE_HEADER)
-        lines.extend(self._rows(core))
+        lines.extend(self._rows([s for s in core if s.source is None]))
+        lines.append("")
+        lines.append("## Retro model packs")
+        lines.append("")
+        lines.append(
+            "Low-poly PS1/PS2-style models. Each is fetched by `tools/fetch_models.py`, stripped to a "
+            "single nearest-sampled base colour texture and packed with gltfpack. The last column "
+            "quotes the licence statement from the pack's page."
+        )
+        lines.append("")
+        lines.append("| Prop type | Model file | Pack | Source file | Author | Pack page | License | Licence statement |")
+        lines.append("|---|---|---|---|---|---|---|---|")
+        packed = [s for s in core if s.source is not None]
+        for spec in sorted(packed, key=lambda s: s.prop_type):
+            info = PACKS[spec.source.pack_id]
+            lines.append(
+                f"| `{spec.prop_type}` | `{spec.category}/{spec.prop_type}.glb` | {info.name} | "
+                f"`{spec.source.member}` | {info.author} | {info.page_url} | {info.licence} | "
+                f"\"{info.licence_quote}\" |"
+            )
         lines.append("")
         lines.append("## Cosmetics")
         lines.append("")
@@ -1226,6 +1421,7 @@ class ModelFetcher:
         self.packer = GltfPacker(self.client_dir)
         self.downscaler = TextureDownscaler()
         self.stripper = GltfMaterialStripper()
+        self.packs = PackStore(self.cache_dir)
         self.author_cache = AuthorCache(self.cache_dir / "authors.json")
         self.info = PolyHavenInfo(self.downloader, self.author_cache)
 
@@ -1269,9 +1465,15 @@ class ModelFetcher:
 
         results = []
         errors = []
-        specs = COSMETIC_MANIFEST if self.cosmetics_only else MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST
+        specs = (
+            COSMETIC_MANIFEST if self.cosmetics_only
+            else MANIFEST + ITCH_MANIFEST + OPENGAMEART_MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST
+        )
         for spec in specs:
-            processor = ModelProcessor(spec, self.output_root, self.downloader, self.packer, self.downscaler, self.stripper)
+            processor = ModelProcessor(
+                spec, self.output_root, self.downloader, self.packer, self.downscaler, self.stripper,
+                self.packs, self.client_dir,
+            )
             try:
                 result = processor.process(self.force)
                 results.append(result)
@@ -1285,7 +1487,8 @@ class ModelFetcher:
         print(f"[decoder] meshopt_decoder.js installed at {decoder_path}")
 
         license_text = LicenseGenerator(
-            MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST, self.info, SKETCHFAB_MANIFEST
+            MANIFEST + ITCH_MANIFEST + OPENGAMEART_MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST,
+            self.info, SKETCHFAB_MANIFEST,
         ).build()
         self.output_root.mkdir(parents=True, exist_ok=True)
         (self.output_root / "LICENSES.md").write_text(license_text, encoding="utf-8")
