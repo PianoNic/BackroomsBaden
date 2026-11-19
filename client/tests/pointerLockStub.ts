@@ -5,7 +5,7 @@ export class PointerLockStub {
     await context.addInitScript(() => {
       let locked: Element | null = null;
       const notify = (): void => {
-        queueMicrotask(() => document.dispatchEvent(new Event("pointerlockchange")));
+        setTimeout(() => document.dispatchEvent(new Event("pointerlockchange")), 0);
       };
       Object.defineProperty(Document.prototype, "pointerLockElement", {
         configurable: true,
