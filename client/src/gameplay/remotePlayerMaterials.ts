@@ -181,11 +181,13 @@ export function buildHat(key: string): TransformNode | null {
 }
 
 export function disposeHat(hat: TransformNode): void {
+  const materials: StandardMaterial[] = [];
   hat.traverse((o) => {
-    const m = o as Mesh;
-    m.dispose?.(true, false);
-    if (m.material) disposeMaterial(m.material as StandardMaterial);
+    const m = (o as Mesh).material;
+    if (m) materials.push(m as StandardMaterial);
   });
+  hat.dispose(false, false);
+  disposeMaterial(materials);
 }
 
 /** Face-pattern materials from a catalog texture path. Resolves to null on a
