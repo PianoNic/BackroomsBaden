@@ -1,6 +1,6 @@
 import type { BrowserContext, Page } from "@playwright/test";
 import type { PickupKind, WorldInit } from "../../src/net/protocol";
-import { BackendProcess } from "./BackendProcess";
+import { GalleryServer } from "./GalleryServer";
 import { GalleryEnvironment } from "./GalleryEnvironment";
 
 export class GameSession {
@@ -8,7 +8,7 @@ export class GameSession {
   private bot!: Page;
   private botContext!: BrowserContext;
   private lobbyId = "";
-  private readonly backend = new BackendProcess();
+  private readonly backend = GalleryServer.game();
 
   constructor(private readonly context: BrowserContext) {}
 

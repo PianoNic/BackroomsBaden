@@ -1,11 +1,13 @@
 import type { BrowserContext, Page } from "@playwright/test";
 import type { CatalogItem } from "../../src/net/protocol";
 import { CatalogDump } from "./CatalogDump";
+import { GalleryServer } from "./GalleryServer";
 import { GalleryEnvironment } from "./GalleryEnvironment";
 
 export class GallerySession {
   private readonly env = new GalleryEnvironment();
   private readonly errors: string[] = [];
+  private readonly server = GalleryServer.vite();
   private sheetPage: Page | null = null;
 
   constructor(
@@ -15,6 +17,7 @@ export class GallerySession {
 
   async open(): Promise<CatalogItem[]> {
     this.env.prepare();
+    await this.server.start();
     const catalog = new CatalogDump().run(this.env.catalogFile());
     await this.page.route("**/shop/catalog", (route) => route.fulfill({ json: catalog }));
     this.page.on("pageerror", (err) => this.errors.push(err.message));
@@ -40,6 +43,7 @@ export class GallerySession {
 
   async close(): Promise<void> {
     await this.sheetPage?.close();
+    this.server.stop();
     if (this.errors.length) console.log(this.errors.join("\n"));
   }
 }

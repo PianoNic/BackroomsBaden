@@ -1,7 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = process.env.GALLERY_PORT ?? "8030";
-const BACKEND_PORT = (process.env.GALLERY_BACKEND_PORT ??= String(Number(PORT) + 1));
+const PORT = process.env.GALLERY_PORT ?? "8020";
 
 export default defineConfig({
   testDir: "./tests/gallery",
@@ -34,11 +33,4 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: `bunx vite --port ${PORT} --strictPort`,
-    url: `http://localhost:${PORT}/tests/gallery/index.html`,
-    reuseExistingServer: false,
-    timeout: 180_000,
-    env: { VITE_DEV_BACKEND: `http://localhost:${BACKEND_PORT}` },
-  },
 });

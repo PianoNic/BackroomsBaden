@@ -61,9 +61,10 @@ and `window.nachsitzenDev` is stripped from production builds entirely.
 
 ### Gallery and perf specs
 Everything that renders the game for a human to look at lives in `client/tests/gallery/`, run by
-`client/playwright.gallery.config.ts`. It starts one Vite dev server (`GALLERY_PORT`, default 8030) and
-drives headless Chromium (1280x720, one worker) with the pointer lock stubbed. These specs are named
-`*.gallery.ts`, so `bun run test:e2e` and CI never run them. Results go to
+`client/playwright.gallery.config.ts`. It drives headless Chromium (1280x720, one worker) with the pointer
+lock stubbed. These specs are named `*.gallery.ts`, so `bun run test:e2e` and CI never run them. Every spec
+talks to one server on one port, `GALLERY_PORT` (default 8020), through `GalleryServer`, which starts it and
+stops it when the spec ends. Results go to
 `$GALLERY_OUT/$GALLERY_ROUND` (defaults: the temp directory, `round`), so two revisions can be
 compared by giving each its own `GALLERY_ROUND`.
 ```powershell
@@ -73,17 +74,19 @@ bun run test:gallery     # all gallery specs
 bun run test:perf        # only the perf measurement
 bunx playwright test -c playwright.gallery.config.ts --project=gallery propGallery   # one spec
 ```
-- `cosmeticsGallery`, `tallHats`, `tagOcclusion` and `titleLegibility` render cosmetics and name tags in the standalone gallery page and need no backend.
+- `cosmeticsGallery`, `tallHats`, `tagOcclusion` and `titleLegibility` render cosmetics and name tags in the standalone gallery page through Vite and need no backend.
 - `propGallery` screenshots every prop type from the front and the back (the orientation probe), and
   `pickupGallery` screenshots every pickup kind; set `GALLERY_PROPS=clock,printer` to limit props.
 - `retroPerf` (the `perf` project, run with unlimited frame rate) measures draw calls, active meshes
   and frame time (median and p95 over 240 frames after 60 warm-up frames) at fixed viewpoints of a solo
   xlarge round (seed 424242), and writes screenshots, `perf.json` and `sizes.txt`.
 
-The prop, pickup and perf specs play a real round, so `GameSession` starts a Python server on
-`GALLERY_BACKEND_PORT` (default `GALLERY_PORT + 1`; `GALLERY_PYTHON` picks the interpreter) that Vite
-proxies to, and stops it when the spec ends. They need Playwright's Chromium and the server
-requirements; no other process may use those two ports.
+The prop, pickup and perf specs play a real round. `GalleryServer.game()` builds the client with the dev
+hooks (`VITE_DEV_HOOKS=1`) into `$GALLERY_BUILD_DIR/<port>` (default: the temp directory) and runs only the
+Python server on `GALLERY_PORT` with `STATIC_DIR` pointing at that build, so there is no Vite process and no
+second port (`GALLERY_PYTHON` picks the interpreter). The cosmetics specs use `GalleryServer.vite()`, a Vite
+dev server on the same port. Playwright's Chromium and the server requirements are needed, and no other
+process may use the port.
 
 ## Tests
 Service-level tests for the server live in `server/tests`. They build `Lobby`
