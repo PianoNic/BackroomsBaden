@@ -2,11 +2,9 @@ import { Matrix, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Viewport } from "@babylonjs/core/Maths/math.viewport";
 import type { Camera } from "@babylonjs/core/Cameras/camera";
 import { cameraForward } from "../rendering/babylon";
-import { distanceSquaredXZ } from "../core/geom";
+import { InteractSelector } from "./interactSelector";
 import { interactLabel, interactX, interactY } from "./hud/state";
 
-const MIN_DOT = 0.55;
-const RANGE_PAD = 1.5;
 const PROMPT_HEIGHT = 0.9;
 
 const fwd = new Vector3();
@@ -47,20 +45,9 @@ export class InteractPrompt {
     }
     cameraForward(yaw, pitch, fwd);
 
-    let bestScore = MIN_DOT;
-    for (const t of targets) {
-      const reach = t.radius * RANGE_PAD;
-      const distSq = distanceSquaredXZ(t.x, t.z, player.x, player.z);
-      if (distSq > reach * reach) continue;
-      const dist = Math.sqrt(distSq) || 1;
-      const dx = t.x - player.x;
-      const dz = t.z - player.z;
-      const dot = (fwd.x * dx + fwd.z * dz) / dist;
-      if (dot > bestScore) {
-        bestScore = dot;
-        this.current = t;
-      }
-    }
+    this.current = InteractSelector.pick(targets, {
+      x: player.x, z: player.z, forwardX: fwd.x, forwardZ: fwd.z,
+    });
 
     if (!this.current) {
       this.hide();
