@@ -54,6 +54,7 @@ class PlayerConn:
     last_voice_noise_t: float = 0.0
     # Hideout (closet) the player is currently hiding in, or None.
     hidden_in: str | None = None
+    catch_immune_until: float = 0.0
     # Set when a move packet changes the pose; the teacher tick drains this
     # into one batched `players_state` snapshot instead of relaying every
     # move packet to every other player.
@@ -71,3 +72,6 @@ class PlayerConn:
     items_collected: int = 0
     death_t: float = 0.0
     extracted_t: float = 0.0
+
+    def is_catchable(self, now: float) -> bool:
+        return now >= self.catch_immune_until

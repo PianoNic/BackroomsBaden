@@ -70,3 +70,16 @@ def test_compute_rewards_gives_the_extracted_player_more_than_the_dead_one():
     rewards = builder.compute_rewards(lobby, "won")
 
     assert rewards["survivor"]["xpEarned"] > rewards["victim"]["xpEarned"]
+
+
+def test_survival_milliseconds_are_exact_for_a_start_stamp_that_truncated_to_one_ms_short():
+    lobby = make_lobby()
+    start = 131064.77308657022
+    lobby.round_started_at = start
+    survivor = add_player(lobby, "survivor")
+    lobby.extracted.add("survivor")
+    survivor.extracted_t = start + 10.0
+
+    board = make_builder().build(lobby, "won")
+
+    assert {p["id"]: p["survivalMs"] for p in board["players"]}["survivor"] == 10_000

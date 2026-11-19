@@ -110,7 +110,7 @@ export function buildScene(
     if (id !== init.selfId) remotes.markDead(id);
   }
 
-  const minimap = new Minimap(init.grid);
+  const minimap = new Minimap(init.grid, init.doors.map((d) => ({ x: d.x, z: d.z })));
   const stamina = new StaminaBar();
   const interactPrompt = new InteractPrompt();
   const laptops = new Laptops(init.laptops);

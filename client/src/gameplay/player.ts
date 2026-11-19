@@ -1,4 +1,5 @@
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { EyeHeight } from "./eyeHeight";
 import type { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { setCameraOrientation } from "../rendering/babylon";
 import type { InputState } from "../core/input";
@@ -15,7 +16,6 @@ const WALK_SPEED = 5.0;
 const SPRINT_SPEED = 8.5;
 const CROUCH_SPEED = 1.8;
 const RADIUS = 0.4;
-const EYE_HEIGHT = 1.7;
 const PITCH_LIMIT = Math.PI / 2 - 0.05;
 const BOB_FREQ = 2.5;
 const BOB_AMOUNT = 0.02;
@@ -49,8 +49,11 @@ export class Player {
     private readonly propColliders: Rect[] = [],
   ) {}
 
+  private readonly eyeHeight = new EyeHeight();
+
   spawn(x: number, z: number, yaw: number): void {
-    this.position.set(x, EYE_HEIGHT, z);
+    this.eyeHeight.reset();
+    this.position.set(x, this.eyeHeight.value, z);
     this.yaw = yaw;
     this.pitch = 0;
     this.bobPhase = 0;
@@ -130,6 +133,7 @@ export class Player {
       this.swayPhase = 0;
       this.stepCooldown = 0;
     }
+    this.position.y = this.eyeHeight.step(this.crouching, dt);
     this.breathPhase += dt * 2 * Math.PI * AMBIENCE.cues.breathHz;
     tickShake(dt);
 

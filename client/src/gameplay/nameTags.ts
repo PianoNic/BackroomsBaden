@@ -3,11 +3,12 @@ import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { EquippedCosmetics } from "../net/protocol";
 import { Mesh, StandardMaterial, activeScene, group, plane } from "../rendering/babylon";
 import { resolveCosmetic } from "./cosmetics";
+import { NameTagPlacement } from "./nameTagPlacement";
 import { parseTitleRef, rarityColor } from "./cosmeticStyle";
 
 const TEX_W = 512;
-const TEX_H = 160;
-const PLANE_W = 1.6;
+const TEX_H = 168;
+const PLANE_W = 2.4;
 const PLANE_H = PLANE_W * (TEX_H / TEX_W);
 const CLEARANCE = 0.28;
 const FALLBACK_OFFSET = 1.15;
@@ -68,7 +69,7 @@ export class NameTags {
         tag.mesh.setEnabled(inRange);
       }
       if (!inRange) continue;
-      tag.mesh.position.set(pos.x, pos.y + tag.offsetY, pos.z);
+      tag.mesh.position.set(pos.x, NameTagPlacement.centerY(pos.y + tag.offsetY, PLANE_H), pos.z);
     }
   }
 
@@ -134,25 +135,25 @@ function drawNameTag(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  const nameY = title ? TEX_H * 0.36 : TEX_H * 0.5;
-  ctx.font = "bold 56px sans-serif";
-  ctx.lineWidth = 8;
+  const nameY = title ? TEX_H * 0.33 : TEX_H * 0.5;
+  ctx.font = "bold 88px sans-serif";
+  ctx.lineWidth = 12;
   ctx.strokeStyle = "rgba(0,0,0,0.85)";
-  ctx.strokeText(name, TEX_W / 2, nameY);
+  ctx.strokeText(name, TEX_W / 2, nameY, TEX_W - 24);
   ctx.fillStyle = "#ffffff";
-  ctx.fillText(name, TEX_W / 2, nameY);
+  ctx.fillText(name, TEX_W / 2, nameY, TEX_W - 24);
 
   if (title) {
     const titleY = TEX_H * 0.74;
-    ctx.font = "italic bold 42px sans-serif";
-    ctx.lineWidth = 7;
+    ctx.font = "italic bold 58px sans-serif";
+    ctx.lineWidth = 9;
     ctx.strokeStyle = "rgba(0,0,0,0.85)";
-    ctx.strokeText(title.text, TEX_W / 2, titleY);
+    ctx.strokeText(title.text, TEX_W / 2, titleY, TEX_W - 24);
     ctx.fillStyle = title.color;
-    ctx.fillText(title.text, TEX_W / 2, titleY);
+    ctx.fillText(title.text, TEX_W / 2, titleY, TEX_W - 24);
     const half = ctx.measureText(title.text).width / 2;
     ctx.fillStyle = accent;
-    ctx.fillRect(TEX_W / 2 - half, titleY + 26, half * 2, 4);
+    ctx.fillRect(TEX_W / 2 - half, titleY + 34, half * 2, 5);
   }
 
   tex.update(false);

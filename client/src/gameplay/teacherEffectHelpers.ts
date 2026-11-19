@@ -116,7 +116,6 @@ export function showMathPopup(teacherName: string): void {
   const a = 2 + Math.floor(Math.random() * 8);
   const b = 2 + Math.floor(Math.random() * 8);
   const answer = a * b;
-  document.exitPointerLock?.();
   const root = document.createElement("div");
   root.style.cssText = `
     position: fixed; inset: 0; z-index: 95;
