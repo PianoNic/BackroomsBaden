@@ -272,3 +272,100 @@ class SceneEditor:
             if found:
                 return found
         return None
+
+
+class SkinRestPose:
+    TOLERANCE = 1e-4
+    IDENTITY = tuple(1.0 if i % 5 == 0 else 0.0 for i in range(16))
+
+    def __init__(self, document: dict, binary: bytes):
+        self.document = document
+        self.binary = binary
+        nodes = document["nodes"]
+        self.parents = {child: index for index, node in enumerate(nodes) for child in node.get("children", [])}
+
+    @staticmethod
+    def _multiply(a: tuple, b: tuple) -> tuple:
+        return tuple(
+            sum(a[row + k * 4] * b[k + col * 4] for k in range(4))
+            for col in range(4) for row in range(4)
+        )
+
+    @staticmethod
+    def _local(node: dict) -> tuple:
+        if "matrix" in node:
+            return tuple(node["matrix"])
+        tx, ty, tz = node.get("translation", (0.0, 0.0, 0.0))
+        qx, qy, qz, qw = node.get("rotation", (0.0, 0.0, 0.0, 1.0))
+        sx, sy, sz = node.get("scale", (1.0, 1.0, 1.0))
+        return (
+            (1 - 2 * (qy * qy + qz * qz)) * sx, (2 * (qx * qy + qz * qw)) * sx, (2 * (qx * qz - qy * qw)) * sx, 0.0,
+            (2 * (qx * qy - qz * qw)) * sy, (1 - 2 * (qx * qx + qz * qz)) * sy, (2 * (qy * qz + qx * qw)) * sy, 0.0,
+            (2 * (qx * qz + qy * qw)) * sz, (2 * (qy * qz - qx * qw)) * sz, (1 - 2 * (qx * qx + qy * qy)) * sz, 0.0,
+            tx, ty, tz, 1.0,
+        )
+
+    def world(self, index: int) -> tuple:
+        matrix = self._local(self.document["nodes"][index])
+        while index in self.parents:
+            index = self.parents[index]
+            matrix = self._multiply(self._local(self.document["nodes"][index]), matrix)
+        return matrix
+
+    def _inverse_binds(self, skin: dict) -> list[tuple]:
+        accessor = self.document["accessors"][skin["inverseBindMatrices"]]
+        view = self.document["bufferViews"][accessor["bufferView"]]
+        start = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
+        count = accessor["count"]
+        values = struct.unpack_from(f"<{count * 16}f", self.binary, start)
+        return [values[i * 16:(i + 1) * 16] for i in range(count)]
+
+    def verify(self, skin: dict, mesh_node: int) -> float:
+        worst = max(abs(a - b) for a, b in zip(self.world(mesh_node), self.IDENTITY))
+        for joint, inverse in zip(skin["joints"], self._inverse_binds(skin)):
+            product = self._multiply(self.world(joint), inverse)
+            worst = max(worst, max(abs(a - b) for a, b in zip(product, self.IDENTITY)))
+        if worst > self.TOLERANCE:
+            raise RuntimeError(f"rest pose differs from the bind pose by {worst:.6f}")
+        return worst
+
+
+class StaticPoseBaker:
+    DROPPED_ATTRIBUTES = ("JOINTS_0", "WEIGHTS_0", "COLOR_0", "COLOR_1")
+
+    def bake(self, gltf: Path, texture: Path | None) -> float:
+        document = json.loads(gltf.read_text(encoding="utf-8"))
+        binary = (gltf.parent / document["buffers"][0]["uri"]).read_bytes()
+        skinned = [i for i, node in enumerate(document["nodes"]) if "skin" in node and "mesh" in node]
+        if len(skinned) != 1:
+            raise RuntimeError(f"expected one skinned mesh node, found {len(skinned)}")
+        index = skinned[0]
+        node = document["nodes"][index]
+        skin = document["skins"][node["skin"]]
+        deviation = SkinRestPose(document, binary).verify(skin, index)
+        for primitive in document["meshes"][node["mesh"]]["primitives"]:
+            for name in self.DROPPED_ATTRIBUTES:
+                primitive["attributes"].pop(name, None)
+        document["nodes"] = [{"name": node.get("name", "body"), "mesh": node["mesh"]}]
+        document["scenes"][document.get("scene", 0)]["nodes"] = [0]
+        document["meshes"] = [document["meshes"][node["mesh"]]]
+        document["nodes"][0]["mesh"] = 0
+        for key in ("skins", "animations"):
+            document.pop(key, None)
+        if texture is not None:
+            self._bind(document, gltf.parent, texture)
+        gltf.write_text(json.dumps(document), encoding="utf-8")
+        return deviation
+
+    @staticmethod
+    def _bind(document: dict, folder: Path, texture: Path) -> None:
+        target = folder / texture.name
+        if target != texture:
+            target.write_bytes(texture.read_bytes())
+        document["images"] = [{"uri": texture.name}]
+        document["samplers"] = [{"magFilter": 9728, "minFilter": 9728, "wrapS": 10497, "wrapT": 10497}]
+        document["textures"] = [{"sampler": 0, "source": 0}]
+        for material in document["materials"]:
+            pbr = material.setdefault("pbrMetallicRoughness", {})
+            pbr["baseColorTexture"] = {"index": 0, "texCoord": 0}
+            pbr["baseColorFactor"] = [1.0, 1.0, 1.0, 1.0]

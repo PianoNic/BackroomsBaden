@@ -70,6 +70,14 @@ Player cosmetic models in `cosmetics/` (backpacks, masks, hats, hand items). CC0
 | `mask_rennbrille` | `cosmetics/mask_rennbrille.glb` | Ski Goggles (4YCjSY3U6H) | https://poly.pizza/m/4YCjSY3U6H | iPoly3D | CC0 1.0 |
 | `mask_schutzbrille` | `cosmetics/mask_schutzbrille.glb` | Glasses (DBEk0SMQCt) | https://poly.pizza/m/DBEk0SMQCt | iPoly3D | CC0 1.0 |
 
+## Characters
+
+Player body models in `characters/`. Fetched by `tools/fetch_models.py`, stripped of the skin, joints and bone nodes so the mesh ships as a static rest pose, with the painted atlas embedded, capped at 256 px and nearest-sampled. The last column quotes the licence statement from the pack's page.
+
+| Body | Model file | Pack | Source file | Author | Pack page | License | Licence statement |
+|---|---|---|---|---|---|---|---|
+| `body_human` | `characters/body_human.glb` | psx male character | `psx-male-character/psx-male-character.glb` | 32Dev3 | https://32dev3.itch.io/psx-male-character | CC0 1.0 | "Free for any use, credit not required. Creative Commons Zero v1.0 Universal" |
+
 ## Not fetched — Sketchfab (CC-BY, requires `SKETCHFAB_API_TOKEN`)
 
 The models below were identified as good matches for their prop types but could not be downloaded because Sketchfab requires an API token and `SKETCHFAB_API_TOKEN` was not available when this manifest was assembled. If one of these is ever added, use the credit line in the last column.

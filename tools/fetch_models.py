@@ -21,7 +21,7 @@ from PIL import Image
 from asset_sources import ArchiveExtractor as PackArchiveExtractor
 from asset_sources import DirectDownloader
 from asset_sources import ItchDownloader as PackItchDownloader
-from model_converters import GlbUnpacker, ObjToGltf, SceneEditor
+from model_converters import GlbUnpacker, ObjToGltf, SceneEditor, StaticPoseBaker
 
 USER_AGENT = "Mozilla/5.0"
 TEXTURE_MAX_PX = 256
@@ -304,6 +304,7 @@ class PackSource:
     member: str
     node: str | None = None
     texture: str | None = None
+    static_pose: bool = False
 
 
 PACKS: dict[str, PackInfo] = {
@@ -318,6 +319,12 @@ PACKS: dict[str, PackInfo] = {
         "https://daniel-jurys.itch.io/psx-derelict-furniture", "CC0 1.0",
         "Licence: Creative Commons Zero v1.0 Universal",
         (".glb",), "PSX-Derelict-Furniture-Standard.zip", itch_listing="PSX-Derelict-Furniture-Standard.zip",
+    ),
+    "psx_male_character": PackInfo(
+        "psx_male_character", "psx male character", "32Dev3",
+        "https://32dev3.itch.io/psx-male-character", "CC0 1.0",
+        "Free for any use, credit not required. Creative Commons Zero v1.0 Universal",
+        (".glb", ".png"), "psx-male-character.zip", itch_listing="psx-male-character.zip",
     ),
     "oga_fire_extinguisher": PackInfo(
         "oga_fire_extinguisher", "Fire Extinguisher", "jameswhite",
@@ -400,6 +407,19 @@ ITCH_MANIFEST: tuple[ModelSpec, ...] = (
     ModelSpec(
         "water_dispenser", "water_cooler", "appliances", 1.0,
         source=PackSource("psx_office", "OFFICE/extras/water_cooler.glb"),
+    ),
+)
+
+
+CHARACTERS_CATEGORY = "characters"
+
+CHARACTER_MANIFEST: tuple[ModelSpec, ...] = (
+    ModelSpec(
+        "body_human", "psx-male-character", CHARACTERS_CATEGORY, 1.0,
+        source=PackSource(
+            "psx_male_character", "psx-male-character/psx-male-character.glb",
+            texture="psx-male-character/psx-male-character-texture.png", static_pose=True,
+        ),
     ),
 )
 
@@ -993,6 +1013,9 @@ class PackAsset:
             gltf = ObjToGltf().convert(member, work, stem, source.texture)
         else:
             raise RuntimeError(f"unsupported model format {suffix}")
+        if source.static_pose:
+            texture = self.store.root(info) / source.texture if source.texture else None
+            StaticPoseBaker().bake(gltf, texture)
         SceneEditor().edit(gltf, source.node, self.spec.pre_yaw)
         return gltf
 
@@ -1338,8 +1361,9 @@ class LicenseGenerator:
         return rows
 
     def build(self) -> str:
-        core = [s for s in self.specs if s.category != COSMETICS_CATEGORY]
+        core = [s for s in self.specs if s.category not in (COSMETICS_CATEGORY, CHARACTERS_CATEGORY)]
         cosmetics = [s for s in self.specs if s.category == COSMETICS_CATEGORY]
+        characters = [s for s in self.specs if s.category == CHARACTERS_CATEGORY]
         lines = []
         lines.append("# Model Licenses")
         lines.append("")
@@ -1389,6 +1413,25 @@ class LicenseGenerator:
         lines.append("")
         lines.extend(self.TABLE_HEADER)
         lines.extend(self._rows(cosmetics))
+        lines.append("")
+        lines.append("## Characters")
+        lines.append("")
+        lines.append(
+            "Player body models in `characters/`. Fetched by `tools/fetch_models.py`, stripped of "
+            "the skin, joints and bone nodes so the mesh ships as a static rest pose, with the "
+            "painted atlas embedded, capped at 256 px and nearest-sampled. The last column quotes "
+            "the licence statement from the pack's page."
+        )
+        lines.append("")
+        lines.append("| Body | Model file | Pack | Source file | Author | Pack page | License | Licence statement |")
+        lines.append("|---|---|---|---|---|---|---|---|")
+        for spec in sorted(characters, key=lambda s: s.prop_type):
+            info = PACKS[spec.source.pack_id]
+            lines.append(
+                f"| `{spec.prop_type}` | `{spec.category}/{spec.prop_type}.glb` | {info.name} | "
+                f"`{spec.source.member}` | {info.author} | {info.page_url} | {info.licence} | "
+                f"\"{info.licence_quote}\" |"
+            )
         lines.append("")
         lines.append("## Not fetched — Sketchfab (CC-BY, requires `SKETCHFAB_API_TOKEN`)")
         lines.append("")
@@ -1462,10 +1505,11 @@ class FootprintsWriter:
 
 
 class ModelFetcher:
-    def __init__(self, repo_root: Path, force: bool, cosmetics_only: bool = False):
+    def __init__(self, repo_root: Path, force: bool, cosmetics_only: bool = False, characters_only: bool = False):
         self.repo_root = repo_root
         self.force = force
         self.cosmetics_only = cosmetics_only
+        self.characters_only = characters_only
         self.client_dir = repo_root / "client"
         self.cache_dir = repo_root / "tools" / ".model-cache"
         self.output_root = self.client_dir / "public" / "models"
@@ -1519,7 +1563,8 @@ class ModelFetcher:
         errors = []
         specs = (
             COSMETIC_MANIFEST if self.cosmetics_only
-            else MANIFEST + ITCH_MANIFEST + OPENGAMEART_MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST
+            else CHARACTER_MANIFEST if self.characters_only
+            else MANIFEST + ITCH_MANIFEST + OPENGAMEART_MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST + CHARACTER_MANIFEST
         )
         for spec in specs:
             processor = ModelProcessor(
@@ -1539,14 +1584,14 @@ class ModelFetcher:
         print(f"[decoder] meshopt_decoder.js installed at {decoder_path}")
 
         license_text = LicenseGenerator(
-            MANIFEST + ITCH_MANIFEST + OPENGAMEART_MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST,
+            MANIFEST + ITCH_MANIFEST + OPENGAMEART_MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST + CHARACTER_MANIFEST,
             self.info, SKETCHFAB_MANIFEST,
         ).build()
         self.output_root.mkdir(parents=True, exist_ok=True)
         (self.output_root / "LICENSES.md").write_text(license_text, encoding="utf-8")
 
-        if not self.cosmetics_only:
-            prop_results = [r for r in results if r.spec.category not in ("pickups", COSMETICS_CATEGORY)]
+        if not (self.cosmetics_only or self.characters_only):
+            prop_results = [r for r in results if r.spec.category not in ("pickups", COSMETICS_CATEGORY, CHARACTERS_CATEGORY)]
             pickup_results = [r for r in results if r.spec.category == "pickups"]
             footprints_path = self.client_dir / "src" / "world" / "footprints.json"
             FootprintsWriter(footprints_path).write(prop_results, pickup_results)
@@ -1563,9 +1608,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--cosmetics", action="store_true")
+    parser.add_argument("--characters", action="store_true")
     args = parser.parse_args()
     repo_root = Path(__file__).resolve().parent.parent
-    return ModelFetcher(repo_root, args.force, args.cosmetics).run()
+    return ModelFetcher(repo_root, args.force, args.cosmetics, args.characters).run()
 
 
 if __name__ == "__main__":
