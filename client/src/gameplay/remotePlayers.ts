@@ -11,7 +11,7 @@ import { getSettings, onSettingsChange } from "../core/settings";
 import { withinRadiusXZ } from "../core/geom";
 import { group } from "../rendering/babylon";
 import {
-  buildVoxelMesh, disposeVoxelMaterial, makeAvatarMaterials,
+  buildVoxelMesh, disposeMaterial, disposeVoxelMaterial, makeAvatarMaterials,
   makeColorMaterial, makeFacePatternMaterials, makeVideoMaterials, setVoxelMaterial,
 } from "./remotePlayerMaterials";
 import { resolveCosmetic } from "./cosmetics";
@@ -146,7 +146,11 @@ export class RemotePlayers {
     if (!path) return;
     void makeFacePatternMaterials(path).then((mats) => {
       const still = this.entries.get(id);
-      if (!mats || still !== e || e.video || e.avatarUrl) return;
+      if (!mats) return;
+      if (still !== e || e.video || e.avatarUrl) {
+        disposeMaterial(mats);
+        return;
+      }
       setVoxelMaterial(e.mesh, mats);
     });
   }
@@ -217,7 +221,10 @@ export class RemotePlayers {
     try {
       const mats = await makeAvatarMaterials(avatar);
       const still = this.entries.get(id);
-      if (still !== e || e.video) return; // video took over while we loaded
+      if (still !== e || e.video) {
+        disposeMaterial(mats);
+        return;
+      }
       setVoxelMaterial(e.mesh, mats);
     } catch (err) {
       console.warn("avatar load failed", err);
@@ -280,6 +287,7 @@ export class RemotePlayers {
     e.loadout.dispose();
     this.group.remove(e.mesh);
     disposeVoxelMaterial(e.mesh);
+    e.mesh.dispose(false, false);
     e.audio?.dispose();
     if (e.video) e.video.srcObject = null;
     e.videoTex?.dispose();

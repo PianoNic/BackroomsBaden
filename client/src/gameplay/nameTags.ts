@@ -5,13 +5,15 @@ import { Mesh, StandardMaterial, activeScene, group, plane } from "../rendering/
 import { resolveCosmetic } from "./cosmetics";
 import { NameTagPlacement } from "./nameTagPlacement";
 import { parseTitleRef, rarityColor } from "./cosmeticStyle";
+import { HatSlice } from "./hatSlice";
+import { TitleLegibility } from "./titleLegibility";
 
 const TEX_W = 512;
 const TEX_H = 168;
 const PLANE_W = 2.4;
 const PLANE_H = PLANE_W * (TEX_H / TEX_W);
 const CLEARANCE = 0.28;
-const FALLBACK_OFFSET = 1.15;
+const FALLBACK_TOP = 1.15;
 const CULL_DIST = 12;
 const CULL_DIST_SQ = CULL_DIST * CULL_DIST;
 
@@ -22,7 +24,9 @@ type Tag = {
   lastKey: string;
   inRange: boolean;
   hiddenByOwner: boolean;
-  offsetY: number;
+  top: number;
+  owner: Mesh | null;
+  radii: Map<string, number>;
 };
 
 export class NameTags {
@@ -69,7 +73,13 @@ export class NameTags {
         tag.mesh.setEnabled(inRange);
       }
       if (!inRange) continue;
-      tag.mesh.position.set(pos.x, NameTagPlacement.centerY(pos.y + tag.offsetY, PLANE_H), pos.z);
+      const placed = NameTagPlacement.place(
+        pos.y + tag.top, PLANE_H, CLEARANCE, (bottom) => this.radiusAt(tag, bottom),
+      );
+      const toCamera = Math.hypot(-dx, -dz);
+      const push = toCamera > 1e-3 ? Math.min(placed.forward, toCamera * 0.5) / toCamera : 0;
+      tag.mesh.position.set(pos.x - dx * push, placed.centerY, pos.z - dz * push);
+      if (tag.mesh.scaling.x !== placed.scale) tag.mesh.scaling.setAll(placed.scale);
     }
   }
 
@@ -97,10 +107,21 @@ export class NameTags {
     this.group.add(mesh);
     const tag: Tag = {
       mesh, tex, material, lastKey: "", inRange: false, hiddenByOwner: false,
-      offsetY: FALLBACK_OFFSET,
+      top: FALLBACK_TOP, owner: null, radii: new Map(),
     };
     this.tags.set(id, tag);
     return tag;
+  }
+
+  private radiusAt(tag: Tag, bottomY: number): number {
+    if (!tag.owner) return 0;
+    const key = bottomY.toFixed(3);
+    let radius = tag.radii.get(key);
+    if (radius === undefined) {
+      radius = HatSlice.maxRadius(tag.owner, bottomY);
+      tag.radii.set(key, radius);
+    }
+    return radius;
   }
 
   private refreshOffset(tag: Tag, owner: Mesh): void {
@@ -110,7 +131,9 @@ export class NameTags {
     } catch {
       top = 0;
     }
-    tag.offsetY = (top > 0 ? top : FALLBACK_OFFSET) + CLEARANCE + PLANE_H / 2;
+    tag.top = top > 0 ? top : FALLBACK_TOP;
+    tag.owner = owner;
+    tag.radii.clear();
   }
 
   private redraw(tag: Tag, name: string, equipped: EquippedCosmetics): void {
@@ -135,25 +158,32 @@ function drawNameTag(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  const nameY = title ? TEX_H * 0.33 : TEX_H * 0.5;
+  const nameY = title ? TEX_H * 0.3 : TEX_H * 0.5;
   ctx.font = "bold 88px sans-serif";
   ctx.lineWidth = 12;
   ctx.strokeStyle = "rgba(0,0,0,0.85)";
+  ctx.strokeText(name, TEX_W / 2, nameY, TEX_W - 24);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#ffffff";
   ctx.strokeText(name, TEX_W / 2, nameY, TEX_W - 24);
   ctx.fillStyle = "#ffffff";
   ctx.fillText(name, TEX_W / 2, nameY, TEX_W - 24);
 
   if (title) {
-    const titleY = TEX_H * 0.74;
-    ctx.font = "italic bold 58px sans-serif";
-    ctx.lineWidth = 9;
-    ctx.strokeStyle = "rgba(0,0,0,0.85)";
+    const titleY = TEX_H * 0.72;
+    ctx.font = "bold 74px sans-serif";
+    const fill = TitleLegibility.legible(title.color);
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = "rgba(0,0,0,0.9)";
     ctx.strokeText(title.text, TEX_W / 2, titleY, TEX_W - 24);
-    ctx.fillStyle = title.color;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = fill;
+    ctx.strokeText(title.text, TEX_W / 2, titleY, TEX_W - 24);
+    ctx.fillStyle = fill;
     ctx.fillText(title.text, TEX_W / 2, titleY, TEX_W - 24);
-    const half = ctx.measureText(title.text).width / 2;
+    const half = Math.min(ctx.measureText(title.text).width, TEX_W - 24) / 2;
     ctx.fillStyle = accent;
-    ctx.fillRect(TEX_W / 2 - half, titleY + 34, half * 2, 5);
+    ctx.fillRect(TEX_W / 2 - half, titleY + 38, half * 2, 4);
   }
 
   tex.update(false);

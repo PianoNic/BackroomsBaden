@@ -3,7 +3,7 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { EquippedCosmetics } from "../../src/net/protocol";
 import { AmbientLights, createRenderContext, type RenderContext } from "../../src/rendering/renderer";
-import { lambertMaterial, plane } from "../../src/rendering/babylon";
+import { box, lambertMaterial, plane } from "../../src/rendering/babylon";
 import { Corpses } from "../../src/gameplay/corpses";
 import { Chairs } from "../../src/gameplay/chairs";
 import { RemotePlayers } from "../../src/gameplay/remotePlayers";
@@ -11,18 +11,22 @@ import { CosmeticSlots } from "../../src/gameplay/cosmeticSlots";
 import { cosmeticModels } from "../../src/gameplay/cosmeticModels";
 import { EyeHeight } from "../../src/gameplay/eyeHeight";
 import { ensureCatalog, resolveCosmetic } from "../../src/gameplay/cosmetics";
+import { HatSlice } from "../../src/gameplay/hatSlice";
+import { LeakProbe } from "./LeakProbe";
 
 type Vec3 = [number, number, number];
 
 export type GalleryApi = {
   ready: Promise<void>;
+  probe: LeakProbe;
   showRemote(equipped: EquippedCosmetics, yaw?: number): Promise<void>;
   showCorpse(equipped: EquippedCosmetics): Promise<void>;
   showHand(equipped: EquippedCosmetics, eyeHeight: number): Promise<void>;
   eyeHeights: { standing: number; crouching: number };
   setCamera(position: Vec3, target: Vec3): void;
   frames(count: number): Promise<void>;
-  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null } | null;
+  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null; tagForward: number; tagBottomRadius: number } | null;
+  setWall(on: boolean, centerZ?: number): void;
 };
 
 class CosmeticGallery implements GalleryApi {
@@ -31,11 +35,13 @@ class CosmeticGallery implements GalleryApi {
 
   readonly eyeHeights = { standing: EyeHeight.STANDING, crouching: EyeHeight.CROUCHING };
   readonly ready: Promise<void>;
+  probe!: LeakProbe;
   private ctx!: RenderContext;
   private remotes!: RemotePlayers;
   private corpses!: Corpses;
   private chairs!: Chairs;
   private lights!: AmbientLights;
+  private wall: Mesh | null = null;
   private lastMs = 0;
   private readonly crosshair = document.getElementById("crosshair") as HTMLElement;
 
@@ -52,6 +58,7 @@ class CosmeticGallery implements GalleryApi {
     floor.rotation.x = -Math.PI / 2;
     this.remotes = new RemotePlayers(camera);
     this.corpses = new Corpses();
+    this.probe = new LeakProbe(scene, this.remotes);
     this.chairs = new Chairs(
       [{ id: "chair", x: 500, z: 500, yaw: 0, heldBy: null }],
       CosmeticGallery.SELF_ID, camera, this.remotes, {},
@@ -88,7 +95,15 @@ class CosmeticGallery implements GalleryApi {
     });
   }
 
-  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null } | null {
+  setWall(on: boolean, centerZ = -3): void {
+    this.wall?.dispose(false, true);
+    this.wall = null;
+    if (!on) return;
+    this.wall = box(8, 3, 0.2, lambertMaterial(0x8a8a78), "galleryWall");
+    this.wall.position.set(0, 1.5, centerZ);
+  }
+
+  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null; tagForward: number; tagBottomRadius: number } | null {
     const body = this.remotes.getMesh("p1");
     const root = body?.getChildren().find((node) => node.name === "cosmetics");
     if (!body || !root) return null;
@@ -105,13 +120,17 @@ class CosmeticGallery implements GalleryApi {
     const origin = body.position;
     const tagMesh = this.ctx.scene.getMeshByName("nameTag_p1");
     let tag: [number, number] | null = null;
+    let tagForward = 0;
+    let tagBottomRadius = 0;
     if (tagMesh) {
+      tagForward = Math.hypot(tagMesh.position.x - origin.x, tagMesh.position.z - origin.z);
       tagMesh.computeWorldMatrix(true);
       const tagBox = tagMesh.getBoundingInfo().boundingBox;
       tag = [tagBox.minimumWorld.y - origin.y, tagBox.maximumWorld.y - origin.y];
+      tagBottomRadius = HatSlice.maxRadius(body, tagBox.minimumWorld.y);
     }
     return {
-      tag,
+      tag, tagForward, tagBottomRadius,
       min: [min.x - origin.x, min.y - origin.y, min.z - origin.z],
       max: [max.x - origin.x, max.y - origin.y, max.z - origin.z],
     };
