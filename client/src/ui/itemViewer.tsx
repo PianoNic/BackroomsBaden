@@ -1,11 +1,6 @@
-/** Tiny Babylon viewer used in the tutorial showcase. Every mounted
- *  ItemViewer shares one pooled offscreen WebGL context (one Engine,
- *  one Scene) instead of creating its own, so mounting many tiles at
- *  once stays under the browser's per-page WebGL context budget. Each
- *  viewer gets its own camera and layer mask into the shared scene and
- *  blits the shared render into its own 2D canvas every frame. The
- *  pool is created on first mount and disposed once the last viewer
- *  using it unmounts. */
+/** Tiny self-contained Babylon viewer used in the tutorial showcase.
+ *  Spins a model around the Y axis. Disposes the WebGL context on
+ *  unmount so the title screen can release it when leaving the tutorial. */
 import { useEffect, useRef } from "preact/hooks";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { Scene } from "@babylonjs/core/scene";
