@@ -10,7 +10,7 @@ import { TitleLegibility } from "./titleLegibility";
 
 const TEX_W = 512;
 const TEX_H = 168;
-const PLANE_W = 2.4;
+export const PLANE_W = 2.4;
 const PLANE_H = PLANE_W * (TEX_H / TEX_W);
 const CLEARANCE = 0.28;
 const FALLBACK_TOP = 1.15;
