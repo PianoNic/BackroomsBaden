@@ -13,7 +13,6 @@ By Francisco Cidade, https://fcidade.itch.io/psx-textures-vol-1, licence CC0 1.0
 | `wall_tile_white` | C_soft/tiles/Tiles036.png | C_soft (128 px, 32 colours, light dither) | [Tiles036](https://ambientcg.com/a/Tiles036) | https://fcidade.itch.io/psx-textures-vol-1 | CC0 1.0 | 2026-11-19 |
 | `wall_concrete` | C_soft/concrete-stone/Concrete034.png | C_soft (128 px, 32 colours, light dither) | [Concrete034](https://ambientcg.com/a/Concrete034) | https://fcidade.itch.io/psx-textures-vol-1 | CC0 1.0 | 2026-11-19 |
 | `dado_tile_green` | C_soft/tiles/Tiles032.png | C_soft (128 px, 32 colours, light dither) | [Tiles032](https://ambientcg.com/a/Tiles032) | https://fcidade.itch.io/psx-textures-vol-1 | CC0 1.0 | 2026-11-19 |
-| `floor_terrazzo` | C_soft/tiles/Tiles074.png | C_soft (128 px, 32 colours, light dither) | [Tiles074](https://ambientcg.com/a/Tiles074) | https://fcidade.itch.io/psx-textures-vol-1 | CC0 1.0 | 2026-11-19 |
 | `floor_lino` | C_soft/tiles/Tiles040.png | C_soft (128 px, 32 colours, light dither) | [Tiles040](https://ambientcg.com/a/Tiles040) | https://fcidade.itch.io/psx-textures-vol-1 | CC0 1.0 | 2026-11-19 |
 | `floor_carpet` | A_classic/carpet-fabric/Carpet016.png | A_classic (64 px, 16 colours, PS1 dither) | [Carpet016](https://ambientcg.com/a/Carpet016) | https://fcidade.itch.io/psx-textures-vol-1 | CC0 1.0 | 2026-11-19 |
 | `floor_stone_tile` | C_soft/tiles/Tiles078.png | C_soft (128 px, 32 colours, light dither) | [Tiles078](https://ambientcg.com/a/Tiles078) | https://fcidade.itch.io/psx-textures-vol-1 | CC0 1.0 | 2026-11-19 |

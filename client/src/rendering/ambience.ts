@@ -110,7 +110,7 @@ export const AMBIENCE = {
         wallRepeatU: 1, wallRepeatV: 1.5,
         dado: { category: "dado_tile_green", tint: 0x89b394 },
         dadoHeight: 1.0,
-        floor: "floor_terrazzo", floorTint: 0xf9ffff,
+        floor: "floor_lino", floorTint: 0xc3cfc0,
         floorRepeatU: 1, floorRepeatV: 1,
         ceiling: "ceiling_tile", ceilingTint: 0x847d5a,
         ceilingRepeatU: 1, ceilingRepeatV: 1,

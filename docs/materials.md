@@ -58,7 +58,7 @@ edge case the inference is unsure about.
 | archetype | wall | floor | ceiling | dado |
 |---|---|---|---|---|
 | classroom | cream plaster, warm tint | lino | acoustic tile | yes |
-| hallway | cream plaster, warm tint | terrazzo | acoustic tile | yes |
+| hallway | cream plaster, warm tint | lino, cool tint | acoustic tile | yes |
 | toilet | white tile | lino | plaster | yes |
 | cafeteria | plaster | stone tile | acoustic tile | no |
 | chemistry_lab | hex tile | dark terrazzo | acoustic tile | no |

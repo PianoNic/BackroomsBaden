@@ -80,7 +80,6 @@ MANIFEST = (
     CategorySpec("wall_tile_hex", AmbientSource("Tiles071", "JPG")),
     CategorySpec("wall_concrete", PackSource("concrete-stone", "Concrete034")),
     CategorySpec("dado_tile_green", PackSource("tiles", "Tiles032")),
-    CategorySpec("floor_terrazzo", PackSource("tiles", "Tiles074")),
     CategorySpec("floor_lino", PackSource("tiles", "Tiles040")),
     CategorySpec("floor_carpet", PackSource("carpet-fabric", "Carpet016", "A_classic")),
     CategorySpec("floor_stone_tile", PackSource("tiles", "Tiles078")),
