@@ -82,22 +82,6 @@ const buildPiano: Builder = () => {
   return g;
 };
 
-const buildWaterDispenser: Builder = () => {
-  const g = group("waterDispenser");
-  const body = box(0.36, 1.0, 0.36, M(0xeceff1));
-  body.position.set(0, 0.5, -0.18);
-  g.add(body);
-  const bottleMat = lambertMaterial(0x4db3e8, "waterDispenserBottle");
-  bottleMat.alpha = 0.7;
-  const bottle = cylinder(0.14, 0.16, 0.4, 12, bottleMat);
-  bottle.position.set(0, 1.2, -0.18);
-  g.add(bottle);
-  const tap = box(0.1, 0.06, 0.08, M(0x303034));
-  tap.position.set(0, 0.72, -0.38);
-  g.add(tap);
-  return g;
-};
-
 const buildTrophyCase: Builder = () => {
   const g = group("trophyCase");
   const caseBox = box(1.3, 1.0, 0.32, M(0x4a3526));
@@ -177,7 +161,6 @@ export const SPECIALTY_BUILDERS: Record<string, Builder> = {
   aquarium: buildAquarium,
   skeleton: buildSkeleton,
   piano: buildPiano,
-  water_dispenser: buildWaterDispenser,
   trophy_case: buildTrophyCase,
   ball_rack: buildBallRack,
   easel: buildEasel,

@@ -92,6 +92,9 @@ export const MODEL_PROPS: Partial<Record<PropType, ModelPropSpec>> = {
   microwave: spec("microwave", "surface", 0.9),
   laptop: spec("laptop", "surface", 0.75),
   locker: spec("locker", "wall", 0),
+  fridge: spec("fridge", "wall", 0),
+  vending_machine: spec("vending_machine", "wall", 0),
+  water_dispenser: spec("water_dispenser", "wall", 0),
 };
 
 export const PICKUP_MODELS: Record<PickupKind, ModelPropSpec> = {
@@ -115,14 +118,15 @@ export type ModelFrontAxis = "plusZ" | "minusZ" | "symmetric";
 
 export const MODEL_NATIVE_FRONT: Record<string, ModelFrontAxis> = {
   bench: "plusZ",
-  bookshelf: "plusZ",
-  books_pile: "symmetric",
+  bookshelf: "symmetric",
+  books_pile: "minusZ",
   bunsen_burner: "symmetric",
   cafeteria_table: "symmetric",
-  chair: "plusZ",
-  clock: "plusZ",
-  cupboard: "plusZ",
-  desk: "minusZ",
+  chair: "minusZ",
+  clock: "minusZ",
+  cupboard: "minusZ",
+  desk: "plusZ",
+  fridge: "symmetric",
   fire_extinguisher: "plusZ",
   laptop: "plusZ",
   locker: "plusZ",
@@ -133,25 +137,27 @@ export const MODEL_NATIVE_FRONT: Record<string, ModelFrontAxis> = {
   plant: "symmetric",
   pylon: "symmetric",
   recycle_bin: "symmetric",
-  side_table: "symmetric",
+  side_table: "minusZ",
   sofa: "plusZ",
   student_desk: "symmetric",
   trash_can: "symmetric",
+  vending_machine: "minusZ",
+  water_dispenser: "minusZ",
 };
 
 export const SITTER_FACING_TYPES: ReadonlySet<PropType> = new Set<PropType>(["chair"]);
 
 export const COMMON_BUNDLE: readonly PropType[] = [
   "chair", "laptop", "locker", "trash_can", "recycle_bin", "pylon", "papers",
-  "plant", "clock", "fire_extinguisher", "bench",
+  "plant", "clock", "fire_extinguisher", "bench", "water_dispenser",
 ];
 
 export const ARCHETYPE_BUNDLES: Record<RoomArchetype, readonly PropType[]> = {
   classroom: ["student_desk", "bookshelf", "cupboard", "books_pile", "microscope", "desk"],
   teacher_room: [
-    "desk", "side_table", "sofa", "cupboard", "microwave", "bookshelf", "books_pile",
+    "desk", "side_table", "sofa", "cupboard", "microwave", "bookshelf", "books_pile", "fridge",
   ],
-  cafeteria: ["cafeteria_table", "microwave"],
+  cafeteria: ["cafeteria_table", "microwave", "vending_machine"],
   chemistry_lab: ["bunsen_burner", "microscope", "bookshelf"],
   janitor_room: ["mop_bucket", "cupboard"],
   toilet: ["bookshelf"],

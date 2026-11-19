@@ -1,19 +1,15 @@
 # Model Licenses
 
-Every model in this directory is CC0 1.0 from Poly Haven, Poly Pizza or itch.io and requires no attribution to use, modify or redistribute; the tables below credit the original authors anyway.
+Every model in this directory is CC0 1.0 - from Poly Haven, Poly Pizza, itch.io or the retro model packs listed below - and requires no attribution to use, modify or redistribute; the tables credit the original authors anyway.
+
+## Poly Haven
 
 | Prop type | Model file | Source asset | Source URL | Author | License |
 |---|---|---|---|---|---|
 | `bench` | `furniture/bench.glb` | painted_wooden_bench | https://polyhaven.com/a/painted_wooden_bench | Kirill Sannikov | CC0 1.0 |
-| `books_pile` | `clutter/books_pile.glb` | binder_notebook | https://polyhaven.com/a/binder_notebook | DaDrood | CC0 1.0 |
-| `bookshelf` | `furniture/bookshelf.glb` | Shelf_01 | https://polyhaven.com/a/Shelf_01 | Gabriel Radić | CC0 1.0 |
 | `bunsen_burner` | `lab/bunsen_burner.glb` | bunsen_burner | https://polyhaven.com/a/bunsen_burner | BKS | CC0 1.0 |
 | `cafeteria_table` | `furniture/cafeteria_table.glb` | dining_table | https://polyhaven.com/a/dining_table | Aron Łyczek | CC0 1.0 |
-| `chair` | `furniture/chair.glb` | SchoolChair_01 | https://polyhaven.com/a/SchoolChair_01 | Ethan Place | CC0 1.0 |
-| `clock` | `wall/clock.glb` | wall_clock | https://polyhaven.com/a/wall_clock | PierreB3D | CC0 1.0 |
 | `compass` | `pickups/compass.glb` | seadogs_compass | https://polyhaven.com/a/seadogs_compass | Benny Weimer | CC0 1.0 |
-| `cupboard` | `furniture/cupboard.glb` | drawer_cabinet | https://polyhaven.com/a/drawer_cabinet | Ulan Cabanilla | CC0 1.0 |
-| `desk` | `furniture/desk.glb` | metal_office_desk | https://polyhaven.com/a/metal_office_desk | Ulan Cabanilla | CC0 1.0 |
 | `fire_extinguisher` | `wall/fire_extinguisher.glb` | korean_fire_extinguisher_01 | https://polyhaven.com/a/korean_fire_extinguisher_01 | UM JOORIN | CC0 1.0 |
 | `goggles` | `pickups/goggles.glb` | old_gas_mask | https://polyhaven.com/a/old_gas_mask | Michał Wiśniewski | CC0 1.0 |
 | `gps` | `pickups/gps.glb` | digital_wrist_watch | https://polyhaven.com/a/digital_wrist_watch | Adrian C | CC0 1.0 |
@@ -23,16 +19,32 @@ Every model in this directory is CC0 1.0 from Poly Haven, Poly Pizza or itch.io 
 | `microscope` | `lab/microscope.glb` | industrial_microscope | https://polyhaven.com/a/industrial_microscope | Lukas Walzer | CC0 1.0 |
 | `microwave` | `appliances/microwave.glb` | vintage_microwave | https://polyhaven.com/a/vintage_microwave | Adam Nekola | CC0 1.0 |
 | `mop_bucket` | `clutter/mop_bucket.glb` | wooden_bucket_01 | https://polyhaven.com/a/wooden_bucket_01 | James Ray Cock | CC0 1.0 |
-| `papers` | `clutter/papers.glb` | office_notepads | https://polyhaven.com/a/office_notepads | Ulan Cabanilla | CC0 1.0 |
-| `plant` | `clutter/plant.glb` | potted_plant_04 | https://polyhaven.com/a/potted_plant_04 | James Ray Cock | CC0 1.0 |
 | `potion` | `pickups/potion.glb` | multi_cleaner_bottle | https://polyhaven.com/a/multi_cleaner_bottle | James Ray Cock | CC0 1.0 |
 | `pylon` | `clutter/pylon.glb` | WetFloorSign_01 | https://polyhaven.com/a/WetFloorSign_01 | Fran Calvente | CC0 1.0 |
 | `recycle_bin` | `clutter/recycle_bin.glb` | plastic_crate_02 | https://polyhaven.com/a/plastic_crate_02 | Fabi_G | CC0 1.0 |
-| `side_table` | `furniture/side_table.glb` | side_table_01 | https://polyhaven.com/a/side_table_01 | James Ray Cock | CC0 1.0 |
-| `sofa` | `furniture/sofa.glb` | Sofa_01 | https://polyhaven.com/a/Sofa_01 | Kirill Sannikov | CC0 1.0 |
 | `student_desk` | `furniture/student_desk.glb` | SchoolDesk_01 | https://polyhaven.com/a/SchoolDesk_01 | Ethan Place | CC0 1.0 |
 | `tracker` | `pickups/tracker.glb` | retro_multimeter | https://polyhaven.com/a/retro_multimeter | elli moeller | CC0 1.0 |
 | `trash_can` | `clutter/trash_can.glb` | industrial_pastic_container | https://polyhaven.com/a/industrial_pastic_container | Galo Benivegna | CC0 1.0 |
+
+## Retro model packs
+
+Low-poly PS1/PS2-style models. Each is fetched by `tools/fetch_models.py`, stripped to a single nearest-sampled base colour texture and packed with gltfpack. The last column quotes the licence statement from the pack's page.
+
+| Prop type | Model file | Pack | Source file | Author | Pack page | License | Licence statement |
+|---|---|---|---|---|---|---|---|
+| `books_pile` | `clutter/books_pile.glb` | PSX style office pack | `OFFICE/book_things/books_alt.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
+| `bookshelf` | `furniture/bookshelf.glb` | PSX style office pack | `OFFICE/book_things/book_case_small.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
+| `chair` | `furniture/chair.glb` | PSX Derelict Furniture (Standard) | `PSX-Derelict-Furniture-Standard/glb/chair.glb` | Daniel Jurys | https://daniel-jurys.itch.io/psx-derelict-furniture | CC0 1.0 | "Licence: Creative Commons Zero v1.0 Universal" |
+| `clock` | `wall/clock.glb` | PSX style office pack | `OFFICE/extras/wall_clock.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
+| `cupboard` | `furniture/cupboard.glb` | PSX style office pack | `OFFICE/file_cabinets/file_cabinet_largest.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
+| `desk` | `furniture/desk.glb` | PSX style office pack | `OFFICE/desks/desk2_weathered.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
+| `fridge` | `appliances/fridge.glb` | PSX Derelict Furniture (Standard) | `PSX-Derelict-Furniture-Standard/glb/fridge.glb` | Daniel Jurys | https://daniel-jurys.itch.io/psx-derelict-furniture | CC0 1.0 | "Licence: Creative Commons Zero v1.0 Universal" |
+| `papers` | `clutter/papers.glb` | PSX style office pack | `OFFICE/stationary/paper_stack.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
+| `plant` | `clutter/plant.glb` | PSX Derelict Furniture (Standard) | `PSX-Derelict-Furniture-Standard/glb/vase.glb` | Daniel Jurys | https://daniel-jurys.itch.io/psx-derelict-furniture | CC0 1.0 | "Licence: Creative Commons Zero v1.0 Universal" |
+| `side_table` | `furniture/side_table.glb` | PSX style office pack | `OFFICE/file_cabinets/file_cabinet_smallest.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
+| `sofa` | `furniture/sofa.glb` | PSX Derelict Furniture (Standard) | `PSX-Derelict-Furniture-Standard/glb/couch.glb` | Daniel Jurys | https://daniel-jurys.itch.io/psx-derelict-furniture | CC0 1.0 | "Licence: Creative Commons Zero v1.0 Universal" |
+| `vending_machine` | `appliances/vending_machine.glb` | PSX style office pack | `OFFICE/extras/coffee_machine.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
+| `water_dispenser` | `appliances/water_dispenser.glb` | PSX style office pack | `OFFICE/extras/water_cooler.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
 
 ## Cosmetics
 
