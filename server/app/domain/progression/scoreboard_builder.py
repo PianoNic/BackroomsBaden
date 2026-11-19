@@ -59,7 +59,7 @@ class ScoreboardBuilder:
                 "id": p.id, "name": p.name, "color": p.color,
                 "tasks": p.tasks_done, "stuns": p.teachers_stunned,
                 "revives": p.revives_done, "items": p.items_collected,
-                "survivalMs": int(survival * 1000),
+                "survivalMs": round(survival * 1000),
                 "extracted": extracted, "died": died,
             })
             team["tasks"] += p.tasks_done
@@ -72,7 +72,7 @@ class ScoreboardBuilder:
 
         return {
             "result": result,
-            "durationMs": max(0, int((end - start) * 1000)),
+            "durationMs": max(0, round((end - start) * 1000)),
             "players": players,
             "team": team,
         }
@@ -81,13 +81,13 @@ class ScoreboardBuilder:
         """Per-player `selfRewards` blocks, keyed by conn id. Each block drives the
         level-up / XP-bar / coins animation on that player's scoreboard."""
         start, end = self._ensure_ended(lobby)
-        duration_ms = max(0, int((end - start) * 1000))
+        duration_ms = max(0, round((end - start) * 1000))
         won = result == "won"
 
         out: dict[str, dict] = {}
         for p in lobby.conns.values():
             extracted = p.id in lobby.extracted
-            survival_ms = int(max(0.0, self._survival_seconds(lobby, p, start, end)) * 1000)
+            survival_ms = round(max(0.0, self._survival_seconds(lobby, p, start, end)) * 1000)
             xp = self._reward_calculator.earned_xp(
                 tasks=p.tasks_done, revives=p.revives_done, items=p.items_collected,
                 stuns=p.teachers_stunned, extracted=extracted,
