@@ -14,7 +14,7 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
     trace: "off",
-    launchOptions: { args: ["--disable-frame-rate-limit", "--disable-gpu-vsync"] },
+    launchOptions: { args: ["--disable-frame-rate-limit", "--disable-gpu-vsync", "--use-angle=d3d11", "--ignore-gpu-blocklist"] },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 720 } } }],
   webServer: {

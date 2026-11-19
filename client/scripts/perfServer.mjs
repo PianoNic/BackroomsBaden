@@ -40,5 +40,5 @@ class PerfServer {
 }
 
 const server = new PerfServer();
-server.build();
+if (process.env.PERF_REUSE_BUILD !== "1") server.build();
 server.serve();

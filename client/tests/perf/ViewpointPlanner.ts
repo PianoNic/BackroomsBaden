@@ -1,5 +1,18 @@
-import { RoomInference, ROOM_ARCHETYPES, type RoomArchetype } from "../../src/world/rooms";
-import type { Grid, PickupKind, WorldInit } from "../../src/net/protocol";
+import type { Grid, PickupKind, Prop, WorldInit } from "../../src/net/protocol";
+
+export type RoomArchetype =
+  | "classroom" | "cafeteria" | "chemistry_lab" | "gym"
+  | "janitor_room" | "server_room" | "teacher_room" | "toilet";
+
+export type RoomBox = {
+  archetype: RoomArchetype;
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+};
+
+type Signature = { strong: readonly string[]; weak: readonly string[] };
 
 export type Viewpoint = {
   name: string;
@@ -23,12 +36,37 @@ const DIAGONALS: Dir[] = [
   { dx: 1, dz: -1 }, { dx: 1, dz: 1 }, { dx: -1, dz: 1 }, { dx: -1, dz: -1 },
 ].map((d) => ({ dx: d.dx * Math.SQRT1_2, dz: d.dz * Math.SQRT1_2 }));
 const ALL_DIRS: Dir[] = [...AXES, ...DIAGONALS];
+const ATRIUM_MIN_SIDE = 8;
+const STRONG_WEIGHT = 3;
+const WEAK_WEIGHT = 1;
+const ROOM_ORDER: RoomArchetype[] = [
+  "classroom", "cafeteria", "chemistry_lab", "gym",
+  "janitor_room", "server_room", "teacher_room", "toilet",
+];
+const SIGNATURES: Partial<Record<RoomArchetype, Signature>> = {
+  toilet: { strong: ["toilet_stall", "urinal"], weak: ["sink"] },
+  server_room: { strong: ["server_rack"], weak: [] },
+  gym: { strong: ["basketball_hoop", "gym_mat", "ball_rack", "pylon"], weak: [] },
+  chemistry_lab: {
+    strong: ["lab_bench", "fume_hood", "chemical_shelf", "bunsen_burner", "emergency_shower"],
+    weak: ["microscope"],
+  },
+  cafeteria: { strong: ["cafeteria_table", "vending_machine", "counter", "microwave"], weak: [] },
+  janitor_room: { strong: ["fuse_box", "mop_bucket"], weak: [] },
+  teacher_room: { strong: ["sofa", "printer", "fridge", "side_table", "trophy_case"], weak: [] },
+  classroom: {
+    strong: ["student_desk", "whiteboard", "projector", "easel", "globe", "map", "skeleton"],
+    weak: [],
+  },
+};
 const PICKUP_KINDS: PickupKind[] = ["medkit", "potion", "compass", "tracker", "goggles", "gps"];
 
 export class FloorMap {
   readonly corridor: Uint8Array;
+  readonly roomMask: Uint8Array;
 
   constructor(readonly grid: Grid) {
+    this.roomMask = this.computeRoomMask();
     this.corridor = this.computeCorridors();
   }
 
@@ -65,7 +103,7 @@ export class FloorMap {
     return max;
   }
 
-  private computeCorridors(): Uint8Array {
+  private computeRoomMask(): Uint8Array {
     const { width, height } = this.grid;
     const inWindow = new Uint8Array(width * height);
     for (let y = 0; y + WINDOW <= height; y++) {
@@ -76,10 +114,15 @@ export class FloorMap {
         }
       }
     }
+    return inWindow;
+  }
+
+  private computeCorridors(): Uint8Array {
+    const { width, height } = this.grid;
     const corridor = new Uint8Array(width * height);
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        if (this.isFloorCell(x, y) && !inWindow[y * width + x]) corridor[y * width + x] = 1;
+        if (this.isFloorCell(x, y) && !this.roomMask[y * width + x]) corridor[y * width + x] = 1;
       }
     }
     return corridor;
@@ -93,23 +136,114 @@ export class FloorMap {
   }
 }
 
+export class RoomClassifier {
+  readonly rooms: RoomBox[] = [];
+  atrium: { minX: number; minY: number; maxX: number; maxY: number } | null = null;
+
+  constructor(floor: FloorMap, props: Prop[]) {
+    const { width, height, cellSize } = floor.grid;
+    const visited = new Uint8Array(width * height);
+    const components: { minX: number; minY: number; maxX: number; maxY: number }[] = [];
+    for (let start = 0; start < width * height; start++) {
+      if (!floor.roomMask[start] || visited[start]) continue;
+      const box = { minX: width, minY: height, maxX: -1, maxY: -1 };
+      const stack = [start];
+      visited[start] = 1;
+      while (stack.length > 0) {
+        const idx = stack.pop()!;
+        const x = idx % width;
+        const y = Math.floor(idx / width);
+        box.minX = Math.min(box.minX, x);
+        box.maxX = Math.max(box.maxX, x);
+        box.minY = Math.min(box.minY, y);
+        box.maxY = Math.max(box.maxY, y);
+        for (const [nx, ny] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) {
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          const n = ny * width + nx;
+          if (floor.roomMask[n] && !visited[n]) {
+            visited[n] = 1;
+            stack.push(n);
+          }
+        }
+      }
+      components.push(box);
+    }
+    const atrium = this.atriumIndex(components, width, height);
+    this.atrium = atrium >= 0 ? components[atrium] : null;
+    components.forEach((box, i) => {
+      if (i !== atrium) this.rooms.push({ ...box, archetype: this.classify(box, props, cellSize) });
+    });
+  }
+
+  private atriumIndex(
+    boxes: { minX: number; minY: number; maxX: number; maxY: number }[], width: number, height: number,
+  ): number {
+    let best = -1;
+    let bestDist = Infinity;
+    boxes.forEach((b, i) => {
+      if (b.maxX - b.minX + 1 < ATRIUM_MIN_SIDE || b.maxY - b.minY + 1 < ATRIUM_MIN_SIDE) return;
+      const dx = (b.minX + b.maxX) / 2 - width / 2;
+      const dy = (b.minY + b.maxY) / 2 - height / 2;
+      const dist = dx * dx + dy * dy;
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    });
+    return best;
+  }
+
+  private classify(
+    box: { minX: number; minY: number; maxX: number; maxY: number }, props: Prop[], cellSize: number,
+  ): RoomArchetype {
+    const scores = new Map<RoomArchetype, number>();
+    for (const prop of props) {
+      const cx = Math.floor(prop.x / cellSize);
+      const cz = Math.floor(prop.z / cellSize);
+      if (cx < box.minX || cx > box.maxX || cz < box.minY || cz > box.maxY) continue;
+      for (const [archetype, sig] of Object.entries(SIGNATURES) as [RoomArchetype, Signature][]) {
+        let add = 0;
+        if (sig.strong.includes(prop.type)) add = STRONG_WEIGHT;
+        else if (sig.weak.includes(prop.type)) add = WEAK_WEIGHT;
+        if (add > 0) scores.set(archetype, (scores.get(archetype) ?? 0) + add);
+      }
+    }
+    let bestScore = 0;
+    for (const score of scores.values()) bestScore = Math.max(bestScore, score);
+    if (bestScore === 0) return "classroom";
+    const winners = [...scores].filter(([, score]) => score === bestScore).map(([a]) => a);
+    return winners.length === 1 ? winners[0] : "classroom";
+  }
+}
+
 export class ViewpointPlanner {
   readonly floor: FloorMap;
-  readonly rooms: RoomInference;
+  readonly classifier: RoomClassifier;
   readonly skipped: string[] = [];
 
   constructor(private readonly init: WorldInit) {
     this.floor = new FloorMap(init.grid);
-    this.rooms = new RoomInference(init.grid, init.props);
+    this.classifier = new RoomClassifier(this.floor, init.props);
   }
 
   static pickupKinds(): PickupKind[] {
     return PICKUP_KINDS;
   }
 
-  atrium(): Viewpoint {
+  spawn(): Viewpoint {
     const { x, z, yaw } = this.init.spawn;
-    return { name: "atrium", x, z, lookX: x, lookZ: z, lookY: EYE_HEIGHT, yaw, measure: true };
+    return { name: "spawn", x, z, lookX: x, lookZ: z, lookY: EYE_HEIGHT, yaw, measure: true };
+  }
+
+  atrium(): Viewpoint | null {
+    const box = this.classifier.atrium;
+    if (!box) return this.skip("atrium");
+    return {
+      name: "atrium",
+      x: this.floor.centre(box.minX + 1), z: this.floor.centre(box.minY + 1),
+      lookX: this.floor.centre(box.maxX), lookZ: this.floor.centre(box.maxY),
+      lookY: EYE_HEIGHT, measure: true,
+    };
   }
 
   corridor(): Viewpoint | null {
@@ -163,18 +297,24 @@ export class ViewpointPlanner {
 
   roomViews(): Viewpoint[] {
     const result: Viewpoint[] = [];
-    for (const archetype of ROOM_ARCHETYPES) {
-      if (archetype === "hallway") continue;
+    for (const archetype of ROOM_ORDER) {
       const view = this.room(archetype);
       if (view) result.push(view);
     }
     return result;
   }
 
-  pickup(kind: PickupKind): Viewpoint | null {
-    const pickup = this.init.pickups.find((p) => p.kind === kind);
-    if (!pickup) return this.skip(`pickup-${kind}`);
-    return this.facing(`pickup-${kind}`, pickup.x, pickup.z, 1.5, 0.25);
+  pickup(kind: PickupKind, x: number, z: number, fromX: number, fromZ: number): Viewpoint | null {
+    const len = Math.hypot(x - fromX, z - fromZ) || 1;
+    const dir = { dx: (x - fromX) / len, dz: (z - fromZ) / len };
+    return this.facing(`pickup-${kind}`, x, z, 1.2, 0.45, [dir, ...ALL_DIRS]);
+  }
+
+  lockersBySpawnDistance(): { id: string; x: number; z: number }[] {
+    const { x, z } = this.init.spawn;
+    return [...this.init.lockers].sort(
+      (a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z),
+    );
   }
 
   door(): Viewpoint | null {
@@ -207,7 +347,7 @@ export class ViewpointPlanner {
   }
 
   private room(archetype: RoomArchetype): Viewpoint | null {
-    const candidates = this.rooms.rooms.filter((r) => r.archetype === archetype);
+    const candidates = this.classifier.rooms.filter((r) => r.archetype === archetype);
     if (candidates.length === 0) return this.skip(`room-${archetype}`);
     const area = (r: { minX: number; maxX: number; minY: number; maxY: number }): number =>
       (r.maxX - r.minX + 1) * (r.maxY - r.minY + 1);

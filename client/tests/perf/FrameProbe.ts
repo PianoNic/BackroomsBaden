@@ -36,8 +36,8 @@ export class FrameProbe {
         const dev = (window as unknown as DevWindow).nachsitzenDev;
         dev.player.spawn(px, pz, angle);
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-        const d = dev.camera.getForwardRay(1).direction;
-        return [d.x, d.z] as [number, number];
+        const m = dev.camera.getViewMatrix(true).m;
+        return [-m[2], -m[10]] as [number, number];
       }, { px: x, pz: z, angle: yaw });
     const f0 = await read(0);
     const f1 = await read(Math.PI / 2);
@@ -64,6 +64,26 @@ export class FrameProbe {
       for (let i = 0; i < frames; i++) await new Promise((r) => requestAnimationFrame(r));
     }, { x: view.x, z: view.z, yawRad: yaw, pitchRad: pitch, frames: settleFrames });
     return { yaw, pitch };
+  }
+
+  async screenshot(path: string): Promise<void> {
+    await this.page.evaluate(() => {
+      for (const child of Array.from(document.body.children) as HTMLElement[]) {
+        if (!child.querySelector("canvas") && child.tagName !== "CANVAS") {
+          child.dataset.perfHidden = child.style.visibility;
+          child.style.visibility = "hidden";
+        }
+      }
+    });
+    await this.page.screenshot({ path });
+    await this.page.evaluate(() => {
+      for (const child of Array.from(document.body.children) as HTMLElement[]) {
+        if (child.dataset.perfHidden !== undefined) {
+          child.style.visibility = child.dataset.perfHidden;
+          delete child.dataset.perfHidden;
+        }
+      }
+    });
   }
 
   async teacherPositions(): Promise<{ x: number; z: number }[]> {
@@ -98,6 +118,22 @@ export class FrameProbe {
     });
   }
 
+  async framesPerSecond(durationMs: number): Promise<number> {
+    return this.page.evaluate(async (ms) => {
+      let frames = 0;
+      const start = performance.now();
+      await new Promise<void>((resolve) => {
+        const tick = (t: number): void => {
+          frames++;
+          if (t - start >= ms) resolve();
+          else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+      return (frames * 1000) / (performance.now() - start);
+    }, durationMs);
+  }
+
   async measure(warmup: number, samples: number): Promise<FrameMeasurement> {
     return this.page.evaluate(async ({ warm, count }) => {
       const dev = (window as unknown as DevWindow).nachsitzenDev;
@@ -107,10 +143,13 @@ export class FrameProbe {
       const meshes: number[] = [];
       const tris: number[] = [];
       let frameIndex = 0;
+      let previousTotal = -1;
       const observer = scene.onAfterRenderObservable.add(() => {
         frameIndex++;
-        if (frameIndex <= warm) return;
-        draw.push(engine._drawCalls.current);
+        if (frameIndex < warm) return;
+        const total = engine._drawCalls.current;
+        if (previousTotal >= 0) draw.push(total - previousTotal);
+        previousTotal = total;
         meshes.push(scene.getActiveMeshes().length);
         tris.push(scene.getActiveIndices() / 3);
       });

@@ -1,11 +1,12 @@
 import type { BrowserContext, Page } from "@playwright/test";
-import type { WorldInit } from "../../src/net/protocol";
+import type { PickupKind, WorldInit } from "../../src/net/protocol";
 import { PerfEnvironment } from "./PerfEnvironment";
 import { PointerLockGuard } from "./PointerLockGuard";
 
 export class GameSession {
   private main!: Page;
   private bot!: Page;
+  private botContext!: BrowserContext;
   private lobbyId = "";
 
   constructor(private readonly context: BrowserContext) {}
@@ -44,11 +45,32 @@ export class GameSession {
     ) as Promise<WorldInit>;
   }
 
+  async close(): Promise<void> {
+    await this.botContext?.close();
+  }
+
   async parkMain(x: number, z: number): Promise<void> {
     await this.main.evaluate(({ px, pz }) => {
       const socket = (window as unknown as { __sockets: { rawSend(d: string): void }[] }).__sockets[0];
       socket.rawSend(JSON.stringify({ type: "move", x: px, z: pz, yaw: 0 }));
     }, { px: x, pz: z });
+  }
+
+  async openLocker(lockerId: string, x: number, z: number): Promise<void> {
+    await this.parkMain(x, z);
+    await this.main.waitForTimeout(250);
+    await this.main.evaluate((id) => {
+      const socket = (window as unknown as { __sockets: { rawSend(d: string): void }[] }).__sockets[0];
+      socket.rawSend(JSON.stringify({ type: "locker_open", lockerId: id }));
+    }, lockerId);
+    await this.main.waitForTimeout(250);
+    await this.parkMain(-1000, -1000);
+  }
+
+  async spawnedPickups(): Promise<{ kind: PickupKind; x: number; z: number }[]> {
+    return this.main.evaluate(
+      () => (window as unknown as { __spawned: { kind: PickupKind; x: number; z: number }[] }).__spawned,
+    );
   }
 
   async botSend(packet: Record<string, unknown>): Promise<void> {
@@ -77,11 +99,21 @@ export class GameSession {
         sessionStorage.setItem("nachsitzen_lobby_resume", JSON.stringify({ lobbyId }));
         const Native = window.WebSocket;
         const sockets: WebSocket[] = [];
+        (window as unknown as { __spawned: unknown[] }).__spawned = [];
         (window as unknown as { __sockets: WebSocket[] }).__sockets = sockets;
         window.WebSocket = class extends Native {
           constructor(url: string | URL, protocols?: string | string[]) {
             super(url, protocols);
             sockets.push(this);
+            this.addEventListener("message", (ev) => {
+              const pkt = JSON.parse(ev.data as string) as {
+                type: string;
+                spawned?: { kind: string; x: number; z: number } | null;
+              };
+              if (pkt.type === "locker_opened" && pkt.spawned) {
+                (window as unknown as { __spawned: unknown[] }).__spawned.push(pkt.spawned);
+              }
+            });
           }
 
           send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
@@ -106,7 +138,8 @@ export class GameSession {
   }
 
   private async openBot(): Promise<void> {
-    this.bot = await this.context.newPage();
+    this.botContext = await this.context.browser()!.newContext();
+    this.bot = await this.botContext.newPage();
     await this.bot.goto("/healthz");
     await this.bot.evaluate((lobbyId) => {
       const w = window as unknown as {
