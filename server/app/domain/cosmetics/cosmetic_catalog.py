@@ -4,17 +4,9 @@ Prices and categories live here so the client can never fake them. `asset_ref`
 is category-polymorphic and interpreted client-side:
   - body        -> a hex colour ("" = the default sampled colour)
   - facePattern -> a texture path under client `public/`
-  - hat         -> a procedural mesh key ("cone", "halo", "gradcap", "crown"),
-                   or a `models/...` glTF path (see below)
-  - backpack    -> a procedural mesh key, a `models/...` glTF path, or "" (none)
-  - mask        -> a procedural mesh key, a `models/...` glTF path, or "" (none)
-  - handitem    -> a `models/...` glTF path, or "" (the default held chair)
+  - hat         -> a procedural mesh key ("cone", "halo", "gradcap", "crown")
   - title       -> "text|#hexcolor"
-  A ref that starts with `models/` is a glTF asset path: the client loads it
-  as `/${assetRef}.glb`. Everything else stays whatever its category expects.
-`default` items are free and auto-owned by everyone (including guests). Items
-with a non-empty `unlock` are never purchasable — they are granted for free to
-any account holding that achievement id (see `ids_unlocked_by`).
+`default` items are free and auto-owned by everyone (including guests).
 """
 from __future__ import annotations
 
@@ -49,7 +41,6 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem("face_heart", "facePattern", "Heart Eyes", 500, "rare", "/cosmetics/faces/heart.png"),
     CosmeticItem("face_robot", "facePattern", "Roboter", 700, "epic", "/cosmetics/faces/robot.png"),
     CosmeticItem("face_ghost", "facePattern", "Spooked", 750, "epic", "/cosmetics/faces/ghost.png"),
-    # --- hats (procedural mesh keys, built client-side) ---
     CosmeticItem("hat_grad", "hat", "Graduation Cap", 0, "common", "gradcap", True),
     CosmeticItem("hat_beret", "hat", "Künstler-Beret", 200, "common", "beret"),
     CosmeticItem("hat_party", "hat", "Party Cone", 250, "common", "cone"),
@@ -73,7 +64,6 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem("title_vip", "title", "VIP", 1000, "epic", "VIP|#ffd24a"),
     CosmeticItem("title_veteran", "title", "Backrooms Veteran", 1200, "epic", "Backrooms Veteran|#c9a227"),
     CosmeticItem("title_king", "title", "Pausenkönig", 1800, "legendary", "Pausenkönig|#ffd24a"),
-    # --- backpacks (worn on the back, local space +Z) ---
     CosmeticItem("backpack_none", "backpack", "Ohne Rucksack", 0, "common", "", True),
     CosmeticItem(
         "backpack_schul", "backpack", "Schulrucksack", 200, "common",
@@ -114,7 +104,6 @@ _ITEMS: list[CosmeticItem] = [
         "models/pickups/medkit", unlock="ach_medic",
         attachment=CosmeticAttachment(x=0, y=0.22, z=0.28, scale=1.0, pitch=1.5708),
     ),
-    # --- masks (worn on the face, local space -Z) ---
     CosmeticItem("mask_none", "mask", "Ohne Maske", 0, "common", "", True),
     CosmeticItem(
         "mask_schutzbrille", "mask", "Schutzbrille", 250, "common", "models/cosmetics/mask_schutzbrille",
@@ -133,13 +122,11 @@ _ITEMS: list[CosmeticItem] = [
         "mask_gas", "mask", "Gasmaske", 1200, "legendary", "models/pickups/goggles",
         attachment=CosmeticAttachment(x=0, y=0.5, z=-0.27, scale=1.2, yaw=3.1416),
     ),
-    # --- hats (new glTF hat alongside the procedural ones above) ---
     CosmeticItem(
         "hat_fischer", "hat", "Fischerhut", 700, "epic",
         "models/cosmetics/hat_fischer",
         attachment=CosmeticAttachment(x=0, y=0.8, z=0, scale=0.25),
     ),
-    # --- hand items (first-person held-chair viewmodel, camera space) ---
     CosmeticItem("handitem_stuhl", "handitem", "Standard-Stuhl", 0, "common", "", True),
     CosmeticItem(
         "handitem_besen", "handitem", "Hausmeister-Besen", 300, "common",

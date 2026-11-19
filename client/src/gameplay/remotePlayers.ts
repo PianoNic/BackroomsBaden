@@ -132,7 +132,6 @@ export class RemotePlayers {
     this.nameTags.set(p.id, name, equipped, mesh);
   }
 
-  /** Sync the hat / backpack / mask slots with the equipped cosmetics. */
   private updateLoadout(id: string): void {
     const e = this.entries.get(id);
     if (e) e.loadout.set(e.equipped);
