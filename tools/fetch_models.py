@@ -138,8 +138,8 @@ MANIFEST: tuple[ModelSpec, ...] = (
 
 
 PICKUP_MANIFEST: tuple[ModelSpec, ...] = (
-    ModelSpec("tracker", "retro_multimeter", "pickups", 1.0, 0.3),
-    ModelSpec("gps", "digital_wrist_watch", "pickups", 1.2, 0.22),
+    ModelSpec("tracker", "retro_multimeter", "pickups", 1.4, 0.3),
+    ModelSpec("gps", "digital_wrist_watch", "pickups", 2.7, 0.22),
 )
 
 
@@ -434,19 +434,19 @@ OPENGAMEART_MANIFEST: tuple[ModelSpec, ...] = (
         source=PackSource("oga_survival_items", "Survival items/items.fbx", node="bucket"),
     ),
     ModelSpec(
-        "medkit", "FirstAid", "pickups", 0.3,
+        "medkit", "FirstAid", "pickups", 0.4,
         source=PackSource("oga_first_aid_kit", "FirstAid.obj"),
     ),
     ModelSpec(
-        "potion", "potion_red", "pickups", 0.032, material_alpha=(("Liquid", 1.0),),
+        "potion", "potion_red", "pickups", 0.07, material_alpha=(("Liquid", 1.0),),
         source=PackSource("oga_n64_potions", "N64 Potions/GLB/Red.glb"),
     ),
     ModelSpec(
-        "goggles", "gasmask", "pickups", 0.05, 0.5,
+        "goggles", "gasmask", "pickups", 0.09, 0.5,
         source=PackSource("oga_gas_mask", "gasmask/gasmask.fbx"),
     ),
     ModelSpec(
-        "compass", "compass", "pickups", 0.22,
+        "compass", "compass", "pickups", 0.6,
         source=PackSource("oga_survival_items", "Survival items/items.fbx", node="compass"),
     ),
 )
