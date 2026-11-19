@@ -1,6 +1,6 @@
 # Model Licenses
 
-Every model in this directory is CC0 1.0 from Poly Haven and requires no attribution to use, modify or redistribute; the table below credits the original authors anyway.
+Every model in this directory is CC0 1.0 from Poly Haven or Poly Pizza and requires no attribution to use, modify or redistribute; the tables below credit the original authors anyway.
 
 | Prop type | Model file | Source asset | Source URL | Author | License |
 |---|---|---|---|---|---|
@@ -34,6 +34,26 @@ Every model in this directory is CC0 1.0 from Poly Haven and requires no attribu
 | `tracker` | `pickups/tracker.glb` | retro_multimeter | https://polyhaven.com/a/retro_multimeter | elli moeller | CC0 1.0 |
 | `trash_can` | `clutter/trash_can.glb` | industrial_pastic_container | https://polyhaven.com/a/industrial_pastic_container | Galo Benivegna | CC0 1.0 |
 
+## Cosmetics
+
+Player cosmetic models in `cosmetics/` (backpacks, hats, hand items). CC0 only; sources are Poly Haven and Poly Pizza (Quaternius).
+
+| Prop type | Model file | Source asset | Source URL | Author | License |
+|---|---|---|---|---|---|
+| `backpack_abfallsack` | `cosmetics/backpack_abfallsack.glb` | trashbag | https://polyhaven.com/a/trashbag | Benny Weimer | CC0 1.0 |
+| `backpack_karton` | `cosmetics/backpack_karton.glb` | cardboard_box_01 | https://polyhaven.com/a/cardboard_box_01 | Rahul Chaudhary | CC0 1.0 |
+| `backpack_koffer` | `cosmetics/backpack_koffer.glb` | vintage_suitcase | https://polyhaven.com/a/vintage_suitcase | Maximilian Schuster | CC0 1.0 |
+| `backpack_rucksack` | `cosmetics/backpack_rucksack.glb` | 2g9Jm7kvIU | https://poly.pizza/m/2g9Jm7kvIU | Quaternius | CC0 1.0 |
+| `backpack_schwimmweste` | `cosmetics/backpack_schwimmweste.glb` | life_jacket | https://polyhaven.com/a/life_jacket | PierreB3D | CC0 1.0 |
+| `backpack_zement` | `cosmetics/backpack_zement.glb` | cement_bag | https://polyhaven.com/a/cement_bag | PierreB3D | CC0 1.0 |
+| `handitem_besen` | `cosmetics/handitem_besen.glb` | plastic_broom | https://polyhaven.com/a/plastic_broom | L | CC0 1.0 |
+| `handitem_lupe` | `cosmetics/handitem_lupe.glb` | magnifying_glass_01 | https://polyhaven.com/a/magnifying_glass_01 | Nazar Borodavka | CC0 1.0 |
+| `handitem_megafon` | `cosmetics/handitem_megafon.glb` | Megaphone_01 | https://polyhaven.com/a/Megaphone_01 | Ethan Simon-Law | CC0 1.0 |
+| `handitem_signal` | `cosmetics/handitem_signal.glb` | signal_flashlight | https://polyhaven.com/a/signal_flashlight | Jiří Ptáček | CC0 1.0 |
+| `handitem_taschenlampe` | `cosmetics/handitem_taschenlampe.glb` | vintage_flashlight | https://polyhaven.com/a/vintage_flashlight | Omar M. El-Safy | CC0 1.0 |
+| `handitem_werkzeugkoffer` | `cosmetics/handitem_werkzeugkoffer.glb` | metal_toolbox | https://polyhaven.com/a/metal_toolbox | Mateusz Sadek | CC0 1.0 |
+| `hat_fischer` | `cosmetics/hat_fischer.glb` | fishermans_hat | https://polyhaven.com/a/fishermans_hat | PierreB3D | CC0 1.0 |
+
 ## Not fetched — Sketchfab (CC-BY, requires `SKETCHFAB_API_TOKEN`)
 
 The models below were identified as good matches for their prop types but could not be downloaded because Sketchfab requires an API token and `SKETCHFAB_API_TOKEN` was not available when this manifest was assembled. If one of these is ever added, use the credit line in the last column.
@@ -50,4 +70,4 @@ The models below were identified as good matches for their prop types but could 
 | `school locker` | School locker | Unknown | `c32db0c65ddb46ce9e6f752b4a0b110b` | CC-BY | would have replaced the procedural locker mesh built in gameplay/lockers.ts; a CC0 Poly Haven stand-in (painted_wooden_cabinet_02, prop type `locker`) shipped instead, so this Sketchfab candidate is no longer needed even once a token becomes available | "School locker" by Unknown, licensed CC-BY, via sketchfab.com/3d-models/c32db0c65ddb46ce9e6f752b4a0b110b |
 | `exit sign` | Exit sign | Adventure Dude | `56000263a5aa466c96df8e1d36533668` | CC-BY | would replace the procedural exit_sign prop | "Exit sign" by Adventure Dude, licensed CC-BY, via sketchfab.com/3d-models/56000263a5aa466c96df8e1d36533668 |
 
-Run `tools/fetch_models.py` to regenerate the Poly Haven table (author names are cached in `tools/.model-cache/authors.json`).
+Run `tools/fetch_models.py` to regenerate the tables (Poly Haven author names are cached in `tools/.model-cache/authors.json`).

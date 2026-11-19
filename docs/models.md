@@ -364,8 +364,12 @@ LOD meshes more than offset it) — see
 ## Running the model fetch script
 
 ```
-python tools/fetch_models.py [--force]
+python tools/fetch_models.py [--force] [--cosmetics]
 ```
+
+`--cosmetics` fetches only the CC0 player cosmetics (Poly Haven and Poly Pizza)
+into `client/public/models/cosmetics/` and regenerates the cosmetics section of
+`LICENSES.md`.
 
 The script needs Pillow (from the server's Python environment) for texture
 downscaling, and `gltfpack` for mesh compression — `gltfpack` isn't a

@@ -16,6 +16,7 @@ from PIL import Image
 
 USER_AGENT = "Mozilla/5.0"
 TEXTURE_MAX_PX = 512
+COSMETIC_TEXTURE_MAX_PX = 256
 TEXTURE_QUALITY = 85
 SUB_CELL_METRES = 0.5
 
@@ -40,6 +41,34 @@ class ModelSpec:
             object.__setattr__(self, "scale_y", self.scale)
         if self.scale_z is None:
             object.__setattr__(self, "scale_z", self.scale)
+
+    def source_url(self) -> str:
+        return f"https://polyhaven.com/a/{self.asset}"
+
+    def source_name(self) -> str:
+        return "Poly Haven"
+
+    def credited_author(self, info) -> str:
+        return info.author_for(self.asset)
+
+    def license_name(self) -> str:
+        return "CC0 1.0"
+
+
+@dataclass(frozen=True)
+class PolyPizzaSpec(ModelSpec):
+    glb_uuid: str = ""
+    title: str = ""
+    author: str = ""
+
+    def source_url(self) -> str:
+        return f"https://poly.pizza/m/{self.asset}"
+
+    def source_name(self) -> str:
+        return "Poly Pizza"
+
+    def credited_author(self, info) -> str:
+        return self.author
 
 
 MANIFEST: tuple[ModelSpec, ...] = (
@@ -81,6 +110,28 @@ PICKUP_MANIFEST: tuple[ModelSpec, ...] = (
     ModelSpec("tracker", "retro_multimeter", "pickups", 1.0, 0.3),
     ModelSpec("goggles", "old_gas_mask", "pickups", 0.3, 0.13),
     ModelSpec("gps", "digital_wrist_watch", "pickups", 1.2, 0.22),
+)
+
+
+COSMETICS_CATEGORY = "cosmetics"
+
+COSMETIC_MANIFEST: tuple[ModelSpec, ...] = (
+    ModelSpec("backpack_koffer", "vintage_suitcase", COSMETICS_CATEGORY, 1.0, 0.1, aggressive_simplify=True),
+    ModelSpec("backpack_abfallsack", "trashbag", COSMETICS_CATEGORY, 1.0, 0.1, aggressive_simplify=True),
+    ModelSpec("backpack_karton", "cardboard_box_01", COSMETICS_CATEGORY, 1.0, 0.1),
+    ModelSpec("backpack_schwimmweste", "life_jacket", COSMETICS_CATEGORY, 1.0, 0.1),
+    ModelSpec("backpack_zement", "cement_bag", COSMETICS_CATEGORY, 1.0, 0.1),
+    PolyPizzaSpec(
+        "backpack_rucksack", "2g9Jm7kvIU", COSMETICS_CATEGORY, 1.0, 0.5,
+        glb_uuid="0d29cdc2-0baf-4bf7-835f-075b34c70b61", title="Backpack", author="Quaternius",
+    ),
+    ModelSpec("hat_fischer", "fishermans_hat", COSMETICS_CATEGORY, 1.0, 0.1),
+    ModelSpec("handitem_besen", "plastic_broom", COSMETICS_CATEGORY, 1.0, 0.1, aggressive_simplify=True),
+    ModelSpec("handitem_lupe", "magnifying_glass_01", COSMETICS_CATEGORY, 1.0, 0.1),
+    ModelSpec("handitem_taschenlampe", "vintage_flashlight", COSMETICS_CATEGORY, 1.0, 0.1),
+    ModelSpec("handitem_werkzeugkoffer", "metal_toolbox", COSMETICS_CATEGORY, 1.0, 0.1),
+    ModelSpec("handitem_megafon", "Megaphone_01", COSMETICS_CATEGORY, 1.0, 0.1, aggressive_simplify=True),
+    ModelSpec("handitem_signal", "signal_flashlight", COSMETICS_CATEGORY, 1.0, 0.1),
 )
 
 
@@ -291,6 +342,10 @@ class PolyHavenAsset:
         self.spec = spec
         self.downloader = downloader
 
+    @property
+    def cache_name(self) -> str:
+        return self.spec.asset
+
     def fetch_gltf(self, lod: str = "1k") -> Path:
         files = self.downloader.fetch_json(self.FILES_URL.format(asset=self.spec.asset))
         entry = files["gltf"][lod]["gltf"]
@@ -298,6 +353,32 @@ class PolyHavenAsset:
         for rel, info in (entry.get("include") or {}).items():
             self.downloader.fetch(info["url"], f"{self.spec.asset}/{rel}")
         return main
+
+
+class PolyPizzaAsset:
+    GLB_URL = "https://static.poly.pizza/{uuid}.glb"
+
+    def __init__(self, spec: PolyPizzaSpec, downloader: Downloader):
+        self.spec = spec
+        self.downloader = downloader
+
+    @property
+    def cache_name(self) -> str:
+        return f"polypizza/{self.spec.asset}"
+
+    def fetch_gltf(self) -> Path:
+        return self.downloader.fetch(
+            self.GLB_URL.format(uuid=self.spec.glb_uuid),
+            f"{self.cache_name}/{self.spec.asset}.glb",
+        )
+
+
+class AssetFactory:
+    @staticmethod
+    def create(spec: ModelSpec, downloader: Downloader):
+        if isinstance(spec, PolyPizzaSpec):
+            return PolyPizzaAsset(spec, downloader)
+        return PolyHavenAsset(spec, downloader)
 
 
 class AuthorCache:
@@ -469,11 +550,11 @@ class ModelProcessor:
             )
 
     def process(self, force: bool) -> ModelResult:
-        asset = PolyHavenAsset(self.spec, self.downloader)
+        asset = AssetFactory.create(self.spec, self.downloader)
 
         if force or not self.is_complete():
             main_gltf = asset.fetch_gltf()
-            self.downscaler.process(self.downloader.cache_dir / self.spec.asset)
+            self.downscaler.process(self.downloader.cache_dir / asset.cache_name)
             extra_args = []
             if self.spec.hinge_node:
                 extra_args.append("-kn")
@@ -492,32 +573,50 @@ class ModelProcessor:
 
 
 class LicenseGenerator:
-    def __init__(self, results, info: PolyHavenInfo, sketchfab):
-        self.results = results
+    TABLE_HEADER = (
+        "| Prop type | Model file | Source asset | Source URL | Author | License |",
+        "|---|---|---|---|---|---|",
+    )
+
+    def __init__(self, specs, info: PolyHavenInfo, sketchfab):
+        self.specs = specs
         self.info = info
         self.sketchfab = sketchfab
 
+    def _rows(self, specs) -> list[str]:
+        rows = []
+        for spec in sorted(specs, key=lambda s: s.prop_type):
+            model_file = f"{spec.category}/{spec.prop_type}.glb"
+            rows.append(
+                f"| `{spec.prop_type}` | `{model_file}` | {spec.asset} | {spec.source_url()} | "
+                f"{spec.credited_author(self.info)} | {spec.license_name()} |"
+            )
+        return rows
+
     def build(self) -> str:
+        core = [s for s in self.specs if s.category != COSMETICS_CATEGORY]
+        cosmetics = [s for s in self.specs if s.category == COSMETICS_CATEGORY]
         lines = []
         lines.append("# Model Licenses")
         lines.append("")
         lines.append(
-            "Every model in this directory is CC0 1.0 from Poly Haven and requires no "
-            "attribution to use, modify or redistribute; the table below credits the "
-            "original authors anyway."
+            "Every model in this directory is CC0 1.0 from Poly Haven or Poly Pizza and "
+            "requires no attribution to use, modify or redistribute; the tables below "
+            "credit the original authors anyway."
         )
         lines.append("")
-        lines.append("| Prop type | Model file | Source asset | Source URL | Author | License |")
-        lines.append("|---|---|---|---|---|---|")
-        for result in sorted(self.results, key=lambda r: r.spec.prop_type):
-            spec = result.spec
-            model_file = f"{spec.category}/{spec.prop_type}.glb"
-            url = f"https://polyhaven.com/a/{spec.asset}"
-            author = self.info.author_for(spec.asset)
-            lines.append(
-                f"| `{spec.prop_type}` | `{model_file}` | {spec.asset} | {url} | {author} | "
-                f"CC0 1.0 |"
-            )
+        lines.extend(self.TABLE_HEADER)
+        lines.extend(self._rows(core))
+        lines.append("")
+        lines.append("## Cosmetics")
+        lines.append("")
+        lines.append(
+            "Player cosmetic models in `cosmetics/` (backpacks, hats, hand items). CC0 only; "
+            "sources are Poly Haven and Poly Pizza (Quaternius)."
+        )
+        lines.append("")
+        lines.extend(self.TABLE_HEADER)
+        lines.extend(self._rows(cosmetics))
         lines.append("")
         lines.append("## Not fetched — Sketchfab (CC-BY, requires `SKETCHFAB_API_TOKEN`)")
         lines.append("")
@@ -538,7 +637,7 @@ class LicenseGenerator:
             )
         lines.append("")
         lines.append(
-            "Run `tools/fetch_models.py` to regenerate the Poly Haven table (author names "
+            "Run `tools/fetch_models.py` to regenerate the tables (Poly Haven author names "
             "are cached in `tools/.model-cache/authors.json`)."
         )
         lines.append("")
@@ -591,15 +690,17 @@ class FootprintsWriter:
 
 
 class ModelFetcher:
-    def __init__(self, repo_root: Path, force: bool):
+    def __init__(self, repo_root: Path, force: bool, cosmetics_only: bool = False):
         self.repo_root = repo_root
         self.force = force
+        self.cosmetics_only = cosmetics_only
         self.client_dir = repo_root / "client"
         self.cache_dir = repo_root / "tools" / ".model-cache"
         self.output_root = self.client_dir / "public" / "models"
         self.downloader = Downloader(self.cache_dir)
         self.packer = GltfPacker(self.client_dir)
         self.downscaler = TextureDownscaler()
+        self.cosmetic_downscaler = TextureDownscaler(COSMETIC_TEXTURE_MAX_PX)
         self.author_cache = AuthorCache(self.cache_dir / "authors.json")
         self.info = PolyHavenInfo(self.downloader, self.author_cache)
 
@@ -643,8 +744,10 @@ class ModelFetcher:
 
         results = []
         errors = []
-        for spec in MANIFEST + PICKUP_MANIFEST:
-            processor = ModelProcessor(spec, self.output_root, self.downloader, self.packer, self.downscaler)
+        specs = COSMETIC_MANIFEST if self.cosmetics_only else MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST
+        for spec in specs:
+            downscaler = self.cosmetic_downscaler if spec.category == COSMETICS_CATEGORY else self.downscaler
+            processor = ModelProcessor(spec, self.output_root, self.downloader, self.packer, downscaler)
             try:
                 result = processor.process(self.force)
                 results.append(result)
@@ -657,14 +760,17 @@ class ModelFetcher:
         decoder_path = DecoderInstaller(self.client_dir).install()
         print(f"[decoder] meshopt_decoder.js installed at {decoder_path}")
 
-        license_text = LicenseGenerator(results, self.info, SKETCHFAB_MANIFEST).build()
+        license_text = LicenseGenerator(
+            MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST, self.info, SKETCHFAB_MANIFEST
+        ).build()
         self.output_root.mkdir(parents=True, exist_ok=True)
         (self.output_root / "LICENSES.md").write_text(license_text, encoding="utf-8")
 
-        prop_results = [r for r in results if r.spec.category != "pickups"]
-        pickup_results = [r for r in results if r.spec.category == "pickups"]
-        footprints_path = self.client_dir / "src" / "world" / "footprints.json"
-        FootprintsWriter(footprints_path).write(prop_results, pickup_results)
+        if not self.cosmetics_only:
+            prop_results = [r for r in results if r.spec.category not in ("pickups", COSMETICS_CATEGORY)]
+            pickup_results = [r for r in results if r.spec.category == "pickups"]
+            footprints_path = self.client_dir / "src" / "world" / "footprints.json"
+            FootprintsWriter(footprints_path).write(prop_results, pickup_results)
 
         self._print_summary(results)
 
@@ -677,9 +783,10 @@ class ModelFetcher:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--cosmetics", action="store_true")
     args = parser.parse_args()
     repo_root = Path(__file__).resolve().parent.parent
-    return ModelFetcher(repo_root, args.force).run()
+    return ModelFetcher(repo_root, args.force, args.cosmetics).run()
 
 
 if __name__ == "__main__":
