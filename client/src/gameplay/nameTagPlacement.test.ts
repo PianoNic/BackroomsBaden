@@ -40,18 +40,23 @@ describe("NameTagPlacement", () => {
       expect(bottom(placed)).toBeGreaterThanOrEqual(ORIGIN_Y + 1.2 + NameTagPlacement.MIN_CLEARANCE - 1e-9);
     });
 
-    it("shrinks the tag so the wizard hat tip stays below it", () => {
+    it("keeps the wizard tag at least 85 percent size and pushes it in front of the tip", () => {
       const tip = ORIGIN_Y + 1.595;
       const placed = NameTagPlacement.place(tip, PLANE_H, CLEARANCE);
-      expect(placed.scale).toBeLessThan(1);
       expect(placed.scale).toBeGreaterThanOrEqual(NameTagPlacement.MIN_SCALE);
-      expect(bottom(placed)).toBeGreaterThanOrEqual(tip + NameTagPlacement.MIN_CLEARANCE - 1e-9);
+      expect(placed.forward).toBe(NameTagPlacement.FORWARD);
       expect(top(placed)).toBeLessThanOrEqual(WALL_HEIGHT - NameTagPlacement.CEILING_GAP + 1e-9);
+    });
+
+    it("never pushes a tag forward when it clears the hat", () => {
+      expect(NameTagPlacement.place(ORIGIN_Y + 0.9, PLANE_H, CLEARANCE).forward).toBe(0);
+      expect(NameTagPlacement.place(ORIGIN_Y + 1.2, PLANE_H, CLEARANCE).forward).toBe(0);
     });
 
     it("lets the ceiling win over the hat when even the smallest tag cannot fit", () => {
       const placed = NameTagPlacement.place(WALL_HEIGHT - 0.1, PLANE_H, CLEARANCE);
       expect(placed.scale).toBe(NameTagPlacement.MIN_SCALE);
+      expect(placed.forward).toBe(NameTagPlacement.FORWARD);
       expect(top(placed)).toBeCloseTo(WALL_HEIGHT - NameTagPlacement.CEILING_GAP, 5);
     });
   });

@@ -6,6 +6,8 @@ import type { GalleryApi } from "./GalleryApp";
 import { ContactSheet, type SheetRow } from "./ContactSheet";
 import { type CameraShot, type Vec3 } from "./GalleryPlan";
 
+export type GalleryBounds = ReturnType<GalleryApi["bounds"]>;
+
 export class TagShots {
   static readonly FOCUS = 2.0;
   static readonly CROP = { width: 480, height: 270 };
@@ -30,15 +32,20 @@ export class TagShots {
     );
   }
 
-  async height(): Promise<number> {
+  async bounds(): Promise<GalleryBounds> {
     return this.page.evaluate(
-      () => (window as unknown as { cosmeticGallery: GalleryApi }).cosmeticGallery.bounds()?.max[1] ?? 0,
+      () => (window as unknown as { cosmeticGallery: GalleryApi }).cosmeticGallery.bounds(),
     );
   }
 
-  async tagRange(): Promise<[number, number] | null> {
-    return this.page.evaluate(
-      () => (window as unknown as { cosmeticGallery: GalleryApi }).cosmeticGallery.bounds()?.tag ?? null,
+  async aim(shot: CameraShot): Promise<void> {
+    await this.page.evaluate(
+      ([position, target]) => (window as unknown as { cosmeticGallery: GalleryApi })
+        .cosmeticGallery.setCamera(position, target),
+      [shot.position, shot.target] as const,
+    );
+    await this.page.evaluate(
+      () => (window as unknown as { cosmeticGallery: GalleryApi }).cosmeticGallery.frames(4),
     );
   }
 

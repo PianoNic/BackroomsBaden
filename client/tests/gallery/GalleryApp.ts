@@ -3,7 +3,7 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { EquippedCosmetics } from "../../src/net/protocol";
 import { AmbientLights, createRenderContext, type RenderContext } from "../../src/rendering/renderer";
-import { lambertMaterial, plane } from "../../src/rendering/babylon";
+import { box, lambertMaterial, plane } from "../../src/rendering/babylon";
 import { Corpses } from "../../src/gameplay/corpses";
 import { Chairs } from "../../src/gameplay/chairs";
 import { RemotePlayers } from "../../src/gameplay/remotePlayers";
@@ -24,7 +24,8 @@ export type GalleryApi = {
   eyeHeights: { standing: number; crouching: number };
   setCamera(position: Vec3, target: Vec3): void;
   frames(count: number): Promise<void>;
-  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null } | null;
+  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null; tagForward: number } | null;
+  setWall(on: boolean): void;
 };
 
 class CosmeticGallery implements GalleryApi {
@@ -39,6 +40,7 @@ class CosmeticGallery implements GalleryApi {
   private corpses!: Corpses;
   private chairs!: Chairs;
   private lights!: AmbientLights;
+  private wall: Mesh | null = null;
   private lastMs = 0;
   private readonly crosshair = document.getElementById("crosshair") as HTMLElement;
 
@@ -92,7 +94,15 @@ class CosmeticGallery implements GalleryApi {
     });
   }
 
-  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null } | null {
+  setWall(on: boolean): void {
+    this.wall?.dispose(false, true);
+    this.wall = null;
+    if (!on) return;
+    this.wall = box(8, 3, 0.2, lambertMaterial(0x8a8a78), "galleryWall");
+    this.wall.position.set(0, 1.5, -3);
+  }
+
+  bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null; tagForward: number } | null {
     const body = this.remotes.getMesh("p1");
     const root = body?.getChildren().find((node) => node.name === "cosmetics");
     if (!body || !root) return null;
@@ -109,13 +119,15 @@ class CosmeticGallery implements GalleryApi {
     const origin = body.position;
     const tagMesh = this.ctx.scene.getMeshByName("nameTag_p1");
     let tag: [number, number] | null = null;
+    let tagForward = 0;
     if (tagMesh) {
+      tagForward = Math.hypot(tagMesh.position.x - origin.x, tagMesh.position.z - origin.z);
       tagMesh.computeWorldMatrix(true);
       const tagBox = tagMesh.getBoundingInfo().boundingBox;
       tag = [tagBox.minimumWorld.y - origin.y, tagBox.maximumWorld.y - origin.y];
     }
     return {
-      tag,
+      tag, tagForward,
       min: [min.x - origin.x, min.y - origin.y, min.z - origin.z],
       max: [max.x - origin.x, max.y - origin.y, max.z - origin.z],
     };

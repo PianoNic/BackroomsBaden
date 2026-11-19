@@ -1,11 +1,12 @@
 import { WALL_HEIGHT } from "../world/builder";
 
-export type TagPlacement = { centerY: number; scale: number };
+export type TagPlacement = { centerY: number; scale: number; forward: number };
 
 export class NameTagPlacement {
   static readonly CEILING_GAP = 0.05;
   static readonly MIN_CLEARANCE = 0.06;
-  static readonly MIN_SCALE = 0.55;
+  static readonly MIN_SCALE = 0.85;
+  static readonly FORWARD = 0.4;
 
   static centerY(wantedCenterY: number, planeHeight: number): number {
     const highest = WALL_HEIGHT - NameTagPlacement.CEILING_GAP - planeHeight / 2;
@@ -16,14 +17,16 @@ export class NameTagPlacement {
     const ceiling = WALL_HEIGHT - NameTagPlacement.CEILING_GAP;
     const wantedBottom = topY + clearance;
     if (wantedBottom + planeHeight <= ceiling) {
-      return { centerY: wantedBottom + planeHeight / 2, scale: 1 };
+      return { centerY: wantedBottom + planeHeight / 2, scale: 1, forward: 0 };
     }
     const lowestBottom = topY + NameTagPlacement.MIN_CLEARANCE;
     if (lowestBottom + planeHeight <= ceiling) {
-      return { centerY: ceiling - planeHeight / 2, scale: 1 };
+      return { centerY: ceiling - planeHeight / 2, scale: 1, forward: 0 };
     }
     const fit = (ceiling - lowestBottom) / planeHeight;
     const scale = Math.min(1, Math.max(NameTagPlacement.MIN_SCALE, fit));
-    return { centerY: ceiling - (planeHeight * scale) / 2, scale };
+    const height = planeHeight * scale;
+    const forward = ceiling - height < lowestBottom ? NameTagPlacement.FORWARD : 0;
+    return { centerY: ceiling - height / 2, scale, forward };
   }
 }

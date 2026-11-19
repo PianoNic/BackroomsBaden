@@ -71,7 +71,9 @@ export class NameTags {
       }
       if (!inRange) continue;
       const placed = NameTagPlacement.place(pos.y + tag.top, PLANE_H, CLEARANCE);
-      tag.mesh.position.set(pos.x, placed.centerY, pos.z);
+      const toCamera = Math.hypot(-dx, -dz);
+      const push = toCamera > 1e-3 ? Math.min(placed.forward, toCamera * 0.5) / toCamera : 0;
+      tag.mesh.position.set(pos.x - dx * push, placed.centerY, pos.z - dz * push);
       if (tag.mesh.scaling.x !== placed.scale) tag.mesh.scaling.setAll(placed.scale);
     }
   }

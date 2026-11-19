@@ -8,6 +8,7 @@ import { TagShots } from "./TagShots";
 class TallHatLimits {
   static readonly CEILING = 3;
   static readonly BODY_ORIGIN = 0.85;
+  static readonly TAG_HEIGHT = 2.4 * (168 / 512);
 }
 
 test("tall procedural hats clear the name tag", async ({ context, page }) => {
@@ -16,17 +17,25 @@ test("tall procedural hats clear the name tag", async ({ context, page }) => {
   const shots = new TagShots(page, session.sheets(), session.outDir);
   const plan = new GalleryPlan(catalog);
   const procedural = plan.hats().filter((hat) => !plan.isModel(hat));
-  const measured: Array<{ id: string; top: number; tag: [number, number] | null }> = [];
+  const measured: Array<{
+    id: string; top: number; radius: number; tag: [number, number] | null; tagForward: number;
+  }> = [];
   for (const hat of procedural) {
     await shots.show({ hat: hat.id, title: GalleryPlan.TITLE });
-    measured.push({ id: hat.id, top: await shots.height(), tag: await shots.tagRange() });
+    await shots.aim(TagShots.shot("front", 2, false));
+    const b = (await shots.bounds())!;
+    const radius = Math.max(b.max[0], -b.min[0], b.max[2], -b.min[2]);
+    measured.push({ id: hat.id, top: b.max[1], radius, tag: b.tag, tagForward: b.tagForward });
   }
   measured.sort((a, b) => b.top - a.top);
   writeFileSync(join(session.outDir, "tallHats.json"), JSON.stringify(measured, null, 1));
   for (const hat of measured) {
     expect(hat.tag, hat.id).not.toBeNull();
-    expect(hat.tag![0], `${hat.id} tag bottom clears the hat`).toBeGreaterThanOrEqual(hat.top);
-    expect(hat.tag![1], `${hat.id} tag top stays under the ceiling`).toBeLessThan(TallHatLimits.CEILING - TallHatLimits.BODY_ORIGIN);
+    const [bottom, top] = hat.tag!;
+    expect(top - bottom, `${hat.id} tag keeps at least 85 percent size`).toBeGreaterThanOrEqual(TallHatLimits.TAG_HEIGHT * 0.85 - 0.01);
+    expect(top, `${hat.id} tag top stays under the ceiling`).toBeLessThan(TallHatLimits.CEILING - TallHatLimits.BODY_ORIGIN);
+    const overlaps = bottom < hat.top;
+    if (overlaps) expect(hat.tagForward, `${hat.id} tag is drawn in front of the hat`).toBeGreaterThan(hat.radius);
   }
   const tallest = measured.slice(0, 4);
   const views = [
