@@ -11,11 +11,13 @@ import { CosmeticSlots } from "../../src/gameplay/cosmeticSlots";
 import { cosmeticModels } from "../../src/gameplay/cosmeticModels";
 import { EyeHeight } from "../../src/gameplay/eyeHeight";
 import { ensureCatalog, resolveCosmetic } from "../../src/gameplay/cosmetics";
+import { LeakProbe } from "./LeakProbe";
 
 type Vec3 = [number, number, number];
 
 export type GalleryApi = {
   ready: Promise<void>;
+  probe: LeakProbe;
   showRemote(equipped: EquippedCosmetics, yaw?: number): Promise<void>;
   showCorpse(equipped: EquippedCosmetics): Promise<void>;
   showHand(equipped: EquippedCosmetics, eyeHeight: number): Promise<void>;
@@ -31,6 +33,7 @@ class CosmeticGallery implements GalleryApi {
 
   readonly eyeHeights = { standing: EyeHeight.STANDING, crouching: EyeHeight.CROUCHING };
   readonly ready: Promise<void>;
+  probe!: LeakProbe;
   private ctx!: RenderContext;
   private remotes!: RemotePlayers;
   private corpses!: Corpses;
@@ -52,6 +55,7 @@ class CosmeticGallery implements GalleryApi {
     floor.rotation.x = -Math.PI / 2;
     this.remotes = new RemotePlayers(camera);
     this.corpses = new Corpses();
+    this.probe = new LeakProbe(scene, this.remotes);
     this.chairs = new Chairs(
       [{ id: "chair", x: 500, z: 500, yaw: 0, heldBy: null }],
       CosmeticGallery.SELF_ID, camera, this.remotes, {},

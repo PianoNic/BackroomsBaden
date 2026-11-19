@@ -50,11 +50,7 @@ export function makeFaceMaterials(
   front: StandardMaterial, sideColor: Color3,
 ): StandardMaterial[] {
   const side = () => lambertMaterial(sideColor);
-  const mats: StandardMaterial[] = [
-    side(), side(), side(), side(), side(), side(),
-  ];
-  mats[FRONT_FACE] = front;
-  return mats;
+  return [side(), front, side(), side(), side(), side()];
 }
 
 function textureFromImage(img: HTMLImageElement): DynamicTexture {
