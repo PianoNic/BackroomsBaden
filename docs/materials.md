@@ -96,14 +96,11 @@ Texture path convention: `/textures/surfaces/<category>/albedo.webp`, where
 (e.g. `wall_plaster_cream`, `floor_lino`).
 
 `classroom`, `hallway` and `teacher_room` all use `wall_plaster_cream`
-(ambientCG `PaintedPlaster017`), a neutral cream/beige painted plaster that
-reads as institutional school wall paint once the client's warm tint is
-multiplied over it — each archetype keeps its own tint and its own green
+(pack texture `Plaster001`, a neutral grey plaster) which reads as
+institutional cream wall paint once the client's warm tint is multiplied
+over it. Each archetype keeps its own tint and its own green
 `dado_tile_green` band with the wooden dado rail on top, so the three
 archetypes still look distinct even though the base wall texture is shared.
-`hallway` previously used a separate green-tinted plaster (`wall_plaster_green`);
-that category has been removed from `tools/fetch_textures.py` since nothing
-references it any more.
 
 Floors carry no reflection or fresnel term: every surface is plain diffuse
 lighting over a nearest-sampled low-resolution albedo.
@@ -135,14 +132,24 @@ mesh and one material, built once via `getDecalMaterial()`.
 
 ## Running the texture fetch script
 
-Category textures aren't checked into the repo pre-baked — they're fetched
-from CC0 sources by `tools/fetch_textures.py`:
+Category textures come from "PSX Textures - 90 Seamless PS1-Style Textures, 5
+Looks" by Francisco Cidade (CC0 1.0, https://fcidade.itch.io/psx-textures-vol-1),
+whose source materials are ambientCG. Most categories copy a pack PNG through
+unchanged, normally the `C_soft` look (128 px, 32 colours); `floor_carpet` uses
+`A_classic` (64 px, 16 colours, dithered) because the `C_soft` palette turns that
+carpet olive. `wall_tile_hex` and `decal_leak` have no match in the pack, so
+they come from ambientCG and are reduced to the same look (128 px, 32 colours,
+ordered dither). The door panel and stall door textures (`door_wood`,
+`door_stall_metal`) come from the pack as well.
 
 ```
-server/.venv/Scripts/python.exe tools/fetch_textures.py
+python tools/fetch_textures.py
 ```
 
-It's idempotent — re-running it skips anything already downloaded — pass
-`--force` to re-fetch everything regardless. See
-[`client/public/textures/surfaces/LICENSES.md`](../client/public/textures/surfaces/LICENSES.md)
-for the CC0 licence list of everything it pulls in.
+The pack is downloaded from itch.io through its free download flow
+(`ItchDownloader`, throttled to one request per 6 s) and cached in the
+gitignored `tools/.texture-cache/`. It is treated as untrusted: only PNG and
+TXT members are extracted, into a fresh directory, with path traversal
+rejected. The script is idempotent: pass `--force` to rebuild every category.
+See [`client/public/textures/surfaces/LICENSES.md`](../client/public/textures/surfaces/LICENSES.md)
+for the per-category source list.
