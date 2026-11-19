@@ -9,6 +9,8 @@ from app.infrastructure.configuration.settings import Settings, settings
 
 log = logging.getLogger("nachsitzen.db")
 
+CONNECT_TIMEOUT_S = 5.0
+
 
 class DatabaseEngine(IDatabaseAvailability):
     def __init__(self, database) -> None:
@@ -38,6 +40,7 @@ class DatabaseEngine(IDatabaseAvailability):
     async def connect(self) -> None:
         try:
             await self._database.aio_connect()
+            await self._wait_for_first_connection()
             self._ready = True
             log.info("Database connected (%s:%s/%s)",
                      settings.db_host, settings.db_port, settings.db_name)
@@ -45,6 +48,12 @@ class DatabaseEngine(IDatabaseAvailability):
             self._ready = False
             log.warning("Database unavailable — accounts/persistence disabled: %s", exc)
             await self._stop_retrying()
+
+    async def _wait_for_first_connection(self) -> None:
+        backend = getattr(self._database, "pool_backend", None)
+        pool = getattr(backend, "pool", None)
+        if pool is not None:
+            await pool.wait(timeout=CONNECT_TIMEOUT_S)
 
     async def _stop_retrying(self) -> None:
         try:
