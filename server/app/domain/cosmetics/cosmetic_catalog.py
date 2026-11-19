@@ -68,7 +68,7 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "backpack_schul", "backpack", "Schulrucksack", 200, "common",
         "models/cosmetics/backpack_rucksack",
-        attachment=CosmeticAttachment(x=0, y=-0.02, z=0.3, scale=0.6, yaw=-1.5708),
+        attachment=CosmeticAttachment(x=0, y=0.08, z=0.47, scale=0.45, yaw=-1.5708),
     ),
     CosmeticItem(
         "backpack_turnbeutel", "backpack", "Turnbeutel", 250, "common", "models/cosmetics/backpack_turnbeutel",
