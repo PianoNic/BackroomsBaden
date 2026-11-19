@@ -3,6 +3,7 @@ import type { CatalogItem, CosmeticCategory, EquippedCosmetics } from "../../../
 import { Button } from "../../components/controls";
 import { Scroll } from "../../components/layout";
 import { SHOP_CATEGORIES } from "../../state/shop";
+import { ShopCatalogView } from "../../state/shopCatalogView";
 
 export type ShopAdapter = {
   signedIn: boolean;
@@ -22,7 +23,8 @@ export function ShopBody(props: {
 }) {
   const [active, setActive] = useState<CosmeticCategory>("body");
   const { adapter } = props;
-  const items = adapter.catalog.filter((item) => item.category === active);
+  const items = ShopCatalogView.inCategory(adapter.catalog, active);
+  const featured = ShopCatalogView.featured(adapter.catalog);
 
   return (
     <>
@@ -30,6 +32,14 @@ export function ShopBody(props: {
         <span>SYS://SHOP</span>
         <span class="shop-balance">{adapter.signedIn ? `${adapter.balance} coins` : "guest"}</span>
       </div>
+      {featured.length > 0 && (
+        <section class="shop-featured" aria-label="Daily featured">
+          <div class="shop-featured-title">DAILY FEATURED</div>
+          <div class="shop-featured-row">
+            {featured.map((item) => <ShopCard key={item.id} item={item} adapter={adapter} />)}
+          </div>
+        </section>
+      )}
       <div class="bb-tabs" role="tablist" aria-label="Cosmetic categories">
         {SHOP_CATEGORIES.map((cat) => (
           <button
@@ -46,41 +56,47 @@ export function ShopBody(props: {
       </div>
       <Scroll>
         <div class="bb-cardgrid">
-          {items.map((item) => {
-            const owned = adapter.owned.has(item.id);
-            const equipped = adapter.equipped[item.category] === item.id;
-            return (
-              <div key={item.id} class={`shop-card rarity-${item.rarity}`}>
-                <div class="shop-card-preview" aria-hidden="true">{item.name.charAt(0)}</div>
-                <div class="shop-card-name">{item.name}</div>
-                <div class="shop-card-rarity">{item.rarity}</div>
-                {equipped ? (
-                  <Button small disabled class="shop-action is-equipped">EQUIPPED</Button>
-                ) : owned ? (
-                  <Button
-                    small
-                    class="shop-action"
-                    onClick={() => adapter.equip(item.category, item.id)}
-                  >
-                    EQUIP
-                  </Button>
-                ) : (
-                  <Button
-                    small
-                    class="shop-action"
-                    disabled={!adapter.signedIn || adapter.balance < item.price}
-                    onClick={() => adapter.buy(item.id)}
-                  >
-                    {`BUY · ${item.price}`}
-                  </Button>
-                )}
-              </div>
-            );
-          })}
+          {items.map((item) => <ShopCard key={item.id} item={item} adapter={adapter} />)}
         </div>
       </Scroll>
       <div class="shop-note">{adapter.note}</div>
       <Button variant="back" class="screen-back" onClick={props.onBack}>{props.backLabel}</Button>
     </>
+  );
+}
+
+function ShopCard(props: { item: CatalogItem; adapter: ShopAdapter }) {
+  const { item, adapter } = props;
+  const owned = adapter.owned.has(item.id);
+  const equipped = adapter.equipped[item.category] === item.id;
+  const locked = ShopCatalogView.isLocked(item, adapter.owned);
+  return (
+    <div class={`shop-card rarity-${item.rarity}${item.featured ? " is-featured" : ""}`}>
+      <div class="shop-card-preview" aria-hidden="true">{item.name.charAt(0)}</div>
+      <div class="shop-card-name">{item.name}</div>
+      <div class="shop-card-rarity">{item.rarity}</div>
+      {equipped ? (
+        <Button small disabled class="shop-action is-equipped">EQUIPPED</Button>
+      ) : owned ? (
+        <Button
+          small
+          class="shop-action"
+          onClick={() => adapter.equip(item.category, item.id)}
+        >
+          EQUIP
+        </Button>
+      ) : locked ? (
+        <div class="shop-locked">{ShopCatalogView.lockedLabel(item)}</div>
+      ) : (
+        <Button
+          small
+          class="shop-action"
+          disabled={!adapter.signedIn || adapter.balance < item.price}
+          onClick={() => adapter.buy(item.id)}
+        >
+          {`BUY · ${item.price}`}
+        </Button>
+      )}
+    </div>
   );
 }
