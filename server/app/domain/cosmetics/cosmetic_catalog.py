@@ -120,7 +120,7 @@ _ITEMS: list[CosmeticItem] = [
     ),
     CosmeticItem(
         "mask_gas", "mask", "Gasmaske", 1200, "legendary", "models/pickups/goggles",
-        attachment=CosmeticAttachment(x=0, y=0.5, z=-0.27, scale=1.2, yaw=3.1416),
+        attachment=CosmeticAttachment(x=0, y=0.62, z=-0.22, scale=0.9, yaw=3.1416),
     ),
     CosmeticItem(
         "hat_fischer", "hat", "Fischerhut", 700, "epic",
