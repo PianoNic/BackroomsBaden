@@ -1,5 +1,6 @@
 import type { Quests } from "../gameplay/quests";
 import type { Objective } from "../net/protocol";
+import { CompassBearing } from "./compassBearing";
 import { compassEnabled, compassLabel } from "./hud/state";
 
 const SIZE = 110;
@@ -76,11 +77,7 @@ export class TaskCompass {
 
     const dx = target.x - playerX;
     const dz = target.z - playerZ;
-    const sin = Math.sin(-yaw);
-    const cos = Math.cos(-yaw);
-    const tx = dx * cos - dz * sin;
-    const tz = dx * sin + dz * cos;
-    const angle = Math.atan2(tx, -tz);
+    const angle = CompassBearing.angle(dx, dz, yaw);
 
     const cx = SIZE / 2;
     const cy = SIZE / 2;
