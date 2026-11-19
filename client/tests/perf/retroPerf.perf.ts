@@ -156,6 +156,7 @@ test("retro art pass perf and screenshots", async ({ browser }) => {
     await run.visit(planner.junction());
     for (const room of planner.roomViews()) await run.visit(room);
     await run.visit(planner.door(), 30);
+    if (process.env.PERF_BRIGHT === "1") await probe.brighten();
     await run.visitPickups();
     const totals = await probe.sceneTotals();
     await run.visitTeachers();

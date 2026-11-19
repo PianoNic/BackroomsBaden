@@ -12,11 +12,11 @@ const STEEL = 0x8d939c;
  *  Footprint 2.0 x 1.0 m — the surface bunsen burners stack onto. */
 const buildLabBench: Builder = () => {
   const g = group("labBench");
-  const cupboard = box(1.9, 0.78, 0.9, M(0x6f6a60));
-  cupboard.position.y = 0.39;
+  const cupboard = box(1.9, 0.72, 0.9, M(0x6f6a60));
+  cupboard.position.y = 0.36;
   g.add(cupboard);
   const top = box(2.0, 0.06, 1.0, M(STONE));
-  top.position.y = 0.81;
+  top.position.y = 0.75;
   g.add(top);
   // Doors, so the base doesn't read as one flat slab.
   for (const dx of [-0.47, 0.47]) {
@@ -29,13 +29,13 @@ const buildLabBench: Builder = () => {
   }
   // Sink basin sunk into one end.
   const basin = box(0.42, 0.05, 0.34, M(0x4a4f57));
-  basin.position.set(-0.68, 0.845, 0);
+  basin.position.set(-0.68, 0.785, 0);
   g.add(basin);
   const tap = cylinder(0.018, 0.018, 0.26, 8, M(STEEL));
-  tap.position.set(-0.68, 0.97, -0.16);
+  tap.position.set(-0.68, 0.91, -0.16);
   g.add(tap);
   const spout = box(0.02, 0.02, 0.16, M(STEEL));
-  spout.position.set(-0.68, 1.09, -0.09);
+  spout.position.set(-0.68, 1.03, -0.09);
   g.add(spout);
   return g;
 };

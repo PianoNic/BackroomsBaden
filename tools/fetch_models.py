@@ -377,7 +377,7 @@ ITCH_MANIFEST: tuple[ModelSpec, ...] = (
         source=PackSource("psx_derelict", "PSX-Derelict-Furniture-Standard/glb/couch.glb"),
     ),
     ModelSpec(
-        "clock", "wall_clock", "wall", 0.53,
+        "clock", "wall_clock", "wall", 0.53, yaw_offset=math.pi,
         source=PackSource("psx_office", "OFFICE/extras/wall_clock.glb"),
     ),
     ModelSpec(
@@ -397,7 +397,7 @@ ITCH_MANIFEST: tuple[ModelSpec, ...] = (
         source=PackSource("psx_derelict", "PSX-Derelict-Furniture-Standard/glb/fridge.glb"),
     ),
     ModelSpec(
-        "vending_machine", "coffee_machine", "appliances", 0.8,
+        "vending_machine", "coffee_machine", "appliances", 0.8, yaw_offset=math.pi,
         source=PackSource("psx_office", "OFFICE/extras/coffee_machine.glb"),
     ),
     ModelSpec(
@@ -410,27 +410,27 @@ ITCH_MANIFEST: tuple[ModelSpec, ...] = (
 OPENGAMEART_MANIFEST: tuple[ModelSpec, ...] = (
     ModelSpec(
         "fire_extinguisher", "fire_extinguisher_model", "wall", 0.078, pre_yaw=math.pi / 2,
-        pack=PackSource("oga_fire_extinguisher", "fire_extinguisher_model.obj", texture="fire_extinguisher_diffuse.tif"),
+        source=PackSource("oga_fire_extinguisher", "fire_extinguisher_model.obj", texture="fire_extinguisher_diffuse.tif"),
     ),
     ModelSpec(
         "mop_bucket", "bucket", "clutter", 0.2,
-        pack=PackSource("oga_survival_items", "Survival items/items.fbx", node="bucket"),
+        source=PackSource("oga_survival_items", "Survival items/items.fbx", node="bucket"),
     ),
     ModelSpec(
         "medkit", "FirstAid", "pickups", 0.3,
-        pack=PackSource("oga_first_aid_kit", "FirstAid.obj"),
+        source=PackSource("oga_first_aid_kit", "FirstAid.obj"),
     ),
     ModelSpec(
         "potion", "potion_red", "pickups", 0.032, material_alpha=(("Liquid", 1.0),),
-        pack=PackSource("oga_n64_potions", "N64 Potions/GLB/Red.glb"),
+        source=PackSource("oga_n64_potions", "N64 Potions/GLB/Red.glb"),
     ),
     ModelSpec(
         "goggles", "gasmask", "pickups", 0.05, 0.5,
-        pack=PackSource("oga_gas_mask", "gasmask/gasmask.fbx"),
+        source=PackSource("oga_gas_mask", "gasmask/gasmask.fbx"),
     ),
     ModelSpec(
         "compass", "compass", "pickups", 0.22,
-        pack=PackSource("oga_survival_items", "Survival items/items.fbx", node="compass"),
+        source=PackSource("oga_survival_items", "Survival items/items.fbx", node="compass"),
     ),
 )
 

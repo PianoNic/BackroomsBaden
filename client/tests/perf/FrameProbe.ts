@@ -86,6 +86,17 @@ export class FrameProbe {
     });
   }
 
+  async brighten(): Promise<void> {
+    await this.page.evaluate(() => {
+      const scene = (window as unknown as DevWindow).nachsitzenDev.camera.getScene();
+      const ambient = scene.getLightByName("ambient");
+      scene.onBeforeRenderObservable.add(() => {
+        if (ambient) ambient.intensity = 4;
+        scene.imageProcessingConfiguration.exposure = 2.2;
+      });
+    });
+  }
+
   async teacherPositions(): Promise<{ x: number; z: number }[]> {
     return this.page.evaluate(
       () => (window as unknown as DevWindow).nachsitzenDev.teacherPositions(),

@@ -11,7 +11,7 @@ import {
 // Small office printer that sits ON a side_table (table_top y ≈ 0.75).
 const buildPrinter: Builder = () => {
   const g = group();
-  const T = 0.75;
+  const T = 0.71;
   const base = box(0.45, 0.22, 0.38, M(0x2a2a2e));
   base.position.y = T + 0.11;
   g.add(base);
