@@ -2,27 +2,31 @@ import { mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-export class PerfEnvironment {
+export class GalleryEnvironment {
   static readonly SEED = 424242;
   static readonly MAP_SIZE = 120;
   static readonly WARMUP_FRAMES = 60;
   static readonly SAMPLE_FRAMES = 240;
 
-  readonly outDir: string;
-  readonly buildDir: string;
+  readonly outDir = join(
+    process.env.GALLERY_OUT ?? join(tmpdir(), "nachsitzen-gallery"),
+    process.env.GALLERY_ROUND ?? "round",
+  );
 
-  constructor() {
-    this.outDir = process.env.PERF_OUT_DIR ?? join(tmpdir(), "nachsitzen-perf-out");
-    this.buildDir = process.env.PERF_BUILD_DIR ?? join(tmpdir(), "nachsitzen-perf-build");
+  prepare(): void {
     mkdirSync(this.outDir, { recursive: true });
+  }
+
+  catalogFile(): string {
+    return join(this.outDir, "catalog.json");
   }
 
   screenshotPath(name: string): string {
     return join(this.outDir, `${name}.png`);
   }
 
-  jsonPath(): string {
-    return join(this.outDir, "perf.json");
+  jsonPath(name: string): string {
+    return join(this.outDir, `${name}.json`);
   }
 
   sizesPath(): string {

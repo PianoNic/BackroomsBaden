@@ -1,13 +1,14 @@
 import type { BrowserContext, Page } from "@playwright/test";
 import type { PickupKind, WorldInit } from "../../src/net/protocol";
-import { PerfEnvironment } from "./PerfEnvironment";
-import { PointerLockStub } from "../pointerLockStub";
+import { BackendProcess } from "./BackendProcess";
+import { GalleryEnvironment } from "./GalleryEnvironment";
 
 export class GameSession {
   private main!: Page;
   private bot!: Page;
   private botContext!: BrowserContext;
   private lobbyId = "";
+  private readonly backend = new BackendProcess();
 
   constructor(private readonly context: BrowserContext) {}
 
@@ -16,9 +17,9 @@ export class GameSession {
   }
 
   async start(): Promise<WorldInit> {
-    await PointerLockStub.install(this.context);
+    await this.backend.start();
     const created = await this.context.request.post("/lobbies", {
-      data: { name: "perf", maxPlayers: 8 },
+      data: { name: "gallery", maxPlayers: 8 },
     });
     this.lobbyId = ((await created.json()) as { id: string }).id;
     await this.openMain();
@@ -28,7 +29,7 @@ export class GameSession {
         const socket = (window as unknown as { __sockets: WebSocket[] }).__sockets[0];
         socket.send(JSON.stringify({ type: "lobby_settings", mapSize: size, mapSeed: seed }));
       },
-      { size: PerfEnvironment.MAP_SIZE, seed: PerfEnvironment.SEED },
+      { size: GalleryEnvironment.MAP_SIZE, seed: GalleryEnvironment.SEED },
     );
     await this.main.waitForTimeout(500);
     await this.main.evaluate(() => {
@@ -47,6 +48,7 @@ export class GameSession {
 
   async close(): Promise<void> {
     await this.botContext?.close();
+    this.backend.stop();
   }
 
   async parkMain(x: number, z: number): Promise<void> {
@@ -104,6 +106,7 @@ export class GameSession {
         window.WebSocket = class extends Native {
           constructor(url: string | URL, protocols?: string | string[]) {
             super(url, protocols);
+            if (!String(url).includes("/ws/")) return;
             sockets.push(this);
             this.addEventListener("message", (ev) => {
               const pkt = JSON.parse(ev.data as string) as {

@@ -1,10 +1,10 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { test } from "@playwright/test";
+import { test } from "../pointerLockStub";
 import type { Prop } from "../../src/net/protocol";
 import { FrameProbe } from "./FrameProbe";
 import { GameSession } from "./GameSession";
-import { PerfEnvironment } from "./PerfEnvironment";
+import { GalleryEnvironment } from "./GalleryEnvironment";
 import { ViewpointPlanner, type Viewpoint } from "./ViewpointPlanner";
 
 const PER_TYPE = 2;
@@ -18,7 +18,7 @@ class PropGallery {
   readonly skipped: string[] = [];
 
   constructor(
-    private readonly env: PerfEnvironment,
+    private readonly env: GalleryEnvironment,
     private readonly planner: ViewpointPlanner,
     private readonly probe: FrameProbe,
     private readonly props: Prop[],
@@ -27,7 +27,7 @@ class PropGallery {
   private pick(): Prop[] {
     const counts = new Map<string, number>();
     const chosen: Prop[] = [];
-    const only = process.env.PERF_PROPS ? new Set(process.env.PERF_PROPS.split(",")) : null;
+    const only = process.env.GALLERY_PROPS ? new Set(process.env.GALLERY_PROPS.split(",")) : null;
     for (const prop of this.props) {
       if (only && !only.has(prop.type)) continue;
       const seen = counts.get(prop.type) ?? 0;
@@ -53,7 +53,7 @@ class PropGallery {
   }
 
   async run(): Promise<void> {
-    if (process.env.PERF_BRIGHT === "1") await this.probe.brighten();
+    if (process.env.GALLERY_BRIGHT === "1") await this.probe.brighten();
     const seenPerType = new Map<string, number>();
     for (const prop of this.pick()) {
       const index = seenPerType.get(prop.type) ?? 0;
@@ -75,7 +75,7 @@ class OrientationProbe {
   private static readonly DISTANCES = [1.8, 1.4, 1.0, 0.7];
 
   constructor(
-    private readonly env: PerfEnvironment,
+    private readonly env: GalleryEnvironment,
     private readonly planner: ViewpointPlanner,
     private readonly probe: FrameProbe,
     private readonly props: Prop[],
@@ -84,7 +84,7 @@ class OrientationProbe {
   private modelTypes(): Set<string> {
     const path = fileURLToPath(new URL("../../src/world/footprints.json", import.meta.url));
     const parsed = JSON.parse(readFileSync(path, "utf8")) as { props: Record<string, unknown> };
-    const only = process.env.PERF_PROPS ? new Set(process.env.PERF_PROPS.split(",")) : null;
+    const only = process.env.GALLERY_PROPS ? new Set(process.env.GALLERY_PROPS.split(",")) : null;
     return new Set(Object.keys(parsed.props).filter((t) => !only || only.has(t)));
   }
 
@@ -135,12 +135,9 @@ class OrientationProbe {
   }
 }
 
-test("prop gallery", async ({ browser }) => {
-  const env = new PerfEnvironment();
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 720 },
-    deviceScaleFactor: 1,
-  });
+test("prop gallery", async ({ context }) => {
+  const env = new GalleryEnvironment();
+  env.prepare();
   const session = new GameSession(context);
   try {
     const init = await session.start();
@@ -158,16 +155,15 @@ test("prop gallery", async ({ browser }) => {
       ...init.lockers.map((l) => ({ type: "locker", x: l.x, z: l.z, yaw: l.yaw }) as Prop),
     ];
     const orientation = new OrientationProbe(env, planner, probe, placed);
-    if (process.env.PERF_ORIENT !== "only") await gallery.run();
+    if (process.env.GALLERY_ORIENT !== "only") await gallery.run();
     await orientation.run();
     writeFileSync(
-      env.jsonPath().replace("perf.json", "gallery.json"),
+      env.jsonPath("gallery"),
       JSON.stringify({
         captured: gallery.captured, skipped: gallery.skipped, orientation: orientation.report,
       }, null, 2),
     );
   } finally {
     await session.close();
-    await context.close();
   }
 });

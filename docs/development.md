@@ -59,21 +59,31 @@ nachsitzenDev.inspector(false)   // closes it again
 The inspector bundle is fetched on demand, so it costs nothing in a production build,
 and `window.nachsitzenDev` is stripped from production builds entirely.
 
-### Perf and screenshot harness
-`bun run test:perf` builds the client with `VITE_DEV_HOOKS=1` into a scratch directory, starts one
-Python server on port 8020 serving that build, then drives a headless Chromium (1280x720) through a
-solo xlarge round (seed 424242). It measures draw calls, active meshes, and frame time (median and p95
-over 240 frames after 60 warm-up frames) at fixed viewpoints, and saves screenshots plus `perf.json`
-and `sizes.txt`. It needs Playwright's Chromium, Python with the server requirements, and no other
-process on port 8020.
+### Gallery and perf specs
+Everything that renders the game for a human to look at lives in `client/tests/gallery/`, run by
+`client/playwright.gallery.config.ts`. It starts one Vite dev server (`GALLERY_PORT`, default 8030) and
+drives headless Chromium (1280x720, one worker) with the pointer lock stubbed. These specs are named
+`*.gallery.ts`, so `bun run test:e2e` and CI never run them. Results go to
+`$GALLERY_OUT/$GALLERY_ROUND` (defaults: the temp directory, `round`), so two revisions can be
+compared by giving each its own `GALLERY_ROUND`.
 ```powershell
 cd client
-$env:PERF_OUT_DIR = "$env:TEMP\perf-after"
-bun run test:perf
+$env:GALLERY_ROUND = "after"
+bun run test:gallery     # all gallery specs
+bun run test:perf        # only the perf measurement
+bunx playwright test -c playwright.gallery.config.ts --project=gallery propGallery   # one spec
 ```
-`PERF_OUT_DIR` holds the results (default: a temp directory), `PERF_BUILD_DIR` the scratch client build,
-`PERF_PYTHON` the Python executable. To compare against another revision, run it from a worktree of that
-revision with a different `PERF_OUT_DIR`.
+- `cosmeticsGallery` renders the cosmetic pose sheets from the shop catalog and needs no backend.
+- `propGallery` screenshots every prop type from the front and the back (the orientation probe), and
+  `pickupGallery` screenshots every pickup kind; set `GALLERY_PROPS=clock,printer` to limit props.
+- `retroPerf` (the `perf` project, run with unlimited frame rate) measures draw calls, active meshes
+  and frame time (median and p95 over 240 frames after 60 warm-up frames) at fixed viewpoints of a solo
+  xlarge round (seed 424242), and writes screenshots, `perf.json` and `sizes.txt`.
+
+The prop, pickup and perf specs play a real round, so `GameSession` starts a Python server on
+`GALLERY_BACKEND_PORT` (default `GALLERY_PORT + 1`; `GALLERY_PYTHON` picks the interpreter) that Vite
+proxies to, and stops it when the spec ends. They need Playwright's Chromium and the server
+requirements; no other process may use those two ports.
 
 ## Tests
 Service-level tests for the server live in `server/tests`. They build `Lobby`

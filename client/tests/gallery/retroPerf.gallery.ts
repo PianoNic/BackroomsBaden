@@ -1,11 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { test } from "@playwright/test";
+import { test } from "../pointerLockStub";
 import type { PickupKind } from "../../src/net/protocol";
 import { AssetSizer } from "./AssetSizer";
 import { FrameProbe, type FrameMeasurement } from "./FrameProbe";
 import { GameSession } from "./GameSession";
-import { PerfEnvironment } from "./PerfEnvironment";
+import { GalleryEnvironment } from "./GalleryEnvironment";
 import { ViewpointPlanner, type Viewpoint } from "./ViewpointPlanner";
 
 const PARK = -1000;
@@ -26,7 +26,7 @@ class RetroPerfRun {
   readonly skipped: string[] = [];
 
   constructor(
-    private readonly env: PerfEnvironment,
+    private readonly env: GalleryEnvironment,
     private readonly session: GameSession,
     private readonly probe: FrameProbe,
     private readonly planner: ViewpointPlanner,
@@ -37,7 +37,7 @@ class RetroPerfRun {
     console.log(`viewpoint ${view.name}`);
     const { yaw, pitch } = await this.probe.place(view, settleFrames);
     const measurement = view.measure
-      ? await this.probe.measure(PerfEnvironment.WARMUP_FRAMES, PerfEnvironment.SAMPLE_FRAMES)
+      ? await this.probe.measure(GalleryEnvironment.WARMUP_FRAMES, GalleryEnvironment.SAMPLE_FRAMES)
       : null;
     await this.probe.screenshot(this.env.screenshotPath(view.name));
     this.captured.push(view.name);
@@ -130,12 +130,9 @@ class RetroPerfRun {
   }
 }
 
-test("retro art pass perf and screenshots", async ({ browser }) => {
-  const env = new PerfEnvironment();
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 720 },
-    deviceScaleFactor: 1,
-  });
+test("retro art pass perf and screenshots", async ({ context }) => {
+  const env = new GalleryEnvironment();
+  env.prepare();
   const session = new GameSession(context);
   try {
     const init = await session.start();
@@ -156,7 +153,7 @@ test("retro art pass perf and screenshots", async ({ browser }) => {
     await run.visit(planner.junction());
     for (const room of planner.roomViews()) await run.visit(room);
     await run.visit(planner.door(), 30);
-    if (process.env.PERF_BRIGHT === "1") await probe.brighten();
+    if (process.env.GALLERY_BRIGHT === "1") await probe.brighten();
     await run.visitPickups();
     const totals = await probe.sceneTotals();
     await run.visitTeachers();
@@ -164,14 +161,14 @@ test("retro art pass perf and screenshots", async ({ browser }) => {
     await run.visitCorpse();
 
     const clientRoot = fileURLToPath(new URL("../..", import.meta.url));
-    const sizer = new AssetSizer(`${clientRoot}/public`, env.buildDir);
+    const sizer = new AssetSizer(`${clientRoot}/public`);
     const sizes = sizer.measure();
     writeFileSync(env.sizesPath(), sizer.format(sizes));
-    writeFileSync(env.jsonPath(), JSON.stringify({
-      seed: PerfEnvironment.SEED,
-      mapSize: PerfEnvironment.MAP_SIZE,
-      warmupFrames: PerfEnvironment.WARMUP_FRAMES,
-      sampleFrames: PerfEnvironment.SAMPLE_FRAMES,
+    writeFileSync(env.jsonPath("perf"), JSON.stringify({
+      seed: GalleryEnvironment.SEED,
+      mapSize: GalleryEnvironment.MAP_SIZE,
+      warmupFrames: GalleryEnvironment.WARMUP_FRAMES,
+      sampleFrames: GalleryEnvironment.SAMPLE_FRAMES,
       scene: totals,
       sizes,
       viewpoints: run.results,
@@ -180,6 +177,5 @@ test("retro art pass perf and screenshots", async ({ browser }) => {
     }, null, 2));
   } finally {
     await session.close();
-    await context.close();
   }
 });

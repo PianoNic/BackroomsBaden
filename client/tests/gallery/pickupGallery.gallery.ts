@@ -1,10 +1,10 @@
 import { writeFileSync } from "node:fs";
-import { test } from "@playwright/test";
+import { test } from "../pointerLockStub";
 import type { PickupKind } from "../../src/net/protocol";
 import type { DevHandle } from "../../src/core/devTools";
 import { FrameProbe } from "./FrameProbe";
 import { GameSession } from "./GameSession";
-import { PerfEnvironment } from "./PerfEnvironment";
+import { GalleryEnvironment } from "./GalleryEnvironment";
 import { ViewpointPlanner } from "./ViewpointPlanner";
 
 type DevWindow = { nachsitzenDev: DevHandle };
@@ -14,7 +14,7 @@ class PickupGallery {
   readonly report: Record<string, unknown> = {};
 
   constructor(
-    private readonly env: PerfEnvironment,
+    private readonly env: GalleryEnvironment,
     private readonly session: GameSession,
     private readonly planner: ViewpointPlanner,
     private readonly probe: FrameProbe,
@@ -71,12 +71,9 @@ class PickupGallery {
   }
 }
 
-test("pickup gallery", async ({ browser }) => {
-  const env = new PerfEnvironment();
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 720 },
-    deviceScaleFactor: 1,
-  });
+test("pickup gallery", async ({ context }) => {
+  const env = new GalleryEnvironment();
+  env.prepare();
   const session = new GameSession(context);
   try {
     const init = await session.start();
@@ -90,11 +87,10 @@ test("pickup gallery", async ({ browser }) => {
     await gallery.run(init);
     await gallery.crouchClassroom();
     writeFileSync(
-      env.jsonPath().replace("perf.json", "pickups.json"),
+      env.jsonPath("pickups"),
       JSON.stringify(gallery.report, null, 2),
     );
   } finally {
     await session.close();
-    await context.close();
   }
 });

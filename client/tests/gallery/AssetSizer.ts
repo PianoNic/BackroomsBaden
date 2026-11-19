@@ -1,19 +1,17 @@
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-export type AssetSizes = { publicBytes: number; buildBytes: number };
+export type AssetSizes = { publicBytes: number };
 
 export class AssetSizer {
   constructor(
     private readonly publicDir: string,
-    private readonly buildDir: string,
     private readonly excluded = "sounds",
   ) {}
 
   measure(): AssetSizes {
     return {
       publicBytes: this.walk(this.publicDir, true),
-      buildBytes: this.walk(this.buildDir, true),
     };
   }
 
@@ -21,7 +19,6 @@ export class AssetSizer {
     const mib = (bytes: number): string => (bytes / (1024 * 1024)).toFixed(2);
     return [
       `client/public excluding ${this.excluded}: ${sizes.publicBytes} bytes (${mib(sizes.publicBytes)} MiB)`,
-      `build output excluding ${this.excluded}: ${sizes.buildBytes} bytes (${mib(sizes.buildBytes)} MiB)`,
       "",
     ].join("\n");
   }

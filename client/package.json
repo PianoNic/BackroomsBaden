@@ -10,7 +10,8 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test:live": "playwright test --project=live",
-    "test:gallery": "playwright test -c playwright.gallery.config.ts"
+    "test:gallery": "playwright test -c playwright.gallery.config.ts --project=gallery",
+    "test:perf": "playwright test -c playwright.gallery.config.ts --project=perf"
   },
   "dependencies": {
     "@babylonjs/core": "^9.25.0",
