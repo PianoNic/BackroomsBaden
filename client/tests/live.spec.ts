@@ -51,7 +51,7 @@ async function releasePointerLockAndOpenPause(page: Page): Promise<void> {
 async function leaveToTitle(page: Page): Promise<void> {
   await releasePointerLockAndOpenPause(page);
   await page.locator("#pause-overlay").getByRole("button", { name: "LEAVE", exact: true }).click();
-  await expect(page.getByRole("button", { name: "PLAY", exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator("nav.menu").getByRole("button", { name: "PLAY" })).toBeVisible({ timeout: 30_000 });
 }
 
 test("live end-to-end flow against a real server", async ({ browser }) => {
@@ -86,7 +86,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await host.getByRole("button", { name: "SCHLIESSEN", exact: true }).click();
     await expect(host.locator("#info-overlay")).not.toBeAttached();
 
-    await host.getByRole("button", { name: /NEWS/ }).click();
+    await host.locator("nav.menu").getByRole("button", { name: "NEWS" }).click();
     await expect(host.locator(".news-panel")).toBeVisible();
     await expect(host.locator("#news-tab-announcements")).toBeVisible();
     await expect(host.locator("#news-tab-changelog")).toBeVisible();
@@ -94,14 +94,14 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await expect(host.locator("#news-panel-changelog")).toBeVisible();
     await host.locator(".screen-back").click();
 
-    await host.getByRole("button", { name: "SHOP", exact: true }).click();
+    await host.locator("nav.menu").getByRole("button", { name: "SHOP" }).click();
     await expect(host.locator(".bb-cardgrid")).toBeVisible({ timeout: 15_000 });
     await expect(host.locator(".shop-card")).not.toHaveCount(0);
     await host.getByRole("tab", { name: "Titles", exact: true }).click();
     await expect(host.locator(".shop-card")).not.toHaveCount(0);
     await host.locator(".screen-back").click();
 
-    await host.getByRole("button", { name: "OPTIONS", exact: true }).click();
+    await host.locator("nav.menu").getByRole("button", { name: "OPTIONS" }).click();
     await expect(host.locator(".options-nav")).toBeVisible();
     const fovInput = host.locator("input.bb-range").first();
     await fovInput.fill("95");
@@ -142,12 +142,12 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await host.locator(".screen-back").click();
     mark("pack install/use/delete");
 
-    await host.getByRole("button", { name: "TUTORIAL", exact: true }).click();
+    await host.locator("nav.menu").getByRole("button", { name: "TUTORIAL" }).click();
     await expect(host.locator(".tut-item canvas")).toHaveCount(12);
     await host.locator(".screen-back").click();
     mark("tutorial");
 
-    await host.getByRole("button", { name: "PLAY", exact: true }).click();
+    await host.locator("nav.menu").getByRole("button", { name: "PLAY" }).click();
     await host.locator(".create-lobby").click();
     const createLobbyNameInput = host.locator("#create-lobby-name");
     await expect(createLobbyNameInput).toBeFocused();
@@ -179,7 +179,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await expect(host.locator("#shop-overlay")).not.toBeAttached();
 
     await guest.goto("/");
-    await guest.getByRole("button", { name: "PLAY", exact: true }).click();
+    await guest.locator("nav.menu").getByRole("button", { name: "PLAY" }).click();
     const lobbyRow = guest.locator(".lobby-row", { hasText: lobbyName });
     await expect(async () => {
       await guest.locator(".icon-btn").click();
