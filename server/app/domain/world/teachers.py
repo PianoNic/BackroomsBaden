@@ -38,6 +38,9 @@ class TeacherState:
     noise_x: float = 0.0
     noise_z: float = 0.0
     noise_until: float = 0.0
+    seen_x: float = 0.0
+    seen_z: float = 0.0
+    seen_until: float = 0.0
     # BFS-planned waypoint chain (world coords). Empty = needs replanning,
     # or means we're currently in greedy-steering mode (LOS to target).
     path: list[tuple[float, float]] = field(default_factory=list)

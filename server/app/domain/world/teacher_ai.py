@@ -30,6 +30,10 @@ TARGET_DRIFT_CELLS = 2
 DOOR_NO_CAMP_RADIUS = 2.4  # m — teachers won't loiter this close to a door
 
 # Per-ability chase-radius override (defaults to CHASE_RADIUS).
+CHASE_MEMORY_S = 5.0
+
+SEES_THROUGH_WALLS: frozenset[str] = frozenset({"minimap_xray"})
+
 ABILITY_CHASE_RADIUS: dict[str, float] = {
     "taunt_shout":   24.0,  # Englisch — sees you from further
     "minimap_xray":  22.0,  # ICT — networked vision
@@ -83,19 +87,34 @@ def _pick_patrol_target(
 def _pick_target(
     t: TeacherState, player_positions: list[tuple[float, float]],
     hallways: list[Rect], rng: random.Random, doors: list[tuple[float, float]],
-    now: float,
+    now: float, cells: list[int],
 ) -> tuple[float, float]:
-    """Chase the nearest player inside the ability's chase radius; else
-    investigate a heard noise; otherwise keep the current patrol target
-    until we arrive, then roll a fresh one."""
+    """Chase the nearest player the teacher can see inside the ability's chase
+    radius; keep walking to where one was last seen for a few seconds; else
+    investigate a heard noise; otherwise keep the current patrol target until
+    we arrive, then roll a fresh one."""
     radius = ABILITY_CHASE_RADIUS.get(t.ability, CHASE_RADIUS)
-    if player_positions:
+    x_ray = t.ability in SEES_THROUGH_WALLS
+    visible = [
+        p for p in player_positions
+        if distance_squared_xz(p[0], p[1], t.x, t.z) <= radius * radius
+        and (x_ray or line_of_sight(cells, t.x, t.z, p[0], p[1]))
+    ]
+    if visible:
         nearest = min(
-            player_positions,
+            visible,
             key=lambda p: distance_squared_xz(p[0], p[1], t.x, t.z),
         )
-        if distance_squared_xz(nearest[0], nearest[1], t.x, t.z) <= radius * radius:
-            return nearest
+        t.seen_x, t.seen_z = nearest
+        t.seen_until = now + CHASE_MEMORY_S
+        return nearest
+    if t.seen_until > now:
+        if distance_squared_xz(
+            t.seen_x, t.seen_z, t.x, t.z,
+        ) < ARRIVE_DIST * ARRIVE_DIST:
+            t.seen_until = 0.0
+        else:
+            return t.seen_x, t.seen_z
     if t.noise_until > now:
         if distance_squared_xz(
             t.noise_x, t.noise_z, t.x, t.z,
@@ -168,7 +187,7 @@ def step_teacher(
 ) -> None:
     """One AI tick for a single teacher. Picks a target, then either walks
     straight at it (clear LOS) or follows a BFS path around walls."""
-    target = _pick_target(t, player_positions, hallways, rng, doors, now)
+    target = _pick_target(t, player_positions, hallways, rng, doors, now, cells)
     t.tx, t.tz = target
     if line_of_sight(cells, t.x, t.z, target[0], target[1]):
         t.path = []
