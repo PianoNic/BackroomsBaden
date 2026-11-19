@@ -243,11 +243,9 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await expect(guest.locator(".count")).toHaveText("2/8", { timeout: 20_000 });
     mark("both back in lobby");
 
-    const starter = await Promise.any([
-      expect(host.locator(".start-btn")).toBeEnabled({ timeout: 20_000 }).then(() => host),
-      expect(guest.locator(".start-btn")).toBeEnabled({ timeout: 20_000 }).then(() => guest),
-    ]);
-    await starter.locator(".start-btn").click();
+    await expect(host.locator(".start-btn")).toBeEnabled({ timeout: 20_000 });
+    await expect(guest.locator(".start-btn")).toBeDisabled();
+    await host.locator(".start-btn").click();
     await Promise.all([waitForCanvas(host, 180_000), waitForCanvas(guest, 180_000)]);
     mark("round 2 world ready");
 
