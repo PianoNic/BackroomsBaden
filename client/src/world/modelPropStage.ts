@@ -9,6 +9,7 @@ import type { Prop, PropType } from "../net/protocol";
 import type { ModelLibrary } from "../rendering/modelLoader";
 import { group, type Group } from "../rendering/babylon";
 import { ModelMaterialFactory } from "../rendering/modelMaterials";
+import type { ScatteredLight } from "../rendering/scatteredLight";
 import { MANAGER_OWNED_TYPES, MODEL_PROPS, type ModelPropSpec } from "./modelProps";
 
 const modelMaterials = new ModelMaterialFactory();
@@ -82,6 +83,7 @@ export class ModelPropStage {
   constructor(
     _scene: Scene,
     private readonly library: ModelLibrary,
+    private readonly scattered: ScatteredLight | null = null,
   ) {
     this.group = group("modelProps");
   }
@@ -150,7 +152,14 @@ export class ModelPropStage {
         ).copyToArray(matrices, i * 16);
       });
 
+      const worldXZ = new Float32Array(props.length * 2);
+      props.forEach((p, i) => {
+        worldXZ[i * 2] = p.x;
+        worldXZ[i * 2 + 1] = p.z;
+      });
+
       template.thinInstanceSetBuffer("matrix", matrices, 16, true);
+      this.scattered?.register(template, worldXZ);
       template.isPickable = false;
       template.alwaysSelectAsActiveMesh = true;
       template.doNotSyncBoundingInfo = true;
