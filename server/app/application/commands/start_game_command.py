@@ -111,6 +111,7 @@ class StartGameHandler(ICommandHandler[StartGameCommand, None]):
         for p in lobby.conns.values():
             p.x, p.z, p.yaw = spawn.x, spawn.z, spawn.yaw
         lobby.status = "running"
+        lobby.clear_admin_resume_token()
         lobby.had_game = True
         lobby.grace_until = _time.monotonic() + START_GRACE_S
         lobby.round_started_at = _time.monotonic()

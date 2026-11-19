@@ -258,7 +258,10 @@ class PacketDispatcher:
                 # scene.
                 for p in list(lobby.conns.values()):
                     try:
-                        await p.channel.send_json(self._lobby_state_builder.build(lobby, p.id))
+                        state = self._lobby_state_builder.build(lobby, p.id)
+                        if p.id == lobby.admin_id and lobby.admin_resume_token:
+                            state["adminResumeToken"] = lobby.admin_resume_token
+                        await p.channel.send_json(state)
                     except Exception:
                         # Connection died — `ws` cleanup will handle removal.
                         pass

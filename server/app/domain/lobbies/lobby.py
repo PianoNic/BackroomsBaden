@@ -1,6 +1,7 @@
 """Pure domain entities for a lobby. No I/O, no services."""
 from __future__ import annotations
 
+import secrets
 from dataclasses import dataclass, field
 
 from app.application.dtos.world import WorldInit
@@ -34,6 +35,7 @@ class Lobby:
     max_players: int = 8
     password: str | None = None
     admin_id: str | None = None
+    admin_resume_token: str | None = None
     # If None: pick teachers randomly from the full roster.
     # If a list: sample (with replacement) from these image filenames each game
     # — picking the same one repeatedly is allowed and intentional.
@@ -95,3 +97,23 @@ class Lobby:
     corpses: dict[str, tuple[float, float]] = field(default_factory=dict)
     # Active revive channels keyed by reviver id.
     revives: dict[str, Revive] = field(default_factory=dict)
+
+    def issue_admin_resume_token(self) -> str | None:
+        if self.admin_id is None:
+            self.admin_resume_token = None
+            return None
+        self.admin_resume_token = secrets.token_hex(16)
+        return self.admin_resume_token
+
+    def claim_admin(self, player_id: str, token: str | None) -> bool:
+        if not token or self.admin_resume_token is None:
+            return False
+        if not secrets.compare_digest(token, self.admin_resume_token):
+            return False
+        self.admin_resume_token = None
+        self.admin_id = player_id
+        return True
+
+    def clear_admin_resume_token(self) -> None:
+        self.admin_resume_token = None
+

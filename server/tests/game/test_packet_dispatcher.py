@@ -7,7 +7,7 @@ individual handler, which the other tests in this package already cover.
 """
 from __future__ import annotations
 
-from app.application.dtos.packets import LobbySettingsPkt, MovePkt, StartGamePkt
+from app.application.dtos.packets import BackToLobbyPkt, LobbySettingsPkt, MovePkt, StartGamePkt
 from app.presentation.dependencies import game_core
 
 from ..conftest import add_player, make_lobby
@@ -50,3 +50,18 @@ async def test_start_game_ignored_from_non_admin():
     await game_core.dispatcher.dispatch(other.channel, lobby, other, pkt)
 
     assert lobby.status == "waiting"
+
+
+async def test_back_to_lobby_sends_the_resume_token_to_the_admin_only():
+    lobby = make_lobby()
+    lobby.phase = "lost"
+    admin = add_player(lobby, "admin")
+    other = add_player(lobby, "other")
+    lobby.admin_id = admin.id
+
+    await game_core.dispatcher.dispatch(
+        other.channel, lobby, other, BackToLobbyPkt(type="back_to_lobby"),
+    )
+
+    assert admin.channel.json_sent[-1]["adminResumeToken"] == lobby.admin_resume_token
+    assert "adminResumeToken" not in other.channel.json_sent[-1]

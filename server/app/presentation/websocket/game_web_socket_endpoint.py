@@ -101,7 +101,13 @@ async def ws_endpoint(
         me.owned_cosmetics = cosmetic_catalog.default_ids()
         me.equipped_cosmetics = cosmetic_catalog.default_equipped()
     lobby.conns[pid] = me
-    if lobby.admin_id is None:
+    previous_admin = lobby.admin_id
+    if lobby.claim_admin(pid, ws.query_params.get("resume")):
+        if previous_admin not in (None, pid):
+            await game_core.broadcaster.broadcast(
+                lobby, {"type": "lobby_admin_changed", "adminId": pid}, exclude=pid,
+            )
+    elif lobby.admin_id is None:
         lobby.admin_id = pid
 
     await ws.send_json(game_core.lobby_state_builder.build(lobby, pid))
