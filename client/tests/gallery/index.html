@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cosmetics gallery</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+      #mount { position: fixed; inset: 0; }
+      #crosshair { position: fixed; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; pointer-events: none; display: none; }
+      #crosshair::before, #crosshair::after { content: ""; position: absolute; background: #fff; }
+      #crosshair::before { left: 6px; top: 0; width: 2px; height: 14px; }
+      #crosshair::after { left: 0; top: 6px; width: 14px; height: 2px; }
+    </style>
+  </head>
+  <body>
+    <div id="mount"></div>
+    <div id="crosshair"></div>
+    <script type="module" src="./GalleryApp.ts"></script>
+  </body>
+</html>
