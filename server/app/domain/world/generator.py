@@ -9,6 +9,7 @@ from app.domain.world.decorate import decorate
 from app.domain.world.layout import Layout, build_layout
 from app.domain.world.layout_bsp import build_layout as build_layout_bsp
 from app.domain.world.layout_hallway import build_layout as build_layout_hallway
+from app.domain.world.layout_school import build_layout as build_layout_school
 from app.domain.world.layout_tentacle import build_layout as build_layout_tentacle
 from app.domain.world.quests import build_objectives
 from app.domain.world.teachers import TEACHER_ROSTER
@@ -18,6 +19,7 @@ _LAYOUT_BUILDERS = {
     "hallway": build_layout_hallway,
     "bsp": build_layout_bsp,
     "tentacle": build_layout_tentacle,
+    "school": build_layout_school,
 }
 
 
@@ -26,7 +28,7 @@ def generate(
     width: int = DEFAULT_MAP_CELLS,
     height: int = DEFAULT_MAP_CELLS,
     objective_count: int = 6,
-    style: str = "tentacle",
+    style: str = "school",
 ) -> tuple[WorldInit, Layout]:
     rng = random.Random(seed)
     layout = _LAYOUT_BUILDERS[style](rng, width, height)
