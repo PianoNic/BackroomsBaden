@@ -33,10 +33,21 @@ export class TagShots {
     return { name: `${name}_${distance}m`, position, target, crop: false };
   }
 
-  async show(equipped: EquippedCosmetics): Promise<void> {
+  static around(spot: [number, number], distance: number, azimuth: number): CameraShot {
+    const target: Vec3 = [spot[0], TagShots.FOCUS, spot[1]];
+    const eye = TagShots.FOCUS + 0.1;
+    const angle = (azimuth * Math.PI) / 180;
+    const position: Vec3 = [
+      spot[0] + distance * Math.sin(angle), eye, spot[1] - distance * Math.cos(angle),
+    ];
+    return { name: `az${azimuth}_${distance}m`, position, target, crop: false };
+  }
+
+  async show(equipped: EquippedCosmetics, spot: [number, number] = [0, 0]): Promise<void> {
     await this.page.evaluate(
-      (eq) => (window as unknown as { cosmeticGallery: GalleryApi }).cosmeticGallery.showRemote(eq),
-      equipped,
+      ([eq, at]) => (window as unknown as { cosmeticGallery: GalleryApi })
+        .cosmeticGallery.showRemote(eq, 0, at[0], at[1]),
+      [equipped, spot] as const,
     );
   }
 

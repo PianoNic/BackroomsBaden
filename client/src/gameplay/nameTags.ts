@@ -1,4 +1,5 @@
 import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTexture";
+import { Plane } from "@babylonjs/core/Maths/math.plane";
 import type { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { EquippedCosmetics } from "../net/protocol";
 import { Mesh, StandardMaterial, activeScene, group, plane } from "../rendering/babylon";
@@ -6,11 +7,12 @@ import { resolveCosmetic } from "./cosmetics";
 import { NameTagPlacement } from "./nameTagPlacement";
 import { parseTitleRef, rarityColor } from "./cosmeticStyle";
 import { HatSlice } from "./hatSlice";
+import { TagDoorPlanes } from "./tagDoorPlanes";
 import { TitleLegibility } from "./titleLegibility";
 
 const TEX_W = 512;
 const TEX_H = 168;
-const PLANE_W = 2.4;
+export const PLANE_W = 2.4;
 const PLANE_H = PLANE_W * (TEX_H / TEX_W);
 const CLEARANCE = 0.28;
 const FALLBACK_TOP = 1.15;
@@ -27,11 +29,22 @@ type Tag = {
   top: number;
   owner: Mesh | null;
   radii: Map<string, number>;
+  clip: Plane;
+  cellX: number;
+  cellZ: number;
+  clipVersion: number;
 };
 
 export class NameTags {
   readonly group = group("nameTags");
   private readonly tags = new Map<string, Tag>();
+  private doors: TagDoorPlanes | null = null;
+
+  attachDoors(cellSize: number): TagDoorPlanes {
+    this.doors = new TagDoorPlanes(cellSize);
+    for (const tag of this.tags.values()) tag.clipVersion = -1;
+    return this.doors;
+  }
 
   set(id: string, name: string, equipped: EquippedCosmetics, owner: Mesh): void {
     let tag = this.tags.get(id);
@@ -73,6 +86,7 @@ export class NameTags {
         tag.mesh.setEnabled(inRange);
       }
       if (!inRange) continue;
+      this.refreshClip(tag, pos.x, pos.z);
       const placed = NameTagPlacement.place(
         pos.y + tag.top, PLANE_H, CLEARANCE, (bottom) => this.radiusAt(tag, bottom),
       );
@@ -100,6 +114,8 @@ export class NameTags {
     material.emissiveTexture = tex;
     material.disableLighting = true;
     material.backFaceCulling = false;
+    const clip = new Plane(0, 0, 0, TagDoorPlanes.NONE.d);
+    material.clipPlane = clip;
     const mesh = plane(PLANE_W, PLANE_H, material, false, `nameTag_${id}`);
     mesh.billboardMode = Mesh.BILLBOARDMODE_ALL;
     mesh.isPickable = false;
@@ -108,9 +124,24 @@ export class NameTags {
     const tag: Tag = {
       mesh, tex, material, lastKey: "", inRange: false, hiddenByOwner: false,
       top: FALLBACK_TOP, owner: null, radii: new Map(),
+      clip, cellX: 0, cellZ: 0, clipVersion: -1,
     };
     this.tags.set(id, tag);
     return tag;
+  }
+
+  private refreshClip(tag: Tag, x: number, z: number): void {
+    const doors = this.doors;
+    if (!doors) return;
+    const cellX = doors.cellOf(x);
+    const cellZ = doors.cellOf(z);
+    if (cellX === tag.cellX && cellZ === tag.cellZ && doors.version === tag.clipVersion) return;
+    tag.cellX = cellX;
+    tag.cellZ = cellZ;
+    tag.clipVersion = doors.version;
+    const next = doors.planeAt(x, z);
+    tag.clip.normal.set(next.nx, 0, next.nz);
+    tag.clip.d = next.d;
   }
 
   private radiusAt(tag: Tag, bottomY: number): number {

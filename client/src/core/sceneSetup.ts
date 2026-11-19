@@ -82,6 +82,7 @@ export function buildScene(
   const ambientLights = new AmbientLights(ctx.scene);
 
   const remotes = new RemotePlayers(ctx.camera);
+  const tagDoors = remotes.attachDoors(init.grid.cellSize);
   remotes.attachAudio(audioListener);
   for (const p of init.players) remotes.add(p);
 
@@ -140,7 +141,7 @@ export function buildScene(
   );
   const pickups = new Pickups(init.pickups ?? []);
   const lockers = new Lockers(init.lockers ?? []);
-  const doors = new Doors(init.doors ?? [], propColliders);
+  const doors = new Doors(init.doors ?? [], propColliders, tagDoors);
   const toiletStallDoors = new ToiletStallDoors(init.props);
   const fuseBoxes = new FuseBoxes(init.props);
   const inventory = new InventoryHud();

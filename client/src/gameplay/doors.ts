@@ -5,6 +5,7 @@
 import type { DoorInfo } from "../net/protocol";
 import type { InteractTarget } from "../ui/interactPrompt";
 import type { Rect } from "../world/colliders";
+import type { TagDoorPlanes } from "./tagDoorPlanes";
 import { Group, group } from "../rendering/babylon";
 import { mergeChildMeshes } from "../rendering/staticMerge";
 import {
@@ -30,7 +31,9 @@ export class Doors {
   private readonly entries = new Map<string, Entry>();
   private readonly colliders: Rect[];
 
-  constructor(initial: DoorInfo[], colliders: Rect[]) {
+  constructor(
+    initial: DoorInfo[], colliders: Rect[], private readonly tagDoors: TagDoorPlanes | null = null,
+  ) {
     this.colliders = colliders;
     for (const d of initial) this.add(d);
   }
@@ -75,6 +78,7 @@ export class Doors {
       entry.panelRectIn = true;
     }
     this.entries.set(d.id, entry);
+    this.tagDoors?.setDoor(d.id, d.x, d.z, d.yaw, !d.isOpen);
   }
 
   /** Convert a local-space AABB (door-aligned) into a world-space AABB.
@@ -105,6 +109,7 @@ export class Doors {
     const e = this.entries.get(id);
     if (!e) return;
     e.isOpen = isOpen;
+    this.tagDoors?.setDoor(id, e.info.x, e.info.z, e.info.yaw, !isOpen);
     e.target = isOpen ? OPEN_ANGLE : 0;
     if (isOpen && e.panelRectIn) {
       const idx = this.colliders.indexOf(e.panelRect);

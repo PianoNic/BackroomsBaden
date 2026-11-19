@@ -3,7 +3,10 @@ import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { EquippedCosmetics } from "../../src/net/protocol";
 import { AmbientLights, createRenderContext, type RenderContext } from "../../src/rendering/renderer";
-import { box, lambertMaterial, plane } from "../../src/rendering/babylon";
+import { lambertMaterial, plane } from "../../src/rendering/babylon";
+import { buildWorld, type World } from "../../src/world/builder";
+import { Lockers } from "../../src/gameplay/lockers";
+import { Doors } from "../../src/gameplay/doors";
 import { Corpses } from "../../src/gameplay/corpses";
 import { Chairs } from "../../src/gameplay/chairs";
 import { RemotePlayers } from "../../src/gameplay/remotePlayers";
@@ -13,20 +16,24 @@ import { EyeHeight } from "../../src/gameplay/eyeHeight";
 import { ensureCatalog, resolveCosmetic } from "../../src/gameplay/cosmetics";
 import { HatSlice } from "../../src/gameplay/hatSlice";
 import { LeakProbe } from "./LeakProbe";
+import { GalleryLayouts, type Layout } from "./GalleryLayouts";
 
 type Vec3 = [number, number, number];
 
 export type GalleryApi = {
   ready: Promise<void>;
   probe: LeakProbe;
-  showRemote(equipped: EquippedCosmetics, yaw?: number): Promise<void>;
+  showRemote(equipped: EquippedCosmetics, yaw?: number, x?: number, z?: number): Promise<void>;
+  setHidden(hidden: boolean): void;
+  setTagVisible(visible: boolean): void;
+  playerSpot(): [number, number];
   showCorpse(equipped: EquippedCosmetics): Promise<void>;
   showHand(equipped: EquippedCosmetics, eyeHeight: number): Promise<void>;
   eyeHeights: { standing: number; crouching: number };
   setCamera(position: Vec3, target: Vec3): void;
   frames(count: number): Promise<void>;
   bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null; tagForward: number; tagBottomRadius: number } | null;
-  setWall(on: boolean, centerZ?: number): void;
+  setLayout(name: string | null): void;
 };
 
 class CosmeticGallery implements GalleryApi {
@@ -41,7 +48,10 @@ class CosmeticGallery implements GalleryApi {
   private corpses!: Corpses;
   private chairs!: Chairs;
   private lights!: AmbientLights;
-  private wall: Mesh | null = null;
+  private world: World | null = null;
+  private lockers: Lockers | null = null;
+  private doors: Doors | null = null;
+  private layout: Layout | null = null;
   private lastMs = 0;
   private readonly crosshair = document.getElementById("crosshair") as HTMLElement;
 
@@ -95,12 +105,32 @@ class CosmeticGallery implements GalleryApi {
     });
   }
 
-  setWall(on: boolean, centerZ = -3): void {
-    this.wall?.dispose(false, true);
-    this.wall = null;
-    if (!on) return;
-    this.wall = box(8, 3, 0.2, lambertMaterial(0x8a8a78), "galleryWall");
-    this.wall.position.set(0, 1.5, centerZ);
+  setLayout(name: string | null): void {
+    this.world?.group.dispose(false, false);
+    this.lockers?.group.dispose(false, false);
+    this.doors?.group.dispose(false, false);
+    this.doors = null;
+    const tagDoors = this.remotes.attachDoors(GalleryLayouts.CELL);
+    this.world = null;
+    this.lockers = null;
+    this.layout = null;
+    if (!name) return;
+    this.layout = name === "distant" ? GalleryLayouts.distant() : GalleryLayouts.build(name);
+    this.world = buildWorld(this.layout.grid, [], []);
+    if (this.layout.door) this.doors = new Doors([this.layout.door], [], tagDoors);
+    if (this.layout.locker) this.lockers = new Lockers([this.layout.locker]);
+  }
+
+  playerSpot(): [number, number] {
+    return this.layout?.player ?? [0, 0];
+  }
+
+  setHidden(hidden: boolean): void {
+    this.remotes.setVisible("p1", !hidden);
+  }
+
+  setTagVisible(visible: boolean): void {
+    this.remotes.nameTags.setVisible("p1", visible);
   }
 
   bounds(): { min: Vec3; max: Vec3; tag: [number, number] | null; tagForward: number; tagBottomRadius: number } | null {
@@ -162,11 +192,11 @@ class CosmeticGallery implements GalleryApi {
     this.crosshair.style.display = "none";
   }
 
-  async showRemote(equipped: EquippedCosmetics, yaw = 0): Promise<void> {
+  async showRemote(equipped: EquippedCosmetics, yaw = 0, x = 0, z = 0): Promise<void> {
     await this.ready;
     this.clearAll();
     this.remotes.add({
-      id: "p1", color: CosmeticGallery.BODY_COLOR, x: 0, z: 0, yaw,
+      id: "p1", color: CosmeticGallery.BODY_COLOR, x, z, yaw,
       equipped, name: "Testschueler",
     });
     await this.load(equipped);

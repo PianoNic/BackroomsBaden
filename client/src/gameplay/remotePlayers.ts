@@ -18,6 +18,7 @@ import { resolveCosmetic } from "./cosmetics";
 import { bodyColor } from "./cosmeticStyle";
 import { NameTags } from "./nameTags";
 import { CosmeticLoadout } from "./cosmeticLoadout";
+import type { TagDoorPlanes } from "./tagDoorPlanes";
 
 const Y = 0.85;
 const STEP_DISTANCE = 1.1;
@@ -63,6 +64,10 @@ export class RemotePlayers {
 
   constructor(private readonly camera: FreeCamera) {
     this.group.add(this.nameTags.group);
+  }
+
+  attachDoors(cellSize: number): TagDoorPlanes {
+    return this.nameTags.attachDoors(cellSize);
   }
 
   /** Optional: attaching a listener enables spatial footsteps. */
