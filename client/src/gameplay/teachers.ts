@@ -9,6 +9,7 @@ import { distanceSquaredXZ, withinRadiusXZ } from "../core/geom";
 import { resolveTeacherImage } from "../core/texturePacks";
 import { PositionalSound, type SpatialListener } from "../core/spatialAudio";
 import { activeScene, color3, group, plane } from "../rendering/babylon";
+import { RetroTextureStyle } from "../rendering/retroTextureStyle";
 
 const SPRITE_HEIGHT = 1.9;
 const SPRITE_ASPECT = 3 / 4;
@@ -68,8 +69,8 @@ export class Teachers {
   }
 
   private spawn(t: TeacherInfo): void {
-    const tex = new Texture(
-      resolveTeacherImage(t.ability, -1, `/teachers/${t.image}`), activeScene(),
+    const tex = RetroTextureStyle.load(
+      resolveTeacherImage(t.ability, -1, `/teachers/${t.image}`),
     );
     tex.hasAlpha = true;
     tex.uRotationCenter = 0.5;

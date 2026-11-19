@@ -51,7 +51,7 @@ PROP_SPECS: dict[str, PropSpec] = {
     "urinal":            PropSpec((1, 1), _WALL),
     # toilet_stall: shell 1.0 x 1.0 → 2 x 2
     "toilet_stall":      PropSpec((2, 2), _WALL),
-    # bookshelf: Shelf_01 (Poly Haven) 1.003 x 0.257 → 2 x 1
+    # bookshelf: book_case_small (PSX office pack) 0.83 x 0.41 → 2 x 1
     "bookshelf":         PropSpec((2, 1), _WALL),
     # cupboard: body 1.2 x 0.5 → 3 x 1
     "cupboard":          PropSpec((3, 1), _WALL),
@@ -102,7 +102,7 @@ PROP_SPECS: dict[str, PropSpec] = {
     # plant: foliage r=0.32 (diam 0.64) → 2 x 2
     "plant":             PropSpec((2, 2), _CORNER),
 
-    # side_table: side_table_01 (Poly Haven) 0.550 x 0.450, offers a layer for stacking props.
+    # side_table: file_cabinet_smallest (PSX office pack) 0.49 x 0.53, offers a layer for stacking props.
     "side_table":        PropSpec((2, 1), _CENTER, offers_layer="table_top"),
     # printer: 0.55 x 0.5 body, stacks on a side_table's table_top layer.
     "printer":           PropSpec((1, 1), _ONTOP, requires_layer="table_top"),

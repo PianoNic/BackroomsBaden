@@ -1,74 +1,11 @@
-/** Cafeteria/break-room kitchen appliances: vending machine, coffee
- *  machine, microwave (stacks on counter), counter (offers counter_top).
+/** Cafeteria/break-room kitchen appliances: coffee machine, microwave
+ *  (stacks on counter), counter (offers counter_top).
  *  All wall props face local -Z per the project convention.
  *
  *  Re-exported by `appliances.ts`; kept here so each file fits the size
  *  budget. */
-import { basicMaterial, box, cylinder, group, lambertMaterial, plane } from "../../rendering/babylon";
+import { box, cylinder, group, lambertMaterial, plane } from "../../rendering/babylon";
 import { Basic, M, type Builder } from "./_common";
-
-export const buildVendingMachine: Builder = (prop) => {
-  const g = group();
-  const body = box(1.0, 2.0, 0.65, M(0xa01818));
-  body.position.y = 1.0;
-  g.add(body);
-  const frame = box(0.86, 1.30, 0.05, M(0x141416));
-  frame.position.set(0, 1.30, -0.331);
-  g.add(frame);
-  const backlight = plane(0.80, 1.22, Basic(0xf6d77a));
-  backlight.position.set(0, 1.30, -0.357);
-  g.add(backlight);
-  const colors = [0x3a8a4a, 0xe8e8d0, 0xd03030, 0x1f6ec8, 0xe8c44a];
-  const seed = ((prop.x * 13.7 + prop.z * 29.1) | 0) >>> 0;
-  for (let row = 0; row < 3; row++) {
-    const shelf = box(0.80, 0.02, 0.02, M(0x303034));
-    shelf.position.set(0, 0.78 + row * 0.36, -0.365);
-    g.add(shelf);
-    for (let col = 0; col < 5; col++) {
-      const c = colors[(seed + row * 5 + col) % colors.length];
-      const isCan = ((seed >> (row + col)) & 1) === 1;
-      const bottle = cylinder(0.055, 0.055, isCan ? 0.18 : 0.24, 8, M(c));
-      bottle.position.set(-0.32 + col * 0.16, 0.90 + row * 0.36, -0.36);
-      g.add(bottle);
-      if (!isCan) {
-        const cap = cylinder(0.04, 0.04, 0.04, 6, M(0x303034));
-        cap.position.set(-0.32 + col * 0.16, 1.04 + row * 0.36, -0.36);
-        g.add(cap);
-      }
-    }
-  }
-  const glassMat = basicMaterial(0x6ad4f0);
-  glassMat.alpha = 0.18;
-  const glass = plane(0.86, 1.30, glassMat);
-  glass.position.set(0, 1.30, -0.365);
-  g.add(glass);
-  const brand = box(1.0, 0.18, 0.03, M(0xf6f6f4));
-  brand.position.set(0, 1.90, -0.34);
-  g.add(brand);
-  const brandAccent = plane(0.94, 0.10, Basic(0xc81818));
-  brandAccent.position.set(0, 1.90, -0.356);
-  g.add(brandAccent);
-  const panel = box(0.24, 1.10, 0.04, M(0x202024));
-  panel.position.set(0.36, 0.85, -0.331);
-  g.add(panel);
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 3; c++) {
-      const btn = box(0.045, 0.045, 0.02, M(0x4a4a52));
-      btn.position.set(0.30 + c * 0.06, 1.20 - r * 0.07, -0.355);
-      g.add(btn);
-    }
-  }
-  const coinSlot = box(0.10, 0.02, 0.02, M(0x101012));
-  coinSlot.position.set(0.36, 0.90, -0.355);
-  g.add(coinSlot);
-  const tray = box(0.86, 0.20, 0.04, M(0x141416));
-  tray.position.set(0, 0.25, -0.331);
-  g.add(tray);
-  const trayLip = box(0.78, 0.04, 0.06, M(0x303034));
-  trayLip.position.set(0, 0.18, -0.345);
-  g.add(trayLip);
-  return g;
-};
 
 export const buildCoffeeMachine: Builder = () => {
   const g = group();

@@ -8,6 +8,7 @@
 import type { Prop } from "../net/protocol";
 import type { InteractTarget } from "../ui/interactPrompt";
 import { Group, box, group } from "../rendering/babylon";
+import { materials } from "../rendering/materials";
 import { M, mulberry32, seedFromPos } from "../world/propBuilders/_common";
 
 const OPEN_ANGLE = -Math.PI / 2.4;     // ~75° swing out toward the room
@@ -55,10 +56,10 @@ export class ToiletStallDoors {
     const pivot = group("stallDoorPivot");
     pivot.position.set(HINGE_X, DOOR_Y, HINGE_Z);
 
-    const door = box(DOOR_W, DOOR_H, 0.04, M(0xb8a070));
+    const door = box(DOOR_W, DOOR_H, 0.04, materials.stallDoor);
     door.position.set(-DOOR_W / 2, 0, 0);
     pivot.add(door);
-    const inset = box(0.65, 1.05, 0.04, M(0x8a7a50));
+    const inset = box(0.65, 1.05, 0.04, materials.stallDoorInset);
     inset.position.set(-DOOR_W / 2, 0, 0.001);
     pivot.add(inset);
     const latch = box(0.06, 0.04, 0.03, M(0xb8b8c0));

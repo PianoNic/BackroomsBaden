@@ -5,6 +5,7 @@ import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
 import { MeshoptCompression } from "@babylonjs/core/Meshes/Compression/meshoptCompression";
 import type { PickupKind, PropType } from "../net/protocol";
 import { MODEL_PROPS, PICKUP_MODELS } from "../world/modelProps";
+import { RetroTextureStyle } from "./retroTextureStyle";
 
 MeshoptCompression.Configuration = { decoder: { url: "/decoders/meshopt_decoder.js" } };
 
@@ -33,6 +34,7 @@ export class ModelLibrary {
         });
 
     const tracked = promise.then((container) => {
+      if (container) RetroTextureStyle.applyToContainer(container);
       this.resolved.set(type, container);
       return container;
     });
@@ -56,6 +58,7 @@ export class ModelLibrary {
       });
 
     const tracked = promise.then((container) => {
+      if (container) RetroTextureStyle.applyToContainer(container);
       this.pickupResolved.set(kind, container);
       return container;
     });

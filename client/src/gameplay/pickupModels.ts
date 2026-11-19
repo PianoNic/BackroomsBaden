@@ -10,6 +10,7 @@ import {
   activeScene, basicMaterial, box, cone, cylinder, disc, group, lambertMaterial, plane, sphere,
 } from "../rendering/babylon";
 import { activeModelLibrary } from "../rendering/modelLoader";
+import { RetroTextureStyle } from "../rendering/retroTextureStyle";
 import { normalizeModelTemplate } from "../world/modelPropStage";
 import { PICKUP_MODELS } from "../world/modelProps";
 
@@ -28,8 +29,7 @@ function buildMedkit(): Group {
 let _labelTex: Texture | null = null;
 function labelTexture(): Texture {
   if (!_labelTex) {
-    _labelTex = new Texture("/potion-label.jpg", activeScene());
-    _labelTex.anisotropicFilteringLevel = 4;
+    _labelTex = RetroTextureStyle.load("/potion-label.jpg");
   }
   return _labelTex;
 }

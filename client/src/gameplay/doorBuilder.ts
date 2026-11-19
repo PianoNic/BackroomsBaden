@@ -19,7 +19,7 @@ export const DOORWAY_X = DOOR_W / 2 + FRAME_T;
 /** Build the frame (posts + lintel) and the hinged panel. Returns the
  *  pivot Group so the caller can rotate it for opening/closing. */
 export function buildFrameAndPanel(root: Group): Group {
-  const frameMat = M(0x8a7a5a);
+  const frameMat = materials.doorFrame;
   const leftPost = box(FRAME_T, FRAME_TOP_Y, FRAME_T, frameMat);
   leftPost.position.set(-DOOR_W / 2 - FRAME_T / 2, FRAME_TOP_Y / 2, 0);
   root.add(leftPost);
@@ -33,11 +33,11 @@ export function buildFrameAndPanel(root: Group): Group {
   // Hinge pivot on the LEFT edge of the doorway (local -x).
   const pivot = group("doorPivot");
   pivot.position.set(-DOOR_W / 2, 0, 0);
-  const panel = box(DOOR_W, DOOR_H, DOOR_T, M(0xc09060));
+  const panel = box(DOOR_W, DOOR_H, DOOR_T, materials.doorPanel);
   panel.position.set(DOOR_W / 2, DOOR_H / 2, 0);
   pivot.add(panel);
   // Inset detail (two recessed rectangles for a school-door look)
-  const inset = M(0xa07040);
+  const inset = materials.doorInset;
   for (let i = 0; i < 2; i++) {
     const r = box(DOOR_W * 0.7, DOOR_H * 0.35, DOOR_T * 0.4, inset);
     r.position.set(DOOR_W / 2, DOOR_H * 0.30 + i * DOOR_H * 0.40, DOOR_T * 0.55);

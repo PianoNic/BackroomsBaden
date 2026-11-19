@@ -2,8 +2,8 @@ import type { RoomArchetype } from "../world/rooms";
 
 export const AMBIENCE = {
   tone: {
-    exposure: 0.78,
-    contrast: 1.28,
+    exposure: 1.2,
+    contrast: 1.1,
     saturation: 62,
     shadowsHue: 150,
     shadowsDensity: 34,
@@ -13,23 +13,25 @@ export const AMBIENCE = {
     highlightsDensity: 16,
   },
   vignette: {
-    weight: 2.8,
+    weight: 1.9,
     stretch: 0.35,
     color: 0x05060a,
     breathHz: 0.08,
     breathAmount: 0.5,
-    chaseWeight: 5.2,
+    chaseWeight: 4.6,
   },
   fog: {
     color: 0x11150e,
-    density: 0.085,
+    start: 6,
+    end: 28,
     breathHz: 0.05,
-    breathAmount: 0.006,
-    chaseDensity: 0.088,
+    breathAmount: 1.2,
+    chaseEnd: 20,
     lerp: 1.6,
   },
   ambientLight: {
-    skyColor: 0xb7b3a0,
+    skyColor: 0xddd9c2,
+    groundColor: 0x8d8974,
     intensity: 1.0,
     minFactor: 0.14,
     radius: 12,
@@ -47,10 +49,6 @@ export const AMBIENCE = {
     blackoutMinS: 1.0,
     blackoutMaxS: 3.0,
     blackoutRadius: 14,
-  },
-  surfaces: {
-    propSpecularColor: 0x0a0a0a,
-    propSpecularPower: 16,
   },
   cues: {
     heartPulseAmount: 0.09,
@@ -87,7 +85,7 @@ export const AMBIENCE = {
   materials: {
     dadoRail: {
       category: "floor_wood",
-      tint: 0x4f3a24,
+      tint: 0x6b6d8b,
     },
     decal: {
       category: "decal_leak",
@@ -98,39 +96,39 @@ export const AMBIENCE = {
     },
     rooms: {
       classroom: {
-        wall: "wall_plaster_cream", wallTint: 0x9d9179,
+        wall: "wall_plaster_cream", wallTint: 0xfff5cf,
         wallRepeatU: 1, wallRepeatV: 1.5,
-        dado: { category: "dado_tile_green", tint: 0x1e2a22 },
+        dado: { category: "dado_tile_green", tint: 0x89b394 },
         dadoHeight: 1.0,
-        floor: "floor_lino", floorTint: 0x787158,
+        floor: "floor_lino", floorTint: 0xa59770,
         floorRepeatU: 1, floorRepeatV: 1,
         ceiling: "ceiling_tile", ceilingTint: 0x847d5a,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
       },
       hallway: {
-        wall: "wall_plaster_cream", wallTint: 0x998d75,
+        wall: "wall_plaster_cream", wallTint: 0xfaeec8,
         wallRepeatU: 1, wallRepeatV: 1.5,
-        dado: { category: "dado_tile_green", tint: 0x1e2a22 },
+        dado: { category: "dado_tile_green", tint: 0x89b394 },
         dadoHeight: 1.0,
-        floor: "floor_terrazzo", floorTint: 0x817e75,
+        floor: "floor_terrazzo", floorTint: 0xf9ffff,
         floorRepeatU: 1, floorRepeatV: 1,
         ceiling: "ceiling_tile", ceilingTint: 0x847d5a,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
       },
       toilet: {
-        wall: "wall_tile_white", wallTint: 0x8f948c,
+        wall: "wall_tile_white", wallTint: 0xd2dace,
         wallRepeatU: 1, wallRepeatV: 1.5,
-        dado: { category: "dado_tile_green", tint: 0x1e2a22 },
+        dado: { category: "dado_tile_green", tint: 0x89b394 },
         dadoHeight: 1.0,
-        floor: "floor_lino", floorTint: 0x766e5d, floorSheen: true,
+        floor: "floor_lino", floorTint: 0xa29376,
         floorRepeatU: 1, floorRepeatV: 1,
-        ceiling: "ceiling_plaster", ceilingTint: 0x817f75,
+        ceiling: "ceiling_plaster", ceilingTint: 0xefeee0,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
       },
       cafeteria: {
-        wall: "wall_plaster_plain", wallTint: 0x87877d,
+        wall: "wall_plaster_plain", wallTint: 0xe7e9da,
         wallRepeatU: 1, wallRepeatV: 1.5,
-        floor: "floor_stone_tile", floorTint: 0x837f72, floorSheen: true,
+        floor: "floor_stone_tile", floorTint: 0xf4ffff,
         floorRepeatU: 1, floorRepeatV: 1,
         ceiling: "ceiling_tile", ceilingTint: 0x847d5a,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
@@ -138,37 +136,37 @@ export const AMBIENCE = {
       chemistry_lab: {
         wall: "wall_tile_hex", wallTint: 0x878a86,
         wallRepeatU: 1, wallRepeatV: 1.5,
-        floor: "floor_terrazzo_dark", floorTint: 0x484a4d, floorSheen: true,
+        floor: "floor_terrazzo_dark", floorTint: 0xffffff,
         floorRepeatU: 1, floorRepeatV: 1,
         ceiling: "ceiling_tile", ceilingTint: 0x7f7c62,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
       },
       gym: {
-        wall: "wall_plaster_plain", wallTint: 0x7f7c6c,
+        wall: "wall_plaster_plain", wallTint: 0xd9d6bc,
         wallRepeatU: 1, wallRepeatV: 1.5,
-        floor: "floor_wood", floorTint: 0x6d502e,
+        floor: "floor_wood", floorTint: 0x9397b2,
         floorRepeatU: 1, floorRepeatV: 1,
-        ceiling: "ceiling_plaster", ceilingTint: 0x7c7d74,
+        ceiling: "ceiling_plaster", ceilingTint: 0xe5ebde,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
       },
       janitor_room: {
-        wall: "wall_concrete", wallTint: 0x5c5a54,
+        wall: "wall_concrete", wallTint: 0x92958f,
         wallRepeatU: 1, wallRepeatV: 1.5,
-        floor: "wall_concrete", floorTint: 0x52514b,
+        floor: "wall_concrete", floorTint: 0x828680,
         floorRepeatU: 1, floorRepeatV: 1,
-        ceiling: "ceiling_plaster", ceilingTint: 0x6d6c64,
+        ceiling: "ceiling_plaster", ceilingTint: 0xcacbbf,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
       },
       server_room: {
-        wall: "wall_concrete", wallTint: 0x646768,
+        wall: "wall_concrete", wallTint: 0x9fabb1,
         wallRepeatU: 1, wallRepeatV: 1.5,
-        floor: "floor_lino", floorTint: 0x52565a,
+        floor: "floor_lino", floorTint: 0x707372,
         floorRepeatU: 1, floorRepeatV: 1,
-        ceiling: "ceiling_plaster", ceilingTint: 0x686b6c,
+        ceiling: "ceiling_plaster", ceilingTint: 0xc0c9ce,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
       },
       teacher_room: {
-        wall: "wall_plaster_cream", wallTint: 0xa09479,
+        wall: "wall_plaster_cream", wallTint: 0xfffacf,
         wallRepeatU: 1, wallRepeatV: 1.5,
         floor: "floor_carpet", floorTint: 0x463b22,
         floorRepeatU: 1, floorRepeatV: 1,
@@ -190,7 +188,6 @@ export type RoomMaterialConfig = {
   dadoHeight?: number;
   floor: string;
   floorTint: number;
-  floorSheen?: true;
   floorRepeatU: number;
   floorRepeatV: number;
   ceiling: string;

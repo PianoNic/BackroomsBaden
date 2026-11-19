@@ -1,15 +1,10 @@
-import { mkdirSync } from "node:fs";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
 import type { BrowserContext, Page } from "@playwright/test";
 import type { CatalogItem } from "../../src/net/protocol";
 import { CatalogDump } from "./CatalogDump";
+import { GalleryEnvironment } from "./GalleryEnvironment";
 
 export class GallerySession {
-  readonly outDir = join(
-    process.env.GALLERY_OUT ?? join(tmpdir(), "nachsitzen-gallery"),
-    process.env.GALLERY_ROUND ?? "round",
-  );
+  private readonly env = new GalleryEnvironment();
   private readonly errors: string[] = [];
   private sheetPage: Page | null = null;
 
@@ -19,8 +14,8 @@ export class GallerySession {
   ) {}
 
   async open(): Promise<CatalogItem[]> {
-    mkdirSync(this.outDir, { recursive: true });
-    const catalog = new CatalogDump().run(join(this.outDir, "catalog.json"));
+    this.env.prepare();
+    const catalog = new CatalogDump().run(this.env.catalogFile());
     await this.page.route("**/shop/catalog", (route) => route.fulfill({ json: catalog }));
     this.page.on("pageerror", (err) => this.errors.push(err.message));
     this.page.on("console", (msg) => {
@@ -32,6 +27,10 @@ export class GallerySession {
       .cosmeticGallery.ready);
     this.sheetPage = await this.context.newPage();
     return catalog;
+  }
+
+  get outDir(): string {
+    return this.env.outDir;
   }
 
   sheets(): Page {

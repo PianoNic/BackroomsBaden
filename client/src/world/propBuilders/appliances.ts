@@ -5,33 +5,13 @@
 import { box, group, plane } from "../../rendering/babylon";
 import { Basic, M, offsetFromWall, type Builder } from "./_common";
 import {
-  buildCoffeeMachine, buildCounter, buildMicrowave, buildVendingMachine,
+  buildCoffeeMachine, buildCounter, buildMicrowave,
 } from "./_appliancesCafeteria";
-
-// Tall white fridge, two-door look. Wall prop; body depth 0.65 → wrap.
-const buildFridge: Builder = () => {
-  const g = group();
-  const body = box(0.75, 1.75, 0.65, M(0xeeeeea));
-  body.position.y = 0.875;
-  g.add(body);
-  const gap = box(0.76, 0.03, 0.66, M(0x404048));
-  gap.position.y = 1.05;
-  g.add(gap);
-  for (const dy of [0.45, 1.45]) {
-    const handle = box(0.03, 0.35, 0.04, M(0x808088));
-    handle.position.set(0.30, dy, -0.34);
-    g.add(handle);
-  }
-  const vent = box(0.5, 0.04, 0.02, M(0x303034));
-  vent.position.set(0, 0.06, -0.34);
-  g.add(vent);
-  return g;
-};
 
 // Small office printer that sits ON a side_table (table_top y ≈ 0.75).
 const buildPrinter: Builder = () => {
   const g = group();
-  const T = 0.75;
+  const T = 0.71;
   const base = box(0.45, 0.22, 0.38, M(0x2a2a2e));
   base.position.y = T + 0.11;
   g.add(base);
@@ -99,11 +79,9 @@ const buildSofa: Builder = () => {
 };
 
 export const APPLIANCE_BUILDERS: Record<string, Builder> = {
-  vending_machine: offsetFromWall(buildVendingMachine, 0.305),
   coffee_machine: offsetFromWall(buildCoffeeMachine, 0.205),
   microwave: buildMicrowave,
   counter: offsetFromWall(buildCounter, 0.32),
-  fridge: offsetFromWall(buildFridge, 0.325),
   printer: buildPrinter,
   side_table: buildSideTable,
   sofa: offsetFromWall(buildSofa, 0.425),

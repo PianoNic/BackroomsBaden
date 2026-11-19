@@ -3,7 +3,7 @@ import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { Light } from "../net/protocol";
 import { AMBIENCE } from "./ambience";
 
-export const SCATTER_MIN = 0.45;
+export const SCATTER_MIN = 0.74;
 export const SCATTER_RADIUS = 9;
 export const BLACKOUT_FACTOR = 0.25;
 

@@ -75,7 +75,7 @@ export function buildScene(
   let modelStage: ModelPropStage | null = null;
   let modelsReady: Promise<void> = Promise.resolve();
   if (models) {
-    modelStage = new ModelPropStage(ctx.scene, models);
+    modelStage = new ModelPropStage(ctx.scene, models, world.scattered);
     const { immediate, deferred } = bundlesFor(init.grid, init.props, init.spawn);
     modelsReady = modelStage.place(init.props, immediate, deferred);
   }

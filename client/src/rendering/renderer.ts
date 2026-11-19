@@ -31,7 +31,7 @@ export class AmbientLights {
 
     this.ambient = new HemisphericLight("ambient", up, scene);
     this.ambient.diffuse = sky.clone();
-    this.ambient.groundColor = sky.clone();
+    this.ambient.groundColor = color3(AMBIENCE.ambientLight.groundColor);
     this.ambient.specular = Color3.Black();
     this.current = AMBIENCE.ambientLight.intensity;
     this.ambient.intensity = this.current;
