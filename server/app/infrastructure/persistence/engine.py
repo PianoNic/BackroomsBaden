@@ -44,6 +44,13 @@ class DatabaseEngine(IDatabaseAvailability):
         except Exception as exc:  # noqa: BLE001 — DB is optional, never fatal
             self._ready = False
             log.warning("Database unavailable — accounts/persistence disabled: %s", exc)
+            await self._stop_retrying()
+
+    async def _stop_retrying(self) -> None:
+        try:
+            await self._database.aio_close()
+        except Exception as exc:  # noqa: BLE001 — closing a pool that never opened is fine
+            log.debug("Closing the unreachable database pool failed: %s", exc)
 
     async def disconnect(self) -> None:
         if self._ready:
