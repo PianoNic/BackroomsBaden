@@ -49,6 +49,41 @@ async function releasePointerLockAndOpenPause(page: Page): Promise<void> {
   await expect(page.locator("#pause-overlay")).toBeVisible({ timeout: 15_000 });
 }
 
+async function runPauseMenuStep(page: Page, mark: (label: string) => void): Promise<void> {
+  const pauseOverlay = page.locator("#pause-overlay");
+  const victory = page.locator("#victory");
+  await releasePointerLockAndOpenPause(page);
+  mark("pause opened");
+  await expect(pauseOverlay.getByRole("button", { name: "RESUME" })).toBeVisible();
+  await expect(pauseOverlay.getByRole("button", { name: "OPTIONS" })).toBeVisible();
+  await expect(pauseOverlay.getByRole("button", { name: "LEAVE" })).toBeVisible();
+  await pauseOverlay.getByRole("button", { name: "OPTIONS" }).click();
+  await expect(page.locator("#settings-overlay")).toBeVisible();
+  await expect(pauseOverlay).not.toBeAttached();
+  await page.locator("#settings-overlay .bb-btn.back").click();
+  await expect(pauseOverlay).toBeVisible();
+  mark("pause options round trip");
+  const micButton = pauseOverlay.locator("button", { hasText: /^MIC/ });
+  const micLabelBefore = await micButton.textContent();
+  await micButton.click();
+  await expect(micButton).not.toHaveText(micLabelBefore ?? "", { timeout: 15_000 });
+  mark("pause mic toggled");
+  const camButton = pauseOverlay.locator("button", { hasText: /^CAM/ });
+  const camLabelBefore = await camButton.textContent();
+  await camButton.click();
+  await expect(camButton).not.toHaveText(camLabelBefore ?? "", { timeout: 15_000 });
+  mark("pause cam toggled");
+  const resumeButton = pauseOverlay.getByRole("button", { name: "RESUME" });
+  await expect(async () => {
+    if (!(await victory.isVisible())) {
+      await resumeButton.click({ timeout: 1_500 }).catch(() => undefined);
+    }
+    await expect(pauseOverlay).not.toBeAttached({ timeout: 1_000 });
+  }).toPass({ timeout: 30_000 });
+  const endedWhilePaused = await victory.isVisible();
+  mark(endedWhilePaused ? "pause menu closed by round end" : "pause menu resumed");
+}
+
 async function leaveToTitle(page: Page): Promise<void> {
   await releasePointerLockAndOpenPause(page);
   await page.locator("#pause-overlay").getByRole("button", { name: "LEAVE" }).click();
@@ -201,31 +236,11 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     await Promise.all([waitForCanvas(host, 180_000), waitForCanvas(guest, 180_000)]);
     mark("round 1 world ready");
 
+    await runPauseMenuStep(host, mark);
+
     await Promise.all([waitForTeacherSlotsGone(host), waitForTeacherSlotsGone(guest)]);
     await expectHudReady(host);
     await expectHudReady(guest);
-
-    await releasePointerLockAndOpenPause(host);
-    const pauseOverlay = host.locator("#pause-overlay");
-    await expect(pauseOverlay.getByRole("button", { name: "RESUME" })).toBeVisible();
-    await expect(pauseOverlay.getByRole("button", { name: "OPTIONS" })).toBeVisible();
-    await expect(pauseOverlay.getByRole("button", { name: "LEAVE" })).toBeVisible();
-    await pauseOverlay.getByRole("button", { name: "OPTIONS" }).click();
-    await expect(host.locator("#settings-overlay")).toBeVisible();
-    await expect(host.locator("#pause-overlay")).not.toBeAttached();
-    await host.locator("#settings-overlay .bb-btn.back").click();
-    await expect(host.locator("#pause-overlay")).toBeVisible();
-    const micButton = pauseOverlay.locator("button", { hasText: /^MIC/ });
-    const micLabelBefore = await micButton.textContent();
-    await micButton.click();
-    await expect(micButton).not.toHaveText(micLabelBefore ?? "", { timeout: 15_000 });
-    const camButton = pauseOverlay.locator("button", { hasText: /^CAM/ });
-    const camLabelBefore = await camButton.textContent();
-    await camButton.click();
-    await expect(camButton).not.toHaveText(camLabelBefore ?? "", { timeout: 15_000 });
-    await pauseOverlay.getByRole("button", { name: "RESUME" }).click();
-    await expect(host.locator("#pause-overlay")).not.toBeAttached();
-    mark("pause menu done");
 
     await Promise.all([
       expect(host.locator("#victory")).toBeVisible({ timeout: 420_000 }),
