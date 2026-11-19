@@ -4,6 +4,9 @@ from app.application.dtos.shop_state_dto import ShopStateDto
 from app.application.queries.get_shop_state_query import GetShopStateHandler, GetShopStateQuery
 from app.domain.cosmetics.cosmetic_catalog import CosmeticCatalog
 from app.infrastructure.persistence.repositories.peewee_account_repository import PeeweeAccountRepository
+from app.infrastructure.persistence.repositories.peewee_achievement_repository import (
+    PeeweeAchievementRepository,
+)
 from app.infrastructure.persistence.repositories.peewee_cosmetic_repository import PeeweeCosmeticRepository
 from app.infrastructure.persistence.repositories.peewee_profile_repository import PeeweeProfileRepository
 from app.infrastructure.security.hmac_token_service import HmacTokenService
@@ -157,3 +160,48 @@ async def test_equip_cosmetic_success_has_no_reason(account_engine):
     assert result.reason is None
     equipped = await cosmetics.get_equipped(account_id)
     assert equipped["body"] == "body_hazmat"
+
+
+async def test_buy_unlock_item_is_rejected_without_coin_change(account_engine):
+    catalog = CosmeticCatalog()
+    cosmetics = PeeweeCosmeticRepository(account_engine, catalog)
+    account_id, session_token, token_service = await _signed_in_account(account_engine)
+    profiles = PeeweeProfileRepository(account_engine)
+    await profiles.apply_round_rewards(account_id, 0, 500)
+    handler = BuyCosmeticHandler(token_service, cosmetics, catalog, account_engine)
+
+    result = await handler.handle(BuyCosmeticCommand(session_token, "backpack_sani"))
+
+    assert (result.ok, result.reason) == (False, "locked")
+    assert (await profiles.get(account_id)).coins == 500
+    assert "backpack_sani" not in await cosmetics.get_owned(account_id)
+
+
+async def test_achievement_unlocked_item_is_owned_and_equippable(account_engine):
+    catalog = CosmeticCatalog()
+    cosmetics = PeeweeCosmeticRepository(account_engine, catalog)
+    account_id, session_token, token_service = await _signed_in_account(account_engine)
+    equip = EquipCosmeticHandler(token_service, cosmetics, catalog, account_engine)
+
+    before = await equip.handle(EquipCosmeticCommand(session_token, "backpack", "backpack_sani"))
+    assert (before.ok, before.reason) == (False, "unowned")
+
+    await PeeweeAchievementRepository(account_engine).unlock_new(account_id, ["ach_medic"])
+
+    assert "backpack_sani" in await cosmetics.get_owned(account_id)
+    after = await equip.handle(EquipCosmeticCommand(session_token, "backpack", "backpack_sani"))
+    assert after.ok is True
+    assert (await cosmetics.get_equipped(account_id))["backpack"] == "backpack_sani"
+
+
+async def test_equip_new_category_validates_category_and_ownership(account_engine):
+    catalog = CosmeticCatalog()
+    cosmetics = PeeweeCosmeticRepository(account_engine, catalog)
+    _account_id, session_token, token_service = await _signed_in_account(account_engine)
+    equip = EquipCosmeticHandler(token_service, cosmetics, catalog, account_engine)
+
+    wrong = await equip.handle(EquipCosmeticCommand(session_token, "mask", "backpack_schul"))
+    unowned = await equip.handle(EquipCosmeticCommand(session_token, "backpack", "backpack_schul"))
+
+    assert (wrong.ok, wrong.reason) == (False, "invalid")
+    assert (unowned.ok, unowned.reason) == (False, "unowned")

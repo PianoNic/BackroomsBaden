@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
 
 from mediatorx import IQuery, IQueryHandler
 
+from app.application.abstractions.date_provider import IDateProvider
 from app.application.dtos.cosmetic_item_dto import CosmeticItemDto
 from app.domain.cosmetics.cosmetic_catalog import CosmeticCatalog
 
@@ -13,18 +13,18 @@ class GetCosmeticCatalogQuery(IQuery[list[CosmeticItemDto]]):
 
 
 class GetCosmeticCatalogHandler(IQueryHandler[GetCosmeticCatalogQuery, list[CosmeticItemDto]]):
-    def __init__(self, catalog: CosmeticCatalog) -> None:
+    def __init__(self, catalog: CosmeticCatalog, dates: IDateProvider) -> None:
         self._catalog = catalog
+        self._dates = dates
 
     async def handle(self, query: GetCosmeticCatalogQuery) -> list[CosmeticItemDto]:
-        featured = self._catalog.featured_ids(datetime.now(timezone.utc).date())
+        rows = self._catalog.to_dto(self._dates.today())
         return [
             CosmeticItemDto(
-                id=it.id, category=it.category, name=it.name, price=it.price,
-                rarity=it.rarity, asset_ref=it.asset_ref, default=it.default,
-                attach=it.attachment.to_dto() if it.attachment is not None else None,
-                featured=it.id in featured,
-                unlock=it.unlock,
+                id=row["id"], category=row["category"], name=row["name"],
+                price=row["price"], rarity=row["rarity"], asset_ref=row["assetRef"],
+                default=row["default"], attach=row["attach"],
+                featured=row["featured"], unlock=row["unlock"],
             )
-            for it in self._catalog.items()
+            for row in rows
         ]

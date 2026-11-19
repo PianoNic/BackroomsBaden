@@ -11,6 +11,7 @@ from app.application.queries.get_cosmetic_catalog_query import (
 )
 from app.application.queries.get_shop_state_query import GetShopStateHandler, GetShopStateQuery
 from app.domain.cosmetics.cosmetic_catalog import CosmeticCatalog
+from app.infrastructure.clock.utc_date_provider import UtcDateProvider
 from app.infrastructure.persistence.repositories.peewee_account_repository import PeeweeAccountRepository
 from app.infrastructure.persistence.repositories.peewee_cosmetic_repository import PeeweeCosmeticRepository
 from app.infrastructure.persistence.repositories.peewee_profile_repository import PeeweeProfileRepository
@@ -27,7 +28,7 @@ def _build_mediator(engine) -> Mediator:
     token_service = HmacTokenService(b"test-secret", 3600, 60)
 
     resolver = DictResolver()
-    resolver.add_factory(GetCosmeticCatalogHandler, lambda: GetCosmeticCatalogHandler(catalog))
+    resolver.add_factory(GetCosmeticCatalogHandler, lambda: GetCosmeticCatalogHandler(catalog, UtcDateProvider()))
     resolver.add_factory(
         GetShopStateHandler,
         lambda: GetShopStateHandler(token_service, cosmetics, profiles, catalog, engine),

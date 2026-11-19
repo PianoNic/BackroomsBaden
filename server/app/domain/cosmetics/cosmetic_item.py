@@ -16,3 +16,11 @@ class CosmeticItem:
     default: bool = False
     attachment: CosmeticAttachment | None = None
     unlock: str = ""
+
+    @property
+    def is_locked(self) -> bool:
+        return bool(self.unlock)
+
+    @property
+    def is_purchasable(self) -> bool:
+        return not self.default and not self.unlock

@@ -9,6 +9,7 @@ from app.application.notifications.round_ended_notification import RoundEndedNot
 from app.domain.accounts.profile_repository import IProfileRepository
 from app.domain.achievements.achievement_catalog import AchievementCatalog
 from app.domain.achievements.achievement_repository import IAchievementRepository
+from app.domain.cosmetics.cosmetic_catalog import CosmeticCatalog
 from app.domain.progression.achievement_evaluator import AchievementEvaluator
 
 log = logging.getLogger("nachsitzen")
@@ -26,12 +27,14 @@ class UnlockAchievementsHandler(INotificationHandler[RoundEndedNotification]):
         achievement_catalog: AchievementCatalog,
         profiles: IProfileRepository,
         engine: IDatabaseAvailability,
+        cosmetic_catalog: CosmeticCatalog | None = None,
     ) -> None:
         self._achievement_evaluator = achievement_evaluator
         self._achievements = achievements
         self._achievement_catalog = achievement_catalog
         self._profiles = profiles
         self._engine = engine
+        self._cosmetic_catalog = cosmetic_catalog
 
     async def handle(self, notification: RoundEndedNotification) -> None:
         lobby, result, rewards, duration_ms = (
@@ -48,6 +51,8 @@ class UnlockAchievementsHandler(INotificationHandler[RoundEndedNotification]):
                     bonus = sum(self._achievement_catalog.get(aid).coins for aid in new_ids)
                     if bonus:
                         await self._profiles.apply_round_rewards(p.account_id, 0, bonus)
+                    if self._cosmetic_catalog is not None:
+                        p.owned_cosmetics |= self._cosmetic_catalog.ids_unlocked_by(set(new_ids))
                     r["achievements"] = [
                         self._achievement_catalog.to_dto(aid, True) for aid in new_ids
                     ]

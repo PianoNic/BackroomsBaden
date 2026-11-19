@@ -5,6 +5,7 @@ from app.application.notifications.persist_rewards_handler import PersistRewards
 from app.application.notifications.round_ended_notification import RoundEndedNotification
 from app.application.notifications.unlock_achievements_handler import UnlockAchievementsHandler
 from app.domain.achievements.achievement_catalog import achievement_catalog
+from app.domain.cosmetics.cosmetic_catalog import CosmeticCatalog
 from app.domain.progression.achievement_evaluator import AchievementEvaluator
 from app.domain.progression.level_calculator import LevelCalculator
 from app.domain.progression.reward_calculator import RewardCalculator
@@ -92,3 +93,28 @@ async def test_signed_in_account_reflects_its_persisted_level(account_engine):
     rewards = player.channel.json_sent[-1]["scoreboard"]["selfRewards"]
     assert rewards["saved"] is True
     assert rewards["levelBefore"] == expected_level_before
+
+
+class _StubEvaluator:
+    def __init__(self, earned):
+        self._earned = earned
+
+    def evaluate_round(self, lobby, result, player, duration_ms):
+        return list(self._earned)
+
+
+async def test_new_achievement_unlock_grants_its_cosmetic_in_lobby(account_engine):
+    profiles = PeeweeProfileRepository(account_engine)
+    handler = UnlockAchievementsHandler(
+        _StubEvaluator(["ach_medic"]), PeeweeAchievementRepository(account_engine),
+        achievement_catalog, profiles, account_engine, CosmeticCatalog(),
+    )
+    acct = await PeeweeAccountRepository(account_engine).upsert("google", "sub-ach", "Hans Ueli")
+    await profiles.ensure(acct.id)
+    lobby = make_lobby()
+    me = add_player(lobby, "me")
+    me.account_id = acct.id
+
+    await handler.handle(RoundEndedNotification(lobby, "won", {me.id: {}}, 1000))
+
+    assert "backpack_sani" in me.owned_cosmetics

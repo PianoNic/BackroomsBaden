@@ -57,6 +57,7 @@ from app.game.game_core import GameCore
 from app.game.lobby_registry import lobby_registry
 from app.infrastructure.announcements.json_file_announcement_source import JsonFileAnnouncementSource
 from app.infrastructure.configuration.settings import settings
+from app.infrastructure.clock.utc_date_provider import UtcDateProvider
 from app.infrastructure.oauth.oauth_provider_factory import OAuthProviderFactory
 from app.infrastructure.persistence.engine import database_engine
 from app.infrastructure.persistence.repositories.peewee_account_repository import PeeweeAccountRepository
@@ -117,7 +118,7 @@ def build_mediator() -> Mediator:
         IssueWsTicketHandler,
         lambda: IssueWsTicketHandler(token_service, accounts, blocked_subject_policy, database_engine),
     )
-    resolver.add_factory(GetCosmeticCatalogHandler, lambda: GetCosmeticCatalogHandler(cosmetic_catalog))
+    resolver.add_factory(GetCosmeticCatalogHandler, lambda: GetCosmeticCatalogHandler(cosmetic_catalog, UtcDateProvider()))
     resolver.add_factory(
         GetShopStateHandler,
         lambda: GetShopStateHandler(token_service, cosmetics, profiles, cosmetic_catalog, database_engine),
@@ -151,6 +152,7 @@ def build_mediator() -> Mediator:
         UnlockAchievementsHandler,
         lambda: UnlockAchievementsHandler(
             achievement_evaluator, achievements, achievement_catalog, profiles, database_engine,
+            cosmetic_catalog,
         ),
     )
     resolver.add_instance(ExceptionLoggingBehavior, ExceptionLoggingBehavior(_log))

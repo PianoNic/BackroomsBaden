@@ -35,6 +35,9 @@ class BuyCosmeticHandler(ICommandHandler[BuyCosmeticCommand, BuyCosmeticResultDt
         item = self._catalog.get(command.cosmetic_id)
         if item is None:
             return BuyCosmeticResultDto(ok=False, reason="unknown", balance=0)
+        rejection = self._catalog.purchase_rejection(item)
+        if rejection is not None:
+            return BuyCosmeticResultDto(ok=False, reason=rejection, balance=0)
         account_id = self._token_service.read_account_id(command.session_token, "session")
         if account_id is None or not self._engine.is_available:
             return BuyCosmeticResultDto(ok=False, reason="guest", balance=0)

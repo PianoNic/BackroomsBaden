@@ -18,7 +18,7 @@ any account holding that achievement id (see `ids_unlocked_by`).
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date
 
 from app.domain.cosmetics.cosmetic_attachment import CosmeticAttachment
 from app.domain.cosmetics.cosmetic_item import CosmeticItem
@@ -76,8 +76,9 @@ _ITEMS: list[CosmeticItem] = [
     # --- backpacks (worn on the back, local space +Z) ---
     CosmeticItem("backpack_none", "backpack", "Ohne Rucksack", 0, "common", "", True),
     CosmeticItem(
-        "backpack_schul", "backpack", "Schulrucksack", 200, "common", "schulrucksack",
-        attachment=CosmeticAttachment(x=0.0, y=0.10, z=0.34, scale=1.0),
+        "backpack_schul", "backpack", "Schulrucksack", 200, "common",
+        "models/cosmetics/backpack_rucksack",
+        attachment=CosmeticAttachment(x=0.0, y=0.10, z=0.34, scale=0.15),
     ),
     CosmeticItem(
         "backpack_turnbeutel", "backpack", "Turnbeutel", 250, "common", "turnbeutel",
@@ -199,8 +200,15 @@ class CosmeticCatalog:
     def featured_ids(self, day: date) -> set[str]:
         return self._daily_selection.select(self._items, day)
 
-    def to_dto(self) -> list[dict]:
-        featured = self.featured_ids(datetime.now(timezone.utc).date())
+    def purchase_rejection(self, item: CosmeticItem) -> str | None:
+        if item.default:
+            return "owned"
+        if item.is_locked:
+            return "locked"
+        return None
+
+    def to_dto(self, day: date) -> list[dict]:
+        featured = self.featured_ids(day)
         return [
             {
                 "id": it.id, "category": it.category, "name": it.name,
