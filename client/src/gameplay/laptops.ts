@@ -2,6 +2,7 @@ import type { LaptopInfo } from "../net/protocol";
 import type { InteractTarget } from "../ui/interactPrompt";
 import { LAPTOP_INTERACT_RADIUS } from "../core/constants";
 import { StandardMaterial, color3, group } from "../rendering/babylon";
+import { LaptopLabels } from "./laptopLabels";
 import { buildLaptopNode, LAPTOP_SCREEN_ACTIVE, LAPTOP_SCREEN_DONE } from "./laptopMesh";
 
 type Entry = {
@@ -40,7 +41,7 @@ export class Laptops {
         x: e.info.x,
         z: e.info.z,
         radius: LAPTOP_INTERACT_RADIUS,
-        label: e.info.game,
+        label: LaptopLabels.for(e.info.game),
         kind: "laptop",
       });
     }
