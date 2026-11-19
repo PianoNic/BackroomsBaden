@@ -144,6 +144,14 @@ const FLAT = {
   mirror: 0x9fb8c8,
 } as const;
 
+const SURFACE_PROPS = {
+  doorPanel: { category: "door_wood", tint: 0xffffff, repeat: [1, 1] },
+  doorInset: { category: "door_wood", tint: 0xc8a078, repeat: [1, 1] },
+  doorFrame: { category: "door_wood", tint: 0xb89c78, repeat: [0.2, 1] },
+  stallDoor: { category: "door_stall_metal", tint: 0xe0d8c0, repeat: [1, 1] },
+  stallDoorInset: { category: "door_stall_metal", tint: 0xa89c78, repeat: [1, 1] },
+} as const;
+
 const EMISSIVE = {
   neon: 0xff4dc4,
   lightFixture: 0xffffcc,
@@ -155,7 +163,10 @@ const EMISSIVE = {
 
 /** Central palette. PS1-ish: Lambert for surfaces, Basic for emissives. */
 export type Materials =
-  Record<keyof typeof FLAT | keyof typeof EMISSIVE, StandardMaterial>
+  Record<
+    keyof typeof FLAT | keyof typeof EMISSIVE | keyof typeof SURFACE_PROPS,
+    StandardMaterial
+  >
   & { floor: Material; wall: Material; ceiling: Material }
   & { paintings: StandardMaterial[] };
 
@@ -178,6 +189,9 @@ function build(): Record<string, unknown> {
   };
   for (const [key, color] of Object.entries(FLAT)) {
     out[key] = lambertMaterial(color, key);
+  }
+  for (const [key, prop] of Object.entries(SURFACE_PROPS)) {
+    out[key] = buildSurface(key, prop.category, prop.tint, [prop.repeat[0], prop.repeat[1]]);
   }
   for (const [key, color] of Object.entries(EMISSIVE)) {
     out[key] = basicMaterial(color, key);
