@@ -56,7 +56,12 @@ class QuestHandler:
                         continue
                 s.done = True
                 changed = True
-                p.tasks_done += 1
+                if required > 1:
+                    for q in active:
+                        if within_radius(q, s, obj.radius):
+                            q.tasks_done += 1
+                else:
+                    p.tasks_done += 1
                 await self._broadcaster.broadcast(lobby, {
                     "type": "spot_done", "id": obj.id, "spot": idx, "by": p.id,
                 })
