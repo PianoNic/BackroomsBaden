@@ -856,6 +856,7 @@ class PsxTextureSize:
 
 
 class GltfMaterialStripper:
+    NEAREST_SAMPLER = {"magFilter": 9728, "minFilter": 9728, "wrapS": 10497, "wrapT": 10497}
     REMOVED_SLOTS = ("normalTexture", "occlusionTexture")
     REMOVED_PBR_SLOTS = ("metallicRoughnessTexture",)
 
@@ -902,6 +903,7 @@ class GltfMaterialStripper:
             texture = dict(textures[old])
             if "source" in texture:
                 texture["source"] = image_map[texture["source"]]
+            texture["sampler"] = 0
             new_textures.append(texture)
 
         def remap(node) -> None:
@@ -920,6 +922,7 @@ class GltfMaterialStripper:
         kept_images = [images[i] for i in images_used]
         if new_textures:
             document["textures"] = new_textures
+            document["samplers"] = [dict(self.NEAREST_SAMPLER)]
             document["images"] = kept_images
         else:
             document.pop("textures", None)

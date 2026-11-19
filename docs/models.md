@@ -170,8 +170,11 @@ on this pass.
 
 1. Query the Poly Haven files API for the asset, and download the 1K glTF
    plus its textures.
-2. Downscale every texture to 512px JPEG at quality 85 with Pillow — the
-   same budget as the material textures in [Materials](materials.md).
+2. Strip normal, occlusion and metallic-roughness textures and their
+   material slots, force every remaining texture onto a nearest-neighbour
+   sampler (no mipmaps), and downscale each one to at most 256px per side
+   (aspect kept, never upscaled, power of two per axis) as JPEG at quality 85
+   with Pillow, so every prop ships one low-resolution base colour image.
 3. Run `gltfpack -c -vtf` (meshopt compression, float texture coordinates —
    see [Float UVs](#float-uvs-why-the-models-were-rendering-black) below)
    over the result, with a per-model `-si` simplification ratio where the

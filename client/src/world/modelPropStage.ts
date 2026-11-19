@@ -71,6 +71,7 @@ export function normalizeModelTemplate(
     }
   }
 
+  modelMaterials.releaseSources(container);
   return meshes;
 }
 

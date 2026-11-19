@@ -59,7 +59,7 @@ edge case the inference is unsure about.
 |---|---|---|---|---|
 | classroom | cream plaster, warm tint | lino | acoustic tile | yes |
 | hallway | cream plaster, warm tint | terrazzo | acoustic tile | yes |
-| toilet | white tile | lino, low sheen | plaster | yes |
+| toilet | white tile | lino | plaster | yes |
 | cafeteria | plaster | stone tile | acoustic tile | no |
 | chemistry_lab | hex tile | dark terrazzo | acoustic tile | no |
 | gym | plaster | wood | plaster | no |
@@ -79,9 +79,10 @@ underlying wall cube itself is untouched.
 ## One material set, one render profile
 
 Every archetype surface — wall, floor, ceiling, and where present dado/rail —
-is a single `StandardMaterial` built from one `512`px albedo WebP
-(`/textures/pbr/<category>/albedo-512.webp`); there is no normal map, no
-ORM/roughness/metalness map, and no HDRI environment texture. The archetype's
+is a single `StandardMaterial` built from one `128`px lossless albedo WebP
+(`/textures/surfaces/<category>/albedo.webp`) sampled nearest-neighbour with no
+mipmaps (`RetroTextureStyle`); there is no normal map, no ORM/roughness/metalness
+map, no reflection or fresnel, and no HDRI environment texture. The archetype's
 tint from the tuning table multiplies the albedo (`diffuseColor`), and
 `maxSimultaneousLights = 1` on every material, matching the single
 `HemisphericLight` that lights the whole scene (see [Architecture](architecture.md)).
@@ -90,7 +91,7 @@ compiled, and `scene.freezeActiveMeshes()` runs once the world and any
 lazily-loaded props are placed — dynamic meshes (players, doors, chairs, …)
 opt out via `alwaysSelectAsActiveMesh = true` so they keep updating.
 
-Texture path convention: `/textures/pbr/<category>/albedo-512.webp`, where
+Texture path convention: `/textures/surfaces/<category>/albedo.webp`, where
 `<category>` is the archetype-specific directory name from the tuning table
 (e.g. `wall_plaster_cream`, `floor_lino`).
 
@@ -104,11 +105,8 @@ archetypes still look distinct even though the base wall texture is shared.
 that category has been removed from `tools/fetch_textures.py` since nothing
 references it any more.
 
-Some tile floors (`toilet`, `cafeteria`, `chemistry_lab`) get a very
-cheap sheen on top of the flat albedo: a tiny procedural cube texture is used
-as `reflectionTexture` together with a Fresnel term, so wet-looking tile and
-stone floors pick up a faint reflective highlight instead of looking
-completely matte, without the cost of a real environment texture.
+Floors carry no reflection or fresnel term: every surface is plain diffuse
+lighting over a nearest-sampled low-resolution albedo.
 
 ### Lazy per-archetype loading
 
@@ -146,5 +144,5 @@ server/.venv/Scripts/python.exe tools/fetch_textures.py
 
 It's idempotent — re-running it skips anything already downloaded — pass
 `--force` to re-fetch everything regardless. See
-[`client/public/textures/pbr/LICENSES.md`](../client/public/textures/pbr/LICENSES.md)
+[`client/public/textures/surfaces/LICENSES.md`](../client/public/textures/surfaces/LICENSES.md)
 for the CC0 licence list of everything it pulls in.

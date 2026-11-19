@@ -11,6 +11,7 @@ import {
   activeScene, basicMaterial, box, cone, cylinder, disc, group, lambertMaterial,
   plane, sphere, torus,
 } from "../rendering/babylon";
+import { RetroTextureStyle } from "../rendering/retroTextureStyle";
 
 export type Projectile = { obj: TransformNode; dispose: () => void };
 
@@ -38,7 +39,7 @@ export function buildBall(
 
 let lawbookTex: Texture | null = null;
 function getLawbookTexture(): Texture {
-  if (!lawbookTex) lawbookTex = new Texture("/projectiles/lawbook.jpg", activeScene());
+  if (!lawbookTex) lawbookTex = RetroTextureStyle.load("/projectiles/lawbook.jpg");
   return lawbookTex;
 }
 

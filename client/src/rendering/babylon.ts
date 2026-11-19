@@ -16,7 +16,6 @@ import type { Material } from "@babylonjs/core/Materials/material";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { Matrix, Quaternion, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import type { TargetCamera } from "@babylonjs/core/Cameras/targetCamera";
-import { AMBIENCE } from "./ambience";
 
 declare module "@babylonjs/core/Meshes/transformNode" {
   interface TransformNode {
@@ -227,8 +226,7 @@ export function lambertMaterial(
 ): StandardMaterial {
   const mat = new StandardMaterial(name, scene);
   mat.diffuseColor = typeof color === "number" ? color3(color) : color;
-  mat.specularColor = color3(AMBIENCE.surfaces.propSpecularColor);
-  mat.specularPower = AMBIENCE.surfaces.propSpecularPower;
+  mat.specularColor = Color3.Black();
   mat.maxSimultaneousLights = 1;
   return mat;
 }

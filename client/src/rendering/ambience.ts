@@ -48,10 +48,6 @@ export const AMBIENCE = {
     blackoutMaxS: 3.0,
     blackoutRadius: 14,
   },
-  surfaces: {
-    propSpecularColor: 0x0a0a0a,
-    propSpecularPower: 16,
-  },
   cues: {
     heartPulseAmount: 0.09,
     heartPulseHzNear: 2.6,
@@ -122,7 +118,7 @@ export const AMBIENCE = {
         wallRepeatU: 1, wallRepeatV: 1.5,
         dado: { category: "dado_tile_green", tint: 0x1e2a22 },
         dadoHeight: 1.0,
-        floor: "floor_lino", floorTint: 0x766e5d, floorSheen: true,
+        floor: "floor_lino", floorTint: 0x766e5d,
         floorRepeatU: 1, floorRepeatV: 1,
         ceiling: "ceiling_plaster", ceilingTint: 0x817f75,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
@@ -130,7 +126,7 @@ export const AMBIENCE = {
       cafeteria: {
         wall: "wall_plaster_plain", wallTint: 0x87877d,
         wallRepeatU: 1, wallRepeatV: 1.5,
-        floor: "floor_stone_tile", floorTint: 0x837f72, floorSheen: true,
+        floor: "floor_stone_tile", floorTint: 0x837f72,
         floorRepeatU: 1, floorRepeatV: 1,
         ceiling: "ceiling_tile", ceilingTint: 0x847d5a,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
@@ -138,7 +134,7 @@ export const AMBIENCE = {
       chemistry_lab: {
         wall: "wall_tile_hex", wallTint: 0x878a86,
         wallRepeatU: 1, wallRepeatV: 1.5,
-        floor: "floor_terrazzo_dark", floorTint: 0x484a4d, floorSheen: true,
+        floor: "floor_terrazzo_dark", floorTint: 0x484a4d,
         floorRepeatU: 1, floorRepeatV: 1,
         ceiling: "ceiling_tile", ceilingTint: 0x7f7c62,
         ceilingRepeatU: 1, ceilingRepeatV: 1,
@@ -190,7 +186,6 @@ export type RoomMaterialConfig = {
   dadoHeight?: number;
   floor: string;
   floorTint: number;
-  floorSheen?: true;
   floorRepeatU: number;
   floorRepeatV: number;
   ceiling: string;

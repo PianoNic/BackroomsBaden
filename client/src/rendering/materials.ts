@@ -1,33 +1,28 @@
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
-import { FresnelParameters } from "@babylonjs/core/Materials/fresnelParameters";
 import type { Material } from "@babylonjs/core/Materials/material";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { activeScene, basicMaterial, color3, lambertMaterial } from "./babylon";
 import { AMBIENCE } from "./ambience";
-import { getFloorSheenTexture } from "./reflectionCube";
+import { RetroTextureStyle } from "./retroTextureStyle";
 import type { RoomArchetype } from "../world/rooms";
 
 function loadPainting(url: string): Texture {
-  const tex = new Texture(url, activeScene(), true, true, Texture.NEAREST_SAMPLINGMODE);
+  const tex = RetroTextureStyle.load(url);
   tex.uScale = -1;
   tex.uOffset = 1;
   return tex;
 }
 
-function pbrTexturePath(category: string): string {
-  return `/textures/pbr/${category}/albedo-512.webp`;
+function surfaceTexturePath(category: string): string {
+  return `/textures/surfaces/${category}/albedo.webp`;
 }
 
-export const FLOOR_SHEEN_ENABLED = true;
-
 function buildSurface(
-  name: string, category: string, tint: number, repeat: [number, number], sheen?: boolean,
+  name: string, category: string, tint: number, repeat: [number, number],
 ): StandardMaterial {
   const mat = new StandardMaterial(name, activeScene());
-  const tex = new Texture(
-    pbrTexturePath(category), activeScene(), false, true, Texture.TRILINEAR_SAMPLINGMODE,
-  );
+  const tex = RetroTextureStyle.load(surfaceTexturePath(category));
   tex.wrapU = Texture.WRAP_ADDRESSMODE;
   tex.wrapV = Texture.WRAP_ADDRESSMODE;
   tex.uScale = repeat[0];
@@ -36,11 +31,6 @@ function buildSurface(
   mat.diffuseColor = color3(tint);
   mat.specularColor = Color3.Black();
   mat.maxSimultaneousLights = 1;
-  if (sheen && FLOOR_SHEEN_ENABLED) {
-    mat.reflectionTexture = getFloorSheenTexture();
-    mat.useReflectionFresnelFromSpecular = false;
-    mat.reflectionFresnelParameters = new FresnelParameters({ bias: 0.2, power: 2 });
-  }
   return mat;
 }
 
@@ -59,7 +49,7 @@ function buildArchetypeMaterials(archetype: RoomArchetype): ArchetypeMaterialSet
   );
   const floor = buildSurface(
     `floor_${archetype}`, config.floor, config.floorTint,
-    [config.floorRepeatU, config.floorRepeatV], config.floorSheen,
+    [config.floorRepeatU, config.floorRepeatV],
   );
   const ceiling = buildSurface(
     `ceiling_${archetype}`, config.ceiling, config.ceilingTint,
@@ -91,10 +81,7 @@ let decalMaterial: StandardMaterial | null = null;
 export function getDecalMaterial(): Material {
   if (decalMaterial) return decalMaterial;
   const mat = new StandardMaterial("decal_leak", activeScene());
-  const tex = new Texture(
-    `/textures/pbr/${AMBIENCE.materials.decal.category}/albedo-512.webp`,
-    activeScene(), true, true, Texture.NEAREST_SAMPLINGMODE,
-  );
+  const tex = RetroTextureStyle.load(surfaceTexturePath(AMBIENCE.materials.decal.category));
   tex.hasAlpha = true;
   mat.diffuseTexture = tex;
   mat.useAlphaFromDiffuseTexture = true;

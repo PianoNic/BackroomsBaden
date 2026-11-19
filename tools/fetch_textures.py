@@ -13,7 +13,8 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageOps
 
 USER_AGENT = "Mozilla/5.0"
-SIZE_SUFFIX = {512: "512"}
+SURFACE_PX = 128
+ALBEDO_FILE = "albedo.webp"
 AO_BAKE_STRENGTH = 0.6
 
 
@@ -138,9 +139,6 @@ class ImageOps2D:
 
 
 class CategoryProcessor:
-    ALBEDO_QUALITY = 80
-    DECAL_QUALITY = 82
-    SIZES = (512,)
 
     def __init__(self, spec: CategorySpec, output_root: Path, downloader: Downloader):
         self.spec = spec
@@ -148,7 +146,7 @@ class CategoryProcessor:
         self.downloader = downloader
 
     def expected_files(self):
-        return ["albedo-512.webp"]
+        return [ALBEDO_FILE]
 
     def is_complete(self) -> bool:
         return all((self.output_dir / name).exists() for name in self.expected_files())
@@ -176,19 +174,13 @@ class CategoryProcessor:
             if opacity is None:
                 raise RuntimeError(f"{self.spec.asset_id}: missing Opacity map for decal")
 
-        total_bytes = 0
-        for size in self.SIZES:
-            suffix = SIZE_SUFFIX[size]
-
-            if self.spec.is_decal:
-                albedo_img = ImageOps2D.decal_albedo(color, opacity, size)
-                quality = self.DECAL_QUALITY
-            else:
-                albedo_img = ImageOps2D.albedo(color, ao, size, self.spec.desaturate)
-                quality = self.ALBEDO_QUALITY
-            albedo_path = self.output_dir / f"albedo-{suffix}.webp"
-            albedo_img.save(albedo_path, "WEBP", quality=quality, method=6)
-            total_bytes += albedo_path.stat().st_size
+        if self.spec.is_decal:
+            albedo_img = ImageOps2D.decal_albedo(color, opacity, SURFACE_PX)
+        else:
+            albedo_img = ImageOps2D.albedo(color, ao, SURFACE_PX, self.spec.desaturate)
+        albedo_path = self.output_dir / ALBEDO_FILE
+        albedo_img.save(albedo_path, "WEBP", lossless=True, method=6)
+        total_bytes = albedo_path.stat().st_size
 
         return CategoryResult(self.spec.dir_name, total_bytes, ao is None, False)
 
@@ -216,7 +208,7 @@ class LicenseGenerator:
         lines.append("## File layout")
         lines.append("")
         lines.append(
-            "Each category directory holds a single `albedo-512.webp` (RGBA for `decal_leak`, alpha from the "
+            f"Each category directory holds a single {SURFACE_PX}x{SURFACE_PX} `{ALBEDO_FILE}` (lossless, RGBA for `decal_leak`, alpha from the "
             "source Opacity map; RGB for the rest), with ambient occlusion pre-baked into it at "
             f"{AO_BAKE_STRENGTH} strength."
         )
@@ -239,7 +231,7 @@ class TextureFetcher:
     def __init__(self, repo_root: Path, force: bool):
         self.repo_root = repo_root
         self.force = force
-        self.output_root = repo_root / "client" / "public" / "textures" / "pbr"
+        self.output_root = repo_root / "client" / "public" / "textures" / "surfaces"
         self.cache_dir = repo_root / "tools" / ".texture-cache"
         self.downloader = Downloader(self.cache_dir)
 
