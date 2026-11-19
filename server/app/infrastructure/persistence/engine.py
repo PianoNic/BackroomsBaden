@@ -49,7 +49,7 @@ class DatabaseEngine(IDatabaseAvailability):
     async def _stop_retrying(self) -> None:
         try:
             await self._database.aio_close()
-        except Exception as exc:  # noqa: BLE001 — closing a pool that never opened is fine
+        except Exception as exc:  # noqa: BLE001
             log.debug("Closing the unreachable database pool failed: %s", exc)
 
     async def disconnect(self) -> None:
