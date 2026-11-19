@@ -366,11 +366,11 @@ ITCH_MANIFEST: tuple[ModelSpec, ...] = (
         source=PackSource("psx_office", "OFFICE/book_things/book_case_small.glb"),
     ),
     ModelSpec(
-        "cupboard", "file_cabinet_largest", "furniture", 0.78,
+        "cupboard", "file_cabinet_largest", "furniture", 0.78, yaw_offset=math.pi,
         source=PackSource("psx_office", "OFFICE/file_cabinets/file_cabinet_largest.glb"),
     ),
     ModelSpec(
-        "side_table", "file_cabinet_smallest", "furniture", 1.0,
+        "side_table", "file_cabinet_smallest", "furniture", 1.0, yaw_offset=math.pi,
         source=PackSource("psx_office", "OFFICE/file_cabinets/file_cabinet_smallest.glb"),
     ),
     ModelSpec(
