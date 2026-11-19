@@ -118,6 +118,7 @@ class ItchSpec(ModelSpec):
 
 MANIFEST: tuple[ModelSpec, ...] = (
     ModelSpec("student_desk", "SchoolDesk_01", "furniture", 1.0, 0.5),
+    ModelSpec("books_pile", "binder_notebook", "clutter", 0.7, 0.1),
     ModelSpec("bench", "painted_wooden_bench", "furniture", 1.0, yaw_offset=math.pi),
     ModelSpec("cafeteria_table", "dining_table", "furniture", 1.0),
     ModelSpec("trash_can", "industrial_pastic_container", "clutter", 0.75, 0.13, aggressive_simplify=True),
@@ -387,10 +388,6 @@ ITCH_MANIFEST: tuple[ModelSpec, ...] = (
     ModelSpec(
         "papers", "paper_stack", "clutter", 1.0,
         source=PackSource("psx_office", "OFFICE/stationary/paper_stack.glb"),
-    ),
-    ModelSpec(
-        "books_pile", "books_alt", "clutter", 0.8,
-        source=PackSource("psx_office", "OFFICE/book_things/books_alt.glb"),
     ),
     ModelSpec(
         "fridge", "fridge", "appliances", 0.85,

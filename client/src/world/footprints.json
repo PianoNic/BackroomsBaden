@@ -16,15 +16,15 @@
     },
     "books_pile": {
       "model": "clutter/books_pile",
-      "asset": "books_alt",
-      "scale": 0.8,
-      "scaleY": 0.8,
-      "scaleZ": 0.8,
+      "asset": "binder_notebook",
+      "scale": 0.7,
+      "scaleY": 0.7,
+      "scaleZ": 0.7,
       "yawOffset": 0.0,
-      "along": 0.3139,
-      "out": 0.18,
-      "height": 0.2895,
-      "triangles": 130
+      "along": 0.4085,
+      "out": 0.1397,
+      "height": 0.0164,
+      "triangles": 1987
     },
     "bookshelf": {
       "model": "furniture/bookshelf",

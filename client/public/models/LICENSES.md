@@ -7,6 +7,7 @@ Every model in this directory is CC0 1.0 - from Poly Haven, Poly Pizza, itch.io 
 | Prop type | Model file | Source asset | Source URL | Author | License |
 |---|---|---|---|---|---|
 | `bench` | `furniture/bench.glb` | painted_wooden_bench | https://polyhaven.com/a/painted_wooden_bench | Kirill Sannikov | CC0 1.0 |
+| `books_pile` | `clutter/books_pile.glb` | binder_notebook | https://polyhaven.com/a/binder_notebook | DaDrood | CC0 1.0 |
 | `bunsen_burner` | `lab/bunsen_burner.glb` | bunsen_burner | https://polyhaven.com/a/bunsen_burner | BKS | CC0 1.0 |
 | `cafeteria_table` | `furniture/cafeteria_table.glb` | dining_table | https://polyhaven.com/a/dining_table | Aron Łyczek | CC0 1.0 |
 | `gps` | `pickups/gps.glb` | digital_wrist_watch | https://polyhaven.com/a/digital_wrist_watch | Adrian C | CC0 1.0 |
@@ -26,7 +27,6 @@ Low-poly PS1/PS2-style models. Each is fetched by `tools/fetch_models.py`, strip
 
 | Prop type | Model file | Pack | Source file | Author | Pack page | License | Licence statement |
 |---|---|---|---|---|---|---|---|
-| `books_pile` | `clutter/books_pile.glb` | PSX style office pack | `OFFICE/book_things/books_alt.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
 | `bookshelf` | `furniture/bookshelf.glb` | PSX style office pack | `OFFICE/book_things/book_case_small.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
 | `chair` | `furniture/chair.glb` | PSX Derelict Furniture (Standard) | `PSX-Derelict-Furniture-Standard/glb/chair.glb` | Daniel Jurys | https://daniel-jurys.itch.io/psx-derelict-furniture | CC0 1.0 | "Licence: Creative Commons Zero v1.0 Universal" |
 | `clock` | `wall/clock.glb` | PSX style office pack | `OFFICE/extras/wall_clock.glb` | valsekamerplant | https://valsekamerplant.itch.io/psx-style-opulent-office | CC0 1.0 | "This pack is CC0 and all textures where obtained by using CC0 textures or my own photos." |
