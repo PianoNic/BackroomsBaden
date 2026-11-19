@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { test, expect, PointerLockStub } from "./pointerLockStub";
 
 const PNG_BUFFER = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -65,6 +66,8 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
 
   const hostContext = await browser.newContext({ permissions: ["microphone", "camera"] });
   const guestContext = await browser.newContext({ permissions: ["microphone", "camera"] });
+  await PointerLockStub.install(hostContext);
+  await PointerLockStub.install(guestContext);
 
   try {
     const host = await hostContext.newPage();

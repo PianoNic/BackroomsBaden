@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./pointerLockStub";
 import { readFile } from "node:fs/promises";
 import { decodeBbpack, encodeBbpack } from "../src/core/bbpack";
 import { mockBackend } from "./backendMocks";

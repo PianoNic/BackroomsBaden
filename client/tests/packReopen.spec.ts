@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./pointerLockStub";
 import { deflateSync } from "node:zlib";
 import { mockBackend } from "./backendMocks";
 

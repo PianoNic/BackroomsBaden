@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./pointerLockStub";
 import { mockBackend } from "./backendMocks";
 
 test("title screens transition forward and back through the screen stage", async ({ page }) => {

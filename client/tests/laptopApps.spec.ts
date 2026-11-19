@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./pointerLockStub";
 import { mockBackend } from "./backendMocks";
 
 type Sent = { type: string; laptopId?: string; choice?: string };
