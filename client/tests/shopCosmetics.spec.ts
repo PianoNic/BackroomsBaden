@@ -1,4 +1,5 @@
-import { test, expect, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
+import { test, expect } from "./pointerLockStub";
 import { mockBackend } from "./backendMocks";
 
 const ATTACH = { x: 0, y: 0, z: 0.3, scale: 1, yaw: 0, pitch: 0 };
@@ -12,27 +13,7 @@ const CATALOG = [
   { id: "handitem_lupe", category: "handitem", name: "Lupe", price: 400, rarity: "rare", assetRef: "models/cosmetics/handitem_lupe", default: false, attach: ATTACH, featured: false, unlock: null },
 ];
 
-async function installFakePointerLock(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    let lockElement: Element | null = null;
-    Element.prototype.requestPointerLock = function requestPointerLock(this: Element) {
-      lockElement = this;
-      setTimeout(() => document.dispatchEvent(new Event("pointerlockchange")), 0);
-      return Promise.resolve();
-    } as unknown as typeof Element.prototype.requestPointerLock;
-    Object.defineProperty(Document.prototype, "pointerLockElement", {
-      configurable: true,
-      get: () => lockElement,
-    });
-    document.exitPointerLock = () => {
-      lockElement = null;
-      setTimeout(() => document.dispatchEvent(new Event("pointerlockchange")), 0);
-    };
-  });
-}
-
 async function openShop(page: Page): Promise<void> {
-  await installFakePointerLock(page);
   await page.addInitScript(() => sessionStorage.setItem("nachsitzen-intro-seen", "1"));
   await mockBackend(page);
   await page.route("**/shop/catalog", (route) =>
