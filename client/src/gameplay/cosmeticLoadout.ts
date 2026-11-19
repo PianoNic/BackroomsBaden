@@ -5,6 +5,7 @@ import { resolveCosmetic } from "./cosmetics";
 import { CosmeticSlots, type CosmeticSlot, type SlotEntry } from "./cosmeticSlots";
 import { cosmeticModels } from "./cosmeticModels";
 import { buildHat, disposeHat } from "./remotePlayerMaterials";
+import { IdentityAnchors, type SlotAnchors } from "./bodyShape";
 
 type SlotState = {
   itemId: string;
@@ -21,6 +22,7 @@ export class CosmeticLoadout {
   constructor(
     parent: TransformNode,
     private readonly onChange: () => void = () => {},
+    private readonly anchors: SlotAnchors = new IdentityAnchors(),
   ) {
     this.root = group("cosmetics");
     this.root.parent = parent;
@@ -66,25 +68,36 @@ export class CosmeticLoadout {
     if (source.kind === "procedural") {
       const hat = slot === "head" ? buildHat(source.key) : null;
       if (!hat) return;
+      const anchor = this.anchorNode(slot);
       const node = group(`slot_${slot}`);
-      node.parent = this.root;
+      node.parent = anchor;
       hat.parent = node;
-      this.slots.set(slot, { itemId: item.id, node, procedural: hat });
+      this.slots.set(slot, { itemId: item.id, node: anchor, procedural: hat });
       return;
     }
     const place = () => {
       if (this.disposed || this.requested.get(slot) !== item.id) return;
       const model = cosmeticModels.instantiate(source.url, `cos_${item.id}`);
       if (!model) return;
+      const anchor = this.anchorNode(slot);
       const node = group(`slot_${slot}`);
-      node.parent = this.root;
+      node.parent = anchor;
       this.applyPose(node, item.attach);
       model.parent = node;
-      this.slots.set(slot, { itemId: item.id, node, procedural: null });
+      this.slots.set(slot, { itemId: item.id, node: anchor, procedural: null });
       this.onChange();
     };
     if (cosmeticModels.has(source.url)) place();
     else void cosmeticModels.load(source.url).then(place);
+  }
+
+  private anchorNode(slot: CosmeticSlot): TransformNode {
+    const anchor = this.anchors.anchor(slot);
+    const node = group(`anchor_${slot}`);
+    node.parent = this.root;
+    node.position.set(anchor.x, anchor.y, anchor.z);
+    node.scaling.setAll(anchor.scale);
+    return node;
   }
 
   private applyPose(node: TransformNode, attach: Parameters<typeof CosmeticSlots.pose>[0]): void {

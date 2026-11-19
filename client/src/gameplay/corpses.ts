@@ -1,16 +1,16 @@
 import type { InteractTarget } from "../ui/interactPrompt";
 import type { Mesh } from "../rendering/babylon";
-import { Color3, box, group, lambertMaterial } from "../rendering/babylon";
+import { group } from "../rendering/babylon";
+import { BodyShapes } from "./bodyShapes";
+import type { CorpseRig } from "./bodyShape";
 import type { EquippedCosmetics } from "../net/protocol";
-import { bodyColor } from "./cosmeticStyle";
+import { themeColor } from "./cosmeticStyle";
 import { CosmeticLoadout } from "./cosmeticLoadout";
 
 const REVIVE_RADIUS = 2.2;
-const HEAD_X = 0.7;
-const HAT_BASE_Y = 0.85;
 
 type Entry = {
-  id: string; x: number; z: number; mesh: Mesh; loadout: CosmeticLoadout;
+  id: string; x: number; z: number; mesh: Mesh; rig: CorpseRig; loadout: CosmeticLoadout;
 };
 
 /** Tracks downed-player markers. Each corpse keeps its server id so the
@@ -24,20 +24,18 @@ export class Corpses {
     equipped: EquippedCosmetics = {},
   ): void {
     if (this.entries.has(id)) return;
-    const mat = lambertMaterial(Color3.FromHexString(bodyColor(equipped, color)));
-    const mesh = box(1.6, 0.5, 0.6, mat);
-    mesh.position.set(x, 0.25, z);
+    const shape = BodyShapes.current();
+    const rig = shape.createCorpse({ theme: themeColor(equipped), player: color });
+    const mesh = rig.root;
+    mesh.position.x = x;
+    mesh.position.z = z;
     mesh.rotation.y = Math.random() * Math.PI * 2;
     this.group.add(mesh);
 
-    const pivot = group("corpseBody");
-    pivot.rotation.z = -Math.PI / 2;
-    pivot.position.set(HEAD_X - HAT_BASE_Y, 0.15, 0);
-    mesh.add(pivot);
-    const loadout = new CosmeticLoadout(pivot);
+    const loadout = new CosmeticLoadout(rig.loadoutParent, () => {}, shape);
     loadout.set(equipped);
 
-    this.entries.set(id, { id, x, z, mesh, loadout });
+    this.entries.set(id, { id, x, z, mesh, rig, loadout });
   }
 
   remove(id: string): void {
@@ -45,7 +43,7 @@ export class Corpses {
     if (!e) return;
     e.loadout.dispose();
     this.group.remove(e.mesh);
-    e.mesh.dispose(false, true);
+    e.rig.dispose();
     this.entries.delete(id);
   }
 

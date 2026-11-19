@@ -11,15 +11,15 @@ import { getSettings, onSettingsChange } from "../core/settings";
 import { withinRadiusXZ } from "../core/geom";
 import { group } from "../rendering/babylon";
 import {
-  buildVoxelMesh, disposeMaterial, disposeVoxelMaterial, makeAvatarMaterials,
-  makeColorMaterial, makeFacePatternMaterials, makeVideoMaterials, setVoxelMaterial,
+  disposeMaterial, makeAvatarMaterials, makeFacePatternMaterials, makeVideoMaterials,
 } from "./remotePlayerMaterials";
 import { resolveCosmetic } from "./cosmetics";
-import { bodyColor } from "./cosmeticStyle";
+import { themeColor } from "./cosmeticStyle";
+import { BodyShapes } from "./bodyShapes";
+import type { BodyPaint, BodyRig, BodyShape } from "./bodyShape";
 import { NameTags } from "./nameTags";
 import { CosmeticLoadout } from "./cosmeticLoadout";
 
-const Y = 0.85;
 const STEP_DISTANCE = 1.1;
 const REF_DISTANCE = 2.5;
 const MAX_DISTANCE = 25;
@@ -30,6 +30,8 @@ const FOOTSTEP_URLS = [1, 2, 3, 4, 5].map((i) => `/sounds/footsteps/step-${i}.og
 
 type Entry = {
   mesh: Mesh;
+  rig: BodyRig;
+  shape: BodyShape;
   color: string;
   target: Vector3;
   targetYaw: number;
@@ -90,6 +92,10 @@ export class RemotePlayers {
     this.buffersLoaded = true;
   }
 
+  private static paint(equipped: EquippedCosmetics, player: string): BodyPaint {
+    return { theme: themeColor(equipped), player };
+  }
+
   add(p: RemotePlayer): void {
     if (this.entries.has(p.id)) return;
     const look = this.retiredLooks.get(p.id);
@@ -97,7 +103,10 @@ export class RemotePlayers {
     const equipped = p.equipped ?? look?.equipped ?? {};
     const avatar = p.avatar ?? look?.avatarUrl ?? null;
     const name = p.name ?? look?.name ?? p.id.slice(0, 6);
-    const mesh = buildVoxelMesh(0.6, 1.7, 0.6, makeColorMaterial(bodyColor(equipped, p.color)));
+    const shape = BodyShapes.current();
+    const rig = shape.createRig(RemotePlayers.paint(equipped, p.color));
+    const mesh = rig.root;
+    const Y = shape.originY;
     mesh.position.set(p.x, Y, p.z);
     mesh.rotation.y = p.yaw;
     this.group.add(mesh);
@@ -114,7 +123,7 @@ export class RemotePlayers {
     }
 
     this.entries.set(p.id, {
-      mesh, color: p.color,
+      mesh, rig, shape, color: p.color,
       target: new Vector3(p.x, Y, p.z),
       targetYaw: p.yaw, audio,
       lastStepX: p.x, lastStepZ: p.z,
@@ -124,7 +133,7 @@ export class RemotePlayers {
       loadout: new CosmeticLoadout(mesh, () => {
         const entry = this.entries.get(p.id);
         if (entry) this.nameTags.set(p.id, entry.name, entry.equipped, entry.mesh);
-      }),
+      }, shape),
     });
     this.updateLoadout(p.id);
     if (avatar) this.applyAvatar(p.id, avatar);
@@ -151,7 +160,7 @@ export class RemotePlayers {
         disposeMaterial(mats);
         return;
       }
-      setVoxelMaterial(e.mesh, mats);
+      e.rig.setFace(mats);
     });
   }
 
@@ -159,12 +168,14 @@ export class RemotePlayers {
    *  video or avatar owns the face). */
   private repaintBody(id: string): void {
     const e = this.entries.get(id);
-    if (!e || e.video || e.avatarUrl) return;
+    if (!e) return;
+    e.rig.setPaint(RemotePlayers.paint(e.equipped, e.color));
+    if (e.video || e.avatarUrl) return;
     if (resolveCosmetic(e.equipped.facePattern)?.assetRef) {
       this.applyFacePattern(id);
       return;
     }
-    setVoxelMaterial(e.mesh, makeColorMaterial(bodyColor(e.equipped, e.color)));
+    e.rig.setFace(null);
   }
 
   /** Apply a live equipped-cosmetics update (from the player_cosmetic packet). */
@@ -185,7 +196,7 @@ export class RemotePlayers {
   setState(id: string, x: number, z: number, yaw: number): void {
     const e = this.entries.get(id);
     if (!e) return;
-    e.target.set(x, Y, z);
+    e.target.set(x, e.shape.originY, z);
     e.targetYaw = yaw;
     // Footstep when the remote walks a full stride; ignore sub-step jitter.
     if (!withinRadiusXZ(x, z, e.lastStepX, e.lastStepZ, STEP_DISTANCE)) {
@@ -225,7 +236,7 @@ export class RemotePlayers {
         disposeMaterial(mats);
         return;
       }
-      setVoxelMaterial(e.mesh, mats);
+      e.rig.setFace(mats);
     } catch (err) {
       console.warn("avatar load failed", err);
     }
@@ -243,7 +254,7 @@ export class RemotePlayers {
       e.video = video;
       e.videoTex?.dispose();
       e.videoTex = tex;
-      setVoxelMaterial(e.mesh, mats);
+      e.rig.setFace(mats);
     } else {
       if (e.video) { e.video.srcObject = null; e.video = null; }
       e.videoTex?.dispose();
@@ -286,8 +297,7 @@ export class RemotePlayers {
     if (!e) return;
     e.loadout.dispose();
     this.group.remove(e.mesh);
-    disposeVoxelMaterial(e.mesh);
-    e.mesh.dispose(false, false);
+    e.rig.dispose();
     e.audio?.dispose();
     if (e.video) e.video.srcObject = null;
     e.videoTex?.dispose();

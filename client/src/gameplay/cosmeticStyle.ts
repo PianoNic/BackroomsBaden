@@ -24,6 +24,10 @@ export function parseTitleRef(assetRef: string | undefined): TitleStyle | null {
   return { text, color };
 }
 
+export function themeColor(equipped: EquippedCosmetics): string | null {
+  return resolveCosmetic(equipped.body)?.assetRef || null;
+}
+
 export function bodyColor(equipped: EquippedCosmetics, fallback: string): string {
   const ref = resolveCosmetic(equipped.body)?.assetRef;
   return ref ? ref : fallback;

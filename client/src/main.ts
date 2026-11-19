@@ -27,6 +27,7 @@ import { buildScene } from "./core/sceneSetup";
 import { getSettings, onSettingsChange, updateSetting } from "./core/settings";
 import { ensureCatalog } from "./gameplay/cosmetics";
 import { installDevTools } from "./core/devTools";
+import { BodyShapes } from "./gameplay/bodyShapes";
 import { ModelLibrary, setActiveModelLibrary } from "./rendering/modelLoader";
 import { bundlesFor } from "./world/modelProps";
 
@@ -88,6 +89,7 @@ async function main(): Promise<void> {
   const ctx = createRenderContext(mount);
   const audioListener = new SpatialListener();
   await ensureCatalog();  // so equipped cosmetics resolve when seeding players
+  await BodyShapes.load();
   const useModels = true;
   let models: ModelLibrary | null = null;
   if (useModels) {
@@ -98,7 +100,7 @@ async function main(): Promise<void> {
   }
   const s = buildScene(init, ctx, net, audioListener, webcam, models);
   installDevTools({
-    init, player: s.player, pickups: s.pickups, camera: ctx.camera,
+    init, player: s.player, pickups: s.pickups, remotes: s.remotes, camera: ctx.camera,
     teacherPositions: () => s.teachers.getMapPositions(),
     inspector: (on: boolean) => ctx.showInspector(on),
   });
