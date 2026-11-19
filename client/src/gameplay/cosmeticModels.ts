@@ -5,12 +5,16 @@ import type { Material } from "@babylonjs/core/Materials/material";
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
 import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { LoadAssetContainerAsync } from "@babylonjs/core/Loading/sceneLoader";
+import { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
+import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { activeScene, group } from "../rendering/babylon";
+import { ModelMaterialFactory } from "../rendering/modelMaterials";
 
 export class CosmeticModelCache {
   private scene: Scene | null = null;
   private readonly pending = new Map<string, Promise<AssetContainer | null>>();
   private readonly resolved = new Map<string, AssetContainer>();
+  private readonly materials = new ModelMaterialFactory();
 
   load(url: string): Promise<AssetContainer | null> {
     const scene = activeScene();
@@ -22,7 +26,7 @@ export class CosmeticModelCache {
     if (cached) return cached;
     const promise = LoadAssetContainerAsync(url, scene)
       .then((container) => {
-        this.freezeMaterials(container);
+        this.stage(container);
         this.resolved.set(url, container);
         return container;
       })
@@ -61,12 +65,21 @@ export class CosmeticModelCache {
     if ("isPickable" in node) (node as Mesh).isPickable = false;
   }
 
-  private freezeMaterials(container: AssetContainer): void {
+  private stage(container: AssetContainer): void {
+    container.addAllToScene();
     const seen = new Set<Material>();
     for (const mesh of container.meshes) {
-      const mat = mesh.material;
+      mesh.isVisible = false;
+      mesh.isPickable = false;
+      let mat = mesh.material;
+      if (mat instanceof PBRMaterial) {
+        mat = this.materials.standardFor(mat);
+        mesh.material = mat;
+      }
       if (mat && !seen.has(mat)) {
         seen.add(mat);
+        const tex = (mat as { diffuseTexture?: Texture | null }).diffuseTexture;
+        if (tex) tex.updateSamplingMode(Texture.NEAREST_SAMPLINGMODE);
         mat.freeze();
       }
     }
