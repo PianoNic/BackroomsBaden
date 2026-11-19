@@ -9,6 +9,7 @@ import { buildPickupModel, pickupLabel } from "./pickupModels";
 
 const Y = 0.45;
 const PICKUP_RADIUS = 1.5;
+const PICKUP_SCALE = 1.4;
 
 type Entry = {
   info: PickupInfo;
@@ -29,6 +30,7 @@ export class Pickups {
   add(p: PickupInfo): void {
     if (this.entries.has(p.id)) return;
     const mesh = buildPickupModel(p.kind);
+    mesh.scaling.setAll(PICKUP_SCALE);
     mesh.position.set(p.x, Y, p.z);
     this.group.add(mesh);
     this.entries.set(p.id, { info: p, mesh, bobSeed: Math.random() * 10 });

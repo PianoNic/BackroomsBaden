@@ -46,6 +46,25 @@ class PickupGallery {
     await this.session.page.keyboard.up("KeyC");
   }
 
+  async standing(init: { spawn: { x: number; z: number } }): Promise<void> {
+    const at = { x: init.spawn.x, z: init.spawn.z };
+    for (const kind of ViewpointPlanner.pickupKinds()) {
+      await this.session.page.evaluate(({ k, p }) => {
+        (window as unknown as DevWindow).nachsitzenDev.pickups.add({ id: `stand-${k}`, kind: k, x: p.x, z: p.z });
+      }, { k: kind, p: at });
+      for (const distance of [1, 2]) {
+        const view = this.planner.facing(`stand-${kind}-${distance}m`, at.x, at.z, distance, 0.5);
+        if (!view) continue;
+        await this.probe.place(view, 30);
+        await this.session.page.waitForTimeout(300);
+        await this.probe.screenshot(this.env.screenshotPath(`stand-${kind}-${distance}m`));
+      }
+      await this.session.page.evaluate((k) => {
+        (window as unknown as DevWindow).nachsitzenDev.pickups.remove(`stand-${k}`);
+      }, kind);
+    }
+  }
+
   async run(init: { spawn: { x: number; z: number } }): Promise<void> {
     await this.session.page.evaluate(() => {
       const prompt = document.getElementById("interact-prompt");
@@ -84,8 +103,11 @@ test("pickup gallery", async ({ context }) => {
     const probe = new FrameProbe(session.page);
     await probe.calibrate(init.spawn.x, init.spawn.z);
     const gallery = new PickupGallery(env, session, planner, probe);
-    await gallery.run(init);
-    await gallery.crouchClassroom();
+    if (process.env.GALLERY_PICKUPS !== "standing") {
+      await gallery.run(init);
+      await gallery.crouchClassroom();
+    }
+    await gallery.standing(init);
     writeFileSync(
       env.jsonPath("pickups"),
       JSON.stringify(gallery.report, null, 2),
