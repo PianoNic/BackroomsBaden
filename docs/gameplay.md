@@ -29,7 +29,6 @@ Vollständige Liste: [items.md](items.md).
 | --- | --- |
 | **WASD** | Bewegung |
 | **Shift** | Sprint |
-| **Space** | Springen |
 | **E** | Interagieren / Aufheben / Wiederbeleben / Schrank |
 | **Q** | Trank trinken |
 | **F** | Wärmebild-Brille |
