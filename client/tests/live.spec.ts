@@ -50,7 +50,7 @@ async function releasePointerLockAndOpenPause(page: Page): Promise<void> {
 
 async function leaveToTitle(page: Page): Promise<void> {
   await releasePointerLockAndOpenPause(page);
-  await page.locator("#pause-overlay").getByRole("button", { name: "LEAVE", exact: true }).click();
+  await page.locator("#pause-overlay").getByRole("button", { name: "LEAVE" }).click();
   await expect(page.locator("nav.menu").getByRole("button", { name: "PLAY" })).toBeVisible({ timeout: 30_000 });
 }
 
@@ -206,10 +206,10 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
 
     await releasePointerLockAndOpenPause(host);
     const pauseOverlay = host.locator("#pause-overlay");
-    await expect(pauseOverlay.getByRole("button", { name: "RESUME", exact: true })).toBeVisible();
-    await expect(pauseOverlay.getByRole("button", { name: "OPTIONS", exact: true })).toBeVisible();
-    await expect(pauseOverlay.getByRole("button", { name: "LEAVE", exact: true })).toBeVisible();
-    await pauseOverlay.getByRole("button", { name: "OPTIONS", exact: true }).click();
+    await expect(pauseOverlay.getByRole("button", { name: "RESUME" })).toBeVisible();
+    await expect(pauseOverlay.getByRole("button", { name: "OPTIONS" })).toBeVisible();
+    await expect(pauseOverlay.getByRole("button", { name: "LEAVE" })).toBeVisible();
+    await pauseOverlay.getByRole("button", { name: "OPTIONS" }).click();
     await expect(host.locator("#settings-overlay")).toBeVisible();
     await expect(host.locator("#pause-overlay")).not.toBeAttached();
     await host.locator("#settings-overlay .bb-btn.back").click();
@@ -222,7 +222,7 @@ test("live end-to-end flow against a real server", async ({ browser }) => {
     const camLabelBefore = await camButton.textContent();
     await camButton.click();
     await expect(camButton).not.toHaveText(camLabelBefore ?? "", { timeout: 15_000 });
-    await pauseOverlay.getByRole("button", { name: "RESUME", exact: true }).click();
+    await pauseOverlay.getByRole("button", { name: "RESUME" }).click();
     await expect(host.locator("#pause-overlay")).not.toBeAttached();
     mark("pause menu done");
 
