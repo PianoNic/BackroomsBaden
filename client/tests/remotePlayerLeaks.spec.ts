@@ -87,3 +87,58 @@ test("a player who leaves takes the body, tag and cosmetics with them", async ({
   await scene.settle();
   expect(await scene.counts()).toEqual(before);
 });
+
+class LeakLooks {
+  static readonly START: EquippedCosmetics = {
+    hat: "hat_fischer", mask: "mask_schutzbrille", backpack: "backpack_rucksack", title: "title_veteran",
+  };
+
+  static readonly SWAPS: EquippedCosmetics[] = [
+    { hat: "hat_wizard", mask: "mask_papiertuete", backpack: "backpack_koffer", title: "title_veteran" },
+    { hat: "hat_party", backpack: "backpack_rucksack" },
+    { hat: "hat_fischer", mask: "mask_schutzbrille", backpack: "backpack_koffer" },
+    { hat: "hat_wizard", mask: "mask_papiertuete" },
+    {},
+    { hat: "hat_party", mask: "mask_schutzbrille", backpack: "backpack_koffer", title: "title_veteran" },
+  ];
+
+  static all(): EquippedCosmetics[] {
+    return [LeakLooks.START, ...LeakLooks.SWAPS];
+  }
+}
+
+test("join, equip, swap and leave cycles leak no meshes, materials or textures", async ({ page }) => {
+  const scene = new LeakScene(page);
+  await scene.open();
+  await scene.warm(LeakLooks.all());
+  await scene.settle();
+  const baseline = await scene.counts();
+
+  for (const id of ["a", "b"]) {
+    await scene.join(id, LeakLooks.START, id === "a");
+    await scene.camera(id, id === "b");
+  }
+  await scene.settle();
+  const joined = await scene.counts();
+  expect(joined.meshes).toBeGreaterThan(baseline.meshes);
+  expect(joined.materials).toBeGreaterThan(baseline.materials);
+  expect(joined.textures).toBeGreaterThan(baseline.textures);
+
+  for (let round = 0; round < 4; round++) {
+    for (const look of LeakLooks.SWAPS) {
+      await scene.equip("a", look);
+      await scene.equip("b", look);
+      await scene.settle();
+    }
+    await scene.equip("a", LeakLooks.START);
+    await scene.equip("b", LeakLooks.START);
+    await scene.settle();
+    expect(await scene.counts()).toEqual(joined);
+  }
+
+  await scene.camera("b", false);
+  await scene.leave("a");
+  await scene.leave("b");
+  await scene.settle();
+  expect(await scene.counts()).toEqual(baseline);
+});
