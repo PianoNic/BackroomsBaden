@@ -78,16 +78,16 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "backpack_schul", "backpack", "Schulrucksack", 200, "common",
         "models/cosmetics/backpack_rucksack",
-        attachment=CosmeticAttachment(x=0.0, y=0.10, z=0.34, scale=0.15),
+        attachment=CosmeticAttachment(x=0.0, y=0.10, z=0.34, scale=0.13),
     ),
     CosmeticItem(
-        "backpack_turnbeutel", "backpack", "Turnbeutel", 250, "common", "turnbeutel",
-        attachment=CosmeticAttachment(x=0.0, y=0.05, z=0.32, scale=0.9),
+        "backpack_turnbeutel", "backpack", "Turnbeutel", 250, "common", "models/cosmetics/backpack_turnbeutel",
+        attachment=CosmeticAttachment(x=0.0, y=0.05, z=0.32, scale=0.13),
     ),
     CosmeticItem(
         "backpack_koffer", "backpack", "Retro-Koffer", 450, "rare",
         "models/cosmetics/backpack_koffer",
-        attachment=CosmeticAttachment(x=0.0, y=0.05, z=0.35, scale=0.9),
+        attachment=CosmeticAttachment(x=0.0, y=0.05, z=0.35, scale=0.8),
     ),
     CosmeticItem(
         "backpack_abfallsack", "backpack", "Abfallsack", 500, "rare",
@@ -97,17 +97,17 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "backpack_karton", "backpack", "Umzugskarton", 800, "epic",
         "models/cosmetics/backpack_karton",
-        attachment=CosmeticAttachment(x=0.0, y=0.15, z=0.36, scale=0.85),
+        attachment=CosmeticAttachment(x=0.0, y=0.15, z=0.36, scale=1.7),
     ),
     CosmeticItem(
         "backpack_schwimmweste", "backpack", "Schwimmweste", 900, "epic",
         "models/cosmetics/backpack_schwimmweste",
-        attachment=CosmeticAttachment(x=0.0, y=0.15, z=0.30, scale=1.0),
+        attachment=CosmeticAttachment(x=0.0, y=0.15, z=0.30, scale=0.65),
     ),
     CosmeticItem(
         "backpack_zement", "backpack", "Zementsack", 1400, "legendary",
         "models/cosmetics/backpack_zement",
-        attachment=CosmeticAttachment(x=0.0, y=0.05, z=0.34, scale=0.8),
+        attachment=CosmeticAttachment(x=0.0, y=0.05, z=0.34, scale=3.0),
     ),
     CosmeticItem(
         "backpack_sani", "backpack", "Sanitätsrucksack", 0, "epic",
@@ -117,17 +117,17 @@ _ITEMS: list[CosmeticItem] = [
     # --- masks (worn on the face, local space -Z) ---
     CosmeticItem("mask_none", "mask", "Ohne Maske", 0, "common", "", True),
     CosmeticItem(
-        "mask_schutzbrille", "mask", "Schutzbrille", 250, "common", "schutzbrille",
-        attachment=CosmeticAttachment(x=0.0, y=0.25, z=-0.33, scale=1.0),
+        "mask_schutzbrille", "mask", "Schutzbrille", 250, "common", "models/cosmetics/mask_schutzbrille",
+        attachment=CosmeticAttachment(x=0.0, y=0.25, z=-0.33, scale=0.18),
     ),
     CosmeticItem(
-        "mask_papiertuete", "mask", "Papiertüte", 400, "rare", "papiertuete",
-        attachment=CosmeticAttachment(x=0.0, y=0.20, z=-0.30, scale=1.0),
+        "mask_papiertuete", "mask", "Papiertüte", 400, "rare", "models/cosmetics/mask_papiertuete",
+        attachment=CosmeticAttachment(x=0.0, y=0.20, z=-0.30, scale=0.9),
     ),
     CosmeticItem(
-        "mask_rennbrille", "mask", "Rennbrille", 0, "rare", "rennbrille",
+        "mask_rennbrille", "mask", "Rennbrille", 0, "rare", "models/cosmetics/mask_rennbrille",
         unlock="ach_speedrun",
-        attachment=CosmeticAttachment(x=0.0, y=0.25, z=-0.33, scale=1.0),
+        attachment=CosmeticAttachment(x=0.0, y=0.25, z=-0.33, scale=0.17),
     ),
     CosmeticItem(
         "mask_gas", "mask", "Gasmaske", 1200, "legendary", "models/pickups/goggles",
@@ -137,14 +137,14 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "hat_fischer", "hat", "Fischerhut", 700, "epic",
         "models/cosmetics/hat_fischer",
-        attachment=CosmeticAttachment(x=0.0, y=0.85, z=0.0, scale=1.0),
+        attachment=CosmeticAttachment(x=0.0, y=0.85, z=0.0, scale=0.18),
     ),
     # --- hand items (first-person held-chair viewmodel, camera space) ---
     CosmeticItem("handitem_stuhl", "handitem", "Standard-Stuhl", 0, "common", "", True),
     CosmeticItem(
         "handitem_besen", "handitem", "Hausmeister-Besen", 300, "common",
         "models/cosmetics/handitem_besen",
-        attachment=CosmeticAttachment(x=0.25, y=-0.20, z=0.40, scale=1.0),
+        attachment=CosmeticAttachment(x=0.25, y=-0.20, z=0.40, scale=0.7),
     ),
     CosmeticItem(
         "handitem_lupe", "handitem", "Lupe", 400, "rare",
@@ -154,22 +154,22 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "handitem_taschenlampe", "handitem", "Taschenlampe", 550, "rare",
         "models/cosmetics/handitem_taschenlampe",
-        attachment=CosmeticAttachment(x=0.24, y=-0.19, z=0.38, scale=1.0),
+        attachment=CosmeticAttachment(x=0.24, y=-0.19, z=0.38, scale=0.11),
     ),
     CosmeticItem(
         "handitem_werkzeugkoffer", "handitem", "Werkzeugkoffer", 800, "epic",
         "models/cosmetics/handitem_werkzeugkoffer",
-        attachment=CosmeticAttachment(x=0.26, y=-0.22, z=0.42, scale=0.85),
+        attachment=CosmeticAttachment(x=0.26, y=-0.22, z=0.42, scale=0.7),
     ),
     CosmeticItem(
         "handitem_megafon", "handitem", "Megafon", 1500, "legendary",
         "models/cosmetics/handitem_megafon",
-        attachment=CosmeticAttachment(x=0.25, y=-0.20, z=0.40, scale=1.1),
+        attachment=CosmeticAttachment(x=0.25, y=-0.20, z=0.40, scale=1.0),
     ),
     CosmeticItem(
         "handitem_signal", "handitem", "Signal-Lampe", 0, "epic",
         "models/cosmetics/handitem_signal", unlock="ach_houdini",
-        attachment=CosmeticAttachment(x=0.25, y=-0.20, z=0.40, scale=1.0),
+        attachment=CosmeticAttachment(x=0.25, y=-0.20, z=0.40, scale=0.33),
     ),
 ]
 

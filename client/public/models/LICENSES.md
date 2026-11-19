@@ -36,23 +36,27 @@ Every model in this directory is CC0 1.0 from Poly Haven or Poly Pizza and requi
 
 ## Cosmetics
 
-Player cosmetic models in `cosmetics/` (backpacks, hats, hand items). CC0 only; sources are Poly Haven and Poly Pizza (Quaternius).
+Player cosmetic models in `cosmetics/` (backpacks, masks, hats, hand items). CC0 1.0 only. Most models come from low-poly packs and authors on Poly Pizza (Kenney, Quaternius, Kay Lousberg and others), with the CC0 licence checked on each model page and the original textures and palettes kept. Three items (life vest, magnifier, megaphone) have no CC0 low-poly equivalent and stay Poly Haven scans.
 
 | Prop type | Model file | Source asset | Source URL | Author | License |
 |---|---|---|---|---|---|
-| `backpack_abfallsack` | `cosmetics/backpack_abfallsack.glb` | trashbag | https://polyhaven.com/a/trashbag | Benny Weimer | CC0 1.0 |
-| `backpack_karton` | `cosmetics/backpack_karton.glb` | cardboard_box_01 | https://polyhaven.com/a/cardboard_box_01 | Rahul Chaudhary | CC0 1.0 |
-| `backpack_koffer` | `cosmetics/backpack_koffer.glb` | vintage_suitcase | https://polyhaven.com/a/vintage_suitcase | Maximilian Schuster | CC0 1.0 |
-| `backpack_rucksack` | `cosmetics/backpack_rucksack.glb` | 2g9Jm7kvIU | https://poly.pizza/m/2g9Jm7kvIU | Quaternius | CC0 1.0 |
+| `backpack_abfallsack` | `cosmetics/backpack_abfallsack.glb` | Trash Bag (jYrMKg2Q7C) | https://poly.pizza/m/jYrMKg2Q7C | Quaternius | CC0 1.0 |
+| `backpack_karton` | `cosmetics/backpack_karton.glb` | Kenney Furniture Kit: Cardboard Box Closed (zv8NvYfT9B) | https://poly.pizza/m/zv8NvYfT9B | Kenney | CC0 1.0 |
+| `backpack_koffer` | `cosmetics/backpack_koffer.glb` | Suit Case (7DsKpns9FM) | https://poly.pizza/m/7DsKpns9FM | smallbigsquare | CC0 1.0 |
+| `backpack_rucksack` | `cosmetics/backpack_rucksack.glb` | Backpack (2g9Jm7kvIU) | https://poly.pizza/m/2g9Jm7kvIU | Quaternius | CC0 1.0 |
 | `backpack_schwimmweste` | `cosmetics/backpack_schwimmweste.glb` | life_jacket | https://polyhaven.com/a/life_jacket | PierreB3D | CC0 1.0 |
-| `backpack_zement` | `cosmetics/backpack_zement.glb` | cement_bag | https://polyhaven.com/a/cement_bag | PierreB3D | CC0 1.0 |
-| `handitem_besen` | `cosmetics/handitem_besen.glb` | plastic_broom | https://polyhaven.com/a/plastic_broom | L | CC0 1.0 |
+| `backpack_turnbeutel` | `cosmetics/backpack_turnbeutel.glb` | Duffel Bag (rysPhwuIP4) | https://poly.pizza/m/rysPhwuIP4 | accidentallyc | CC0 1.0 |
+| `backpack_zement` | `cosmetics/backpack_zement.glb` | Bag (VRfAODZ0Xk) | https://poly.pizza/m/VRfAODZ0Xk | Quaternius | CC0 1.0 |
+| `handitem_besen` | `cosmetics/handitem_besen.glb` | Witch Broom (gwE8397gO3) | https://poly.pizza/m/gwE8397gO3 | MiniPoly | CC0 1.0 |
 | `handitem_lupe` | `cosmetics/handitem_lupe.glb` | magnifying_glass_01 | https://polyhaven.com/a/magnifying_glass_01 | Nazar Borodavka | CC0 1.0 |
 | `handitem_megafon` | `cosmetics/handitem_megafon.glb` | Megaphone_01 | https://polyhaven.com/a/Megaphone_01 | Ethan Simon-Law | CC0 1.0 |
-| `handitem_signal` | `cosmetics/handitem_signal.glb` | signal_flashlight | https://polyhaven.com/a/signal_flashlight | Jiří Ptáček | CC0 1.0 |
-| `handitem_taschenlampe` | `cosmetics/handitem_taschenlampe.glb` | vintage_flashlight | https://polyhaven.com/a/vintage_flashlight | Omar M. El-Safy | CC0 1.0 |
-| `handitem_werkzeugkoffer` | `cosmetics/handitem_werkzeugkoffer.glb` | metal_toolbox | https://polyhaven.com/a/metal_toolbox | Mateusz Sadek | CC0 1.0 |
-| `hat_fischer` | `cosmetics/hat_fischer.glb` | fishermans_hat | https://polyhaven.com/a/fishermans_hat | PierreB3D | CC0 1.0 |
+| `handitem_signal` | `cosmetics/handitem_signal.glb` | Lantern (CtHBJ1ufeW) | https://poly.pizza/m/CtHBJ1ufeW | Kay Lousberg | CC0 1.0 |
+| `handitem_taschenlampe` | `cosmetics/handitem_taschenlampe.glb` | Torch (WGsvr4KOZd) | https://poly.pizza/m/WGsvr4KOZd | Quaternius | CC0 1.0 |
+| `handitem_werkzeugkoffer` | `cosmetics/handitem_werkzeugkoffer.glb` | Toolbox (3ImQcIK0Gp) | https://poly.pizza/m/3ImQcIK0Gp | CreativeTrio | CC0 1.0 |
+| `hat_fischer` | `cosmetics/hat_fischer.glb` | Hat Stylised (lNN3PlrjSa) | https://poly.pizza/m/lNN3PlrjSa | hat_my_guy | CC0 1.0 |
+| `mask_papiertuete` | `cosmetics/mask_papiertuete.glb` | Kenney Food Kit: Bag (fLNcjJnsJi) | https://poly.pizza/m/fLNcjJnsJi | Kenney | CC0 1.0 |
+| `mask_rennbrille` | `cosmetics/mask_rennbrille.glb` | Ski Goggles (4YCjSY3U6H) | https://poly.pizza/m/4YCjSY3U6H | iPoly3D | CC0 1.0 |
+| `mask_schutzbrille` | `cosmetics/mask_schutzbrille.glb` | Glasses (DBEk0SMQCt) | https://poly.pizza/m/DBEk0SMQCt | iPoly3D | CC0 1.0 |
 
 ## Not fetched — Sketchfab (CC-BY, requires `SKETCHFAB_API_TOKEN`)
 

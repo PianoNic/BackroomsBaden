@@ -48,6 +48,9 @@ class ModelSpec:
     def source_name(self) -> str:
         return "Poly Haven"
 
+    def asset_label(self) -> str:
+        return self.asset
+
     def credited_author(self, info) -> str:
         return info.author_for(self.asset)
 
@@ -60,9 +63,14 @@ class PolyPizzaSpec(ModelSpec):
     glb_uuid: str = ""
     title: str = ""
     author: str = ""
+    pack: str = ""
 
     def source_url(self) -> str:
         return f"https://poly.pizza/m/{self.asset}"
+
+    def asset_label(self) -> str:
+        label = f"{self.title} ({self.asset})"
+        return f"{self.pack}: {label}" if self.pack else label
 
     def source_name(self) -> str:
         return "Poly Pizza"
@@ -116,22 +124,65 @@ PICKUP_MANIFEST: tuple[ModelSpec, ...] = (
 COSMETICS_CATEGORY = "cosmetics"
 
 COSMETIC_MANIFEST: tuple[ModelSpec, ...] = (
-    ModelSpec("backpack_koffer", "vintage_suitcase", COSMETICS_CATEGORY, 1.0, 0.1, aggressive_simplify=True),
-    ModelSpec("backpack_abfallsack", "trashbag", COSMETICS_CATEGORY, 1.0, 0.1, aggressive_simplify=True),
-    ModelSpec("backpack_karton", "cardboard_box_01", COSMETICS_CATEGORY, 1.0, 0.1),
     ModelSpec("backpack_schwimmweste", "life_jacket", COSMETICS_CATEGORY, 1.0, 0.1),
-    ModelSpec("backpack_zement", "cement_bag", COSMETICS_CATEGORY, 1.0, 0.1),
+    ModelSpec("handitem_lupe", "magnifying_glass_01", COSMETICS_CATEGORY, 1.0, 0.1),
+    ModelSpec("handitem_megafon", "Megaphone_01", COSMETICS_CATEGORY, 1.0, 0.1, aggressive_simplify=True),
     PolyPizzaSpec(
-        "backpack_rucksack", "2g9Jm7kvIU", COSMETICS_CATEGORY, 1.0, 0.5,
+        "backpack_koffer", "7DsKpns9FM", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="185b3169-8d50-4419-80ca-eab21d769a25", title="Suit Case", author="smallbigsquare",
+    ),
+    PolyPizzaSpec(
+        "backpack_abfallsack", "jYrMKg2Q7C", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="9cc89089-5f9a-4d6b-a7a1-57e2f78e3976", title="Trash Bag", author="Quaternius",
+    ),
+    PolyPizzaSpec(
+        "backpack_karton", "zv8NvYfT9B", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="4dd8687e-a34d-4688-84ce-4084dc797476", title="Cardboard Box Closed", author="Kenney", pack="Kenney Furniture Kit",
+    ),
+    PolyPizzaSpec(
+        "backpack_zement", "VRfAODZ0Xk", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="5c18a372-e0fb-490f-aa90-8bdd04d7e92f", title="Bag", author="Quaternius",
+    ),
+    PolyPizzaSpec(
+        "backpack_turnbeutel", "rysPhwuIP4", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="4f52d8a5-4ebb-4099-9686-d841a03d85dd", title="Duffel Bag", author="accidentallyc",
+    ),
+    PolyPizzaSpec(
+        "backpack_rucksack", "2g9Jm7kvIU", COSMETICS_CATEGORY, 1.0,
         glb_uuid="0d29cdc2-0baf-4bf7-835f-075b34c70b61", title="Backpack", author="Quaternius",
     ),
-    ModelSpec("hat_fischer", "fishermans_hat", COSMETICS_CATEGORY, 1.0, 0.1),
-    ModelSpec("handitem_besen", "plastic_broom", COSMETICS_CATEGORY, 1.0, 0.1, aggressive_simplify=True),
-    ModelSpec("handitem_lupe", "magnifying_glass_01", COSMETICS_CATEGORY, 1.0, 0.1),
-    ModelSpec("handitem_taschenlampe", "vintage_flashlight", COSMETICS_CATEGORY, 1.0, 0.1),
-    ModelSpec("handitem_werkzeugkoffer", "metal_toolbox", COSMETICS_CATEGORY, 1.0, 0.1),
-    ModelSpec("handitem_megafon", "Megaphone_01", COSMETICS_CATEGORY, 1.0, 0.1, aggressive_simplify=True),
-    ModelSpec("handitem_signal", "signal_flashlight", COSMETICS_CATEGORY, 1.0, 0.1),
+    PolyPizzaSpec(
+        "mask_schutzbrille", "DBEk0SMQCt", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="ebadf2b5-3f28-4aa9-b0fd-942a4a6a06c5", title="Glasses", author="iPoly3D",
+    ),
+    PolyPizzaSpec(
+        "mask_rennbrille", "4YCjSY3U6H", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="d9c725b3-b39a-49c9-bc51-1159c1a747db", title="Ski Goggles", author="iPoly3D",
+    ),
+    PolyPizzaSpec(
+        "mask_papiertuete", "fLNcjJnsJi", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="4473a789-f73a-47d4-b73a-0e015b643325", title="Bag", author="Kenney", pack="Kenney Food Kit",
+    ),
+    PolyPizzaSpec(
+        "hat_fischer", "lNN3PlrjSa", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="5f6f5355-664d-4763-b1f6-71474caf2d52", title="Hat Stylised", author="hat_my_guy",
+    ),
+    PolyPizzaSpec(
+        "handitem_besen", "gwE8397gO3", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="32a3f78c-b0a0-4a9d-b88d-cd8b0652010b", title="Witch Broom", author="MiniPoly",
+    ),
+    PolyPizzaSpec(
+        "handitem_taschenlampe", "WGsvr4KOZd", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="035c4897-22f3-4e9c-b29f-ebafe2b566da", title="Torch", author="Quaternius",
+    ),
+    PolyPizzaSpec(
+        "handitem_werkzeugkoffer", "3ImQcIK0Gp", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="7c2b3946-0ee2-4626-b582-c280f1704dfc", title="Toolbox", author="CreativeTrio",
+    ),
+    PolyPizzaSpec(
+        "handitem_signal", "CtHBJ1ufeW", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="ecbc7b04-09ca-4068-bb3c-4e5ce1163c9a", title="Lantern", author="Kay Lousberg",
+    ),
 )
 
 
@@ -299,6 +350,39 @@ class GlbAnalyzer:
                 if "indices" in primitive:
                     total += document["accessors"][primitive["indices"]]["count"] // 3
         return total
+
+
+class GlbOrigin:
+    JSON_TYPE = 0x4E4F534A
+
+    @staticmethod
+    def centre_on_base(path: Path) -> bool:
+        data = path.read_bytes()
+        document = _read_json_chunk(data)
+        scenes = document.get("scenes", [])
+        if len(scenes) != 1:
+            return False
+        lo, hi = GlbAnalyzer.bounding_box(path)
+        shift = [-(lo[0] + hi[0]) / 2, -lo[1], -(lo[2] + hi[2]) / 2]
+        if all(abs(v) < 1e-6 for v in shift):
+            return False
+        nodes = document["nodes"]
+        nodes.append({"name": "origin", "translation": shift, "children": list(scenes[0]["nodes"])})
+        scenes[0]["nodes"] = [len(nodes) - 1]
+        payload = json.dumps(document, separators=(",", ":")).encode("utf-8")
+        payload += b" " * ((4 - len(payload) % 4) % 4)
+        out = bytearray(data[:12])
+        offset = 12
+        while offset < len(data):
+            chunk_length, chunk_type = struct.unpack_from("<II", data, offset)
+            if chunk_type == GlbOrigin.JSON_TYPE:
+                out += struct.pack("<II", len(payload), chunk_type) + payload
+            else:
+                out += data[offset: offset + 8 + chunk_length + ((4 - chunk_length % 4) % 4)]
+            offset += 8 + chunk_length + ((4 - chunk_length % 4) % 4)
+        struct.pack_into("<I", out, 8, len(out))
+        path.write_bytes(bytes(out))
+        return True
 
 
 class Downloader:
@@ -561,6 +645,8 @@ class ModelProcessor:
             if self.spec.aggressive_simplify:
                 extra_args.append("-sa")
             self.packer.pack(main_gltf, self.output_path, self.spec.simplify, extra_args or None)
+            if self.spec.category == COSMETICS_CATEGORY:
+                GlbOrigin.centre_on_base(self.output_path)
             result = self._measure()
         else:
             result = self._measure()
@@ -588,7 +674,7 @@ class LicenseGenerator:
         for spec in sorted(specs, key=lambda s: s.prop_type):
             model_file = f"{spec.category}/{spec.prop_type}.glb"
             rows.append(
-                f"| `{spec.prop_type}` | `{model_file}` | {spec.asset} | {spec.source_url()} | "
+                f"| `{spec.prop_type}` | `{model_file}` | {spec.asset_label()} | {spec.source_url()} | "
                 f"{spec.credited_author(self.info)} | {spec.license_name()} |"
             )
         return rows
@@ -611,8 +697,12 @@ class LicenseGenerator:
         lines.append("## Cosmetics")
         lines.append("")
         lines.append(
-            "Player cosmetic models in `cosmetics/` (backpacks, hats, hand items). CC0 only; "
-            "sources are Poly Haven and Poly Pizza (Quaternius)."
+            "Player cosmetic models in `cosmetics/` (backpacks, masks, hats, hand items). "
+            "CC0 1.0 only. Most models come from low-poly packs and authors on Poly Pizza "
+            "(Kenney, Quaternius, Kay Lousberg and others), with the CC0 licence checked on "
+            "each model page and the original textures and palettes kept. Three items "
+            "(life vest, magnifier, megaphone) have no CC0 low-poly equivalent and stay "
+            "Poly Haven scans."
         )
         lines.append("")
         lines.extend(self.TABLE_HEADER)
