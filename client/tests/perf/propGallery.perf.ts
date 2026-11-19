@@ -38,7 +38,7 @@ class PropGallery {
   }
 
   private viewFor(prop: Prop, index: number): Viewpoint | null {
-    const distance = SMALL_TYPES.has(prop.type) ? 1.1 : WALL_TYPES.has(prop.type) ? 1.6 : 2.4;
+    const distance = SMALL_TYPES.has(prop.type) ? 1.1 : WALL_TYPES.has(prop.type) ? 0.8 : 2.4;
     const lookY = prop.type === "clock" ? 2.5 : SMALL_TYPES.has(prop.type) ? 0.85 : 0.9;
     const front = { dx: -Math.sin(prop.yaw), dz: -Math.cos(prop.yaw) };
     const name = `prop-${prop.type}-${index}`;
