@@ -10,6 +10,7 @@ noise from the closet, which is exactly the kind of tension we want.
 from __future__ import annotations
 
 import math
+import time as _time
 
 from app.domain.lobbies.hideout import Hideout
 from app.domain.lobbies.lobby import Lobby
@@ -24,6 +25,7 @@ HIDE_RADIUS = 2.2      # m — how close the player must stand to enter
 SEEN_RADIUS = 9.0      # m — a watching teacher this close blocks entry
 HIDE_NOISE_RADIUS = 7.0
 EXIT_OFFSET = 0.9      # m — step out in front of the closet
+EXIT_GRACE_S = 1.0
 
 
 class HidingHandler:
@@ -109,6 +111,7 @@ class HidingHandler:
     async def _exit(self, lobby: Lobby, me: PlayerConn) -> None:
         ho = lobby.hideouts.get(me.hidden_in or "")
         me.hidden_in = None
+        me.catch_immune_until = _time.monotonic() + EXIT_GRACE_S
         if ho is None:
             return
         ho.occupied_by = None

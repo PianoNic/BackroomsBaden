@@ -64,7 +64,7 @@ class TeacherLoop:
         alive = [
             p for p in lobby.conns.values()
             if p.id not in lobby.dead and p.id not in lobby.extracted
-            and p.hidden_in is None
+            and p.hidden_in is None and p.is_catchable(now)
         ]
         for p in alive:
             for t in lobby.teachers:
