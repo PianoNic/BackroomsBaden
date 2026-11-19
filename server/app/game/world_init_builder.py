@@ -23,6 +23,7 @@ class WorldInitBuilder:
         """Per-player WORLD_INIT snapshot sent on game start."""
         assert lobby.world is not None
         init_payload = lobby.world.model_dump()
+        init_payload["spawn"] = {"x": me.x, "z": me.z, "yaw": me.yaw}
         init_payload["selfId"] = me.id
         init_payload["selfColor"] = me.color
         init_payload["players"] = [

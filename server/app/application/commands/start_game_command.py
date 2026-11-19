@@ -16,6 +16,7 @@ from app.domain.lobbies.hideout import Hideout
 from app.domain.lobbies.laptop import Laptop
 from app.domain.lobbies.lobby import GAMES, Lobby
 from app.domain.world.coop_party import CoopPartyPolicy
+from app.domain.world.spawn_spread import SpawnSpread
 from app.domain.lobbies.locker import Locker
 from app.domain.world.challenges.laptop_challenge_factory import LaptopChallengeFactory
 from app.domain.world.teachers import TeacherState, to_dto
@@ -110,8 +111,10 @@ class StartGameHandler(ICommandHandler[StartGameCommand, None]):
         self._locker_filler(list(lobby.lockers.values()), world.grid.width, random.Random())
         lobby.world = world
         spawn = world.spawn
-        for p in lobby.conns.values():
-            p.x, p.z, p.yaw = spawn.x, spawn.z, spawn.yaw
+        spread = SpawnSpread(world.grid.cells, world.grid.width, world.grid.height)
+        spots = spread.positions(spawn.x, spawn.z, len(lobby.conns))
+        for p, (sx, sz) in zip(lobby.conns.values(), spots):
+            p.x, p.z, p.yaw = sx, sz, spawn.yaw
         lobby.status = "running"
         lobby.clear_admin_resume_token()
         lobby.had_game = True
