@@ -38,6 +38,7 @@ export class Pickups {
     const e = this.entries.get(id);
     if (!e) return;
     this.group.remove(e.mesh);
+    e.mesh.dispose();
     this.entries.delete(id);
   }
 

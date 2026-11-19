@@ -98,7 +98,7 @@ async function main(): Promise<void> {
   }
   const s = buildScene(init, ctx, net, audioListener, webcam, models);
   installDevTools({
-    init, player: s.player, camera: ctx.camera,
+    init, player: s.player, pickups: s.pickups, camera: ctx.camera,
     teacherPositions: () => s.teachers.getMapPositions(),
     inspector: (on: boolean) => ctx.showInspector(on),
   });

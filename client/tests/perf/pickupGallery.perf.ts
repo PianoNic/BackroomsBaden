@@ -20,19 +20,6 @@ class PickupGallery {
     private readonly probe: FrameProbe,
   ) {}
 
-  async locate(): Promise<Map<PickupKind, Found>> {
-    const wanted = new Set<PickupKind>(ViewpointPlanner.pickupKinds());
-    const found = new Map<PickupKind, Found>();
-    for (const locker of this.planner.lockersBySpawnDistance()) {
-      if (found.size === wanted.size) break;
-      await this.session.openLocker(locker.id, locker.x, locker.z);
-      for (const spawn of await this.session.spawnedPickups()) {
-        if (!found.has(spawn.kind)) found.set(spawn.kind, { x: spawn.x, z: spawn.z });
-      }
-    }
-    return found;
-  }
-
   private async meshesNear(at: Found): Promise<unknown> {
     return this.session.page.evaluate(({ x, z }) => {
       const scene = (window as unknown as DevWindow).nachsitzenDev.camera.getScene();
@@ -50,38 +37,25 @@ class PickupGallery {
     }, at);
   }
 
-  private async aim(distance: number, at: Found): Promise<number> {
-    return this.session.page.evaluate(({ d, a }) => {
-      const dev = (window as unknown as DevWindow).nachsitzenDev;
-      const scene = dev.camera.getScene();
-      let sum = 0;
-      let count = 0;
-      for (const m of scene.meshes) {
-        if (!m.isEnabled() || !m.isVisible || m.getTotalVertices() === 0) continue;
-        const p = m.getAbsolutePosition();
-        if (Math.hypot(p.x - a.x, p.z - a.z) > 0.3 || p.y < 0.2 || p.y > 1.0) continue;
-        sum += p.y;
-        count++;
-      }
-      const targetY = count > 0 ? sum / count : 0.45;
-      dev.player.position.y = 0.8;
-      dev.player.pitch = Math.atan2(targetY - 0.8, d);
-      return targetY;
-    }, { d: distance, a: at });
-  }
-
-  async run(): Promise<void> {
-    await this.probe.brighten();
-    const found = await this.locate();
-    await this.session.page.waitForTimeout(1500);
-    for (const [kind, at] of found) {
-      const view = this.planner.facing(`pickup-${kind}`, at.x, at.z, 0.7, 0.45);
+  async run(init: { spawn: { x: number; z: number } }): Promise<void> {
+    await this.session.page.evaluate(() => {
+      const prompt = document.getElementById("interact-prompt");
+      if (prompt) prompt.style.display = "none";
+    });
+    const at = { x: init.spawn.x, z: init.spawn.z };
+    for (const kind of ViewpointPlanner.pickupKinds()) {
+      const view = this.planner.facing(`pickup-${kind}`, at.x, at.z, 0.55, 0.5);
       if (!view) continue;
+      await this.session.page.evaluate(({ k, p }) => {
+        (window as unknown as DevWindow).nachsitzenDev.pickups.add({ id: `gallery-${k}`, kind: k, x: p.x, z: p.z });
+      }, { k: kind, p: at });
       await this.probe.place(view, 5);
-      const targetY = await this.aim(0.7, at);
       await this.session.page.waitForTimeout(400);
-      this.report[kind] = { at, targetY, meshes: await this.meshesNear(at) };
+      this.report[kind] = { at, meshes: await this.meshesNear(at) };
       await this.probe.screenshot(this.env.screenshotPath(`pickup-${kind}`));
+      await this.session.page.evaluate((k) => {
+        (window as unknown as DevWindow).nachsitzenDev.pickups.remove(`gallery-${k}`);
+      }, kind);
     }
   }
 }
@@ -102,7 +76,7 @@ test("pickup gallery", async ({ browser }) => {
     const probe = new FrameProbe(session.page);
     await probe.calibrate(init.spawn.x, init.spawn.z);
     const gallery = new PickupGallery(env, session, planner, probe);
-    await gallery.run();
+    await gallery.run(init);
     writeFileSync(
       env.jsonPath().replace("perf.json", "pickups.json"),
       JSON.stringify(gallery.report, null, 2),
