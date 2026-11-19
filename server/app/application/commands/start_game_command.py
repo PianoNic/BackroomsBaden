@@ -15,6 +15,7 @@ from app.domain.lobbies.door import Door
 from app.domain.lobbies.hideout import Hideout
 from app.domain.lobbies.laptop import Laptop
 from app.domain.lobbies.lobby import GAMES, Lobby
+from app.domain.world.coop_party import CoopPartyPolicy
 from app.domain.lobbies.locker import Locker
 from app.domain.world.challenges.laptop_challenge_factory import LaptopChallengeFactory
 from app.domain.world.teachers import TeacherState, to_dto
@@ -56,6 +57,7 @@ class StartGameHandler(ICommandHandler[StartGameCommand, None]):
             seed=seed, width=size, height=size,
             objective_count=lobby.objective_count,
         )
+        CoopPartyPolicy.apply(world.objectives, len(lobby.conns))
         lobby.hallway_rects = [h for h in layout.hallways if h is not layout.atrium]
         lobby.doors = list(layout.doors)
         # Spawn an interactable Door panel on every classroom doorway. Other
