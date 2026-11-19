@@ -127,7 +127,7 @@ export const MODEL_NATIVE_FRONT: Record<string, ModelFrontAxis> = {
   cupboard: "minusZ",
   desk: "plusZ",
   fridge: "symmetric",
-  fire_extinguisher: "plusZ",
+  fire_extinguisher: "minusZ",
   laptop: "plusZ",
   locker: "plusZ",
   microscope: "plusZ",

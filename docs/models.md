@@ -1,81 +1,71 @@
 # Models
 
-Twenty-three props and all six world pickups used to be procedural — boxes
-and cylinders built in `propBuilders/*.ts` and `gameplay/pickupModels.ts` at
-runtime. This replaces them with realistic CC0 glTF models fetched from Poly
-Haven, while keeping the procedural builders for every prop type that has no
-CC0 model match (see [Why Sketchfab's picks weren't fetched](#why-sketchfabs-picks-werent-fetched)
-below).
+Props and pickups that used to be procedural boxes are glTF models. Most are
+low-poly PS1/PS2-style CC0 models from itch.io and OpenGameArt packs; the few
+left from Poly Haven are photo scans that get cut down to a retro look at fetch
+time (256 px textures, nearest sampling, no PBR maps). The procedural builders in
+`propBuilders/*.ts` remain for prop types with no model.
 
-## What moved to a model
+## What is a model
 
-Every model is CC0 1.0 — no attribution is legally required — but
+Every model is CC0 1.0 - no attribution is legally required -
 [`client/public/models/LICENSES.md`](../client/public/models/LICENSES.md)
-credits every author anyway.
+credits every author and quotes each pack's licence statement anyway.
+Measured size is along x out x height in metres after scaling.
 
-| Prop type | Poly Haven asset | Author | Triangles |
+| Prop type | Source | Triangles | Size |
 |---|---|---|---|
-| `bench` | painted_wooden_bench | Kirill Sannikov | 630 |
-| `books_pile` | binder_notebook | DaDrood | 1,987 |
-| `bookshelf` | Shelf_01 | Gabriel Radić | 182 |
-| `bunsen_burner` | bunsen_burner | BKS | 2,108 |
-| `cafeteria_table` | dining_table | Aron Łyczek | 1,048 |
-| `chair` | SchoolChair_01 | Ethan Place | 2,282 |
-| `clock` | wall_clock | PierreB3D | 1,829 |
-| `cupboard` | drawer_cabinet | Ulan Cabanilla | 3,418 |
-| `desk` | metal_office_desk | Ulan Cabanilla | 4,137 |
-| `fire_extinguisher` | korean_fire_extinguisher_01 | UM JOORIN | 1,981 |
-| `laptop` | classic_laptop | Arrangemonk | 4,532 |
-| `locker` | painted_wooden_cabinet_02 | Kirill Sannikov | 966 |
-| `microscope` | industrial_microscope | Lukas Walzer | 4,795 |
-| `microwave` | vintage_microwave | Adam Nekola | 2,435 |
-| `mop_bucket` | wooden_bucket_01 | James Ray Cock | 1,891 |
-| `papers` | office_notepads | Ulan Cabanilla | 666 |
-| `plant` | potted_plant_04 | James Ray Cock | 1,277 |
-| `pylon` | WetFloorSign_01 | Fran Calvente | 228 |
-| `recycle_bin` | plastic_crate_02 | Fabi_G | 1,336 |
-| `side_table` | side_table_01 | James Ray Cock | 1,929 |
-| `sofa` | Sofa_01 | Kirill Sannikov | 4,101 |
-| `student_desk` | SchoolDesk_01 | Ethan Place | 2,080 |
-| `trash_can` | industrial_pastic_container | Galo Benivegna | 713 |
-
-`trash_can`, `recycle_bin`, `mop_bucket`, `plant`, and `books_pile` are all
-small 0.5x0.5m floor clutter and are held to a tighter ≤2,000-triangle
-budget than the large furniture pieces (≤5,000). The first pass at
-`trash_can`/`recycle_bin`/`plant` left them well over budget (4,328 /
-2,308 / 3,998 triangles) even after raising their `simplify` ratio, because
-`industrial_pastic_container`, `plastic_crate_02`, and `potted_plant_04`
-are built from many small disconnected shells that plain `gltfpack -si`
-refuses to decimate past a certain point. Setting `aggressive_simplify` on
-those three specs (adds gltfpack's `-sa`, which allows simplification
-across disconnected shells) to the main pack dropped them to 713 / 1,336 /
-1,277 triangles, comfortably under budget. `mop_bucket` and `books_pile`
-hit their budget from a `simplify` ratio bump alone (1,891 and stayed at
-1,987 respectively) and didn't need `-sa`.
-
-`locker` is new in this pass: Poly Haven has no school-locker asset, so
-`painted_wooden_cabinet_02` ships as a CC0 stand-in, scaled non-uniformly
-to fit the 0.5 x 1.8 x 0.4m locker envelope (see below). It replaces the
-Sketchfab "School locker" candidate that would otherwise have needed a
-`SKETCHFAB_API_TOKEN` — see [Why Sketchfab's picks weren't fetched](#why-sketchfabs-picks-werent-fetched).
+| `bench` | Poly Haven / painted_wooden_bench | 630 | 1.16 x 0.50 x 0.89 |
+| `books_pile` | PSX style office pack / `OFFICE/book_things/books_alt.glb` | 130 | 0.31 x 0.18 x 0.29 |
+| `bookshelf` | PSX style office pack / `OFFICE/book_things/book_case_small.glb` | 224 | 0.83 x 0.41 x 2.08 |
+| `bunsen_burner` | Poly Haven / bunsen_burner | 2,108 | 0.14 x 0.14 x 0.17 |
+| `cafeteria_table` | Poly Haven / dining_table | 1,048 | 2.26 x 1.39 x 0.88 |
+| `chair` | PSX Derelict Furniture (Standard) / `PSX-Derelict-Furniture-Standard/glb/chair.glb` | 348 | 0.50 x 0.50 x 1.03 |
+| `clock` | PSX style office pack / `OFFICE/extras/wall_clock.glb` | 60 | 0.32 x 0.02 x 0.32 |
+| `cupboard` | PSX style office pack / `OFFICE/file_cabinets/file_cabinet_largest.glb` | 20 | 1.12 x 0.55 x 1.10 |
+| `desk` | PSX style office pack / `OFFICE/desks/desk2_weathered.glb` | 236 | 1.94 x 0.96 x 0.78 |
+| `fire_extinguisher` | Fire Extinguisher / `fire_extinguisher_model.obj` | 330 | 0.50 x 0.14 x 0.48 |
+| `fridge` | PSX Derelict Furniture (Standard) / `PSX-Derelict-Furniture-Standard/glb/fridge.glb` | 12 | 0.71 x 0.83 x 1.61 |
+| `laptop` | Poly Haven / classic_laptop | 4,532 | 0.36 x 0.27 x 0.30 |
+| `locker` | Poly Haven / painted_wooden_cabinet_02 | 966 | 0.50 x 0.40 x 1.80 |
+| `microscope` | Poly Haven / industrial_microscope | 4,795 | 0.20 x 0.47 x 0.44 |
+| `microwave` | Poly Haven / vintage_microwave | 2,435 | 0.70 x 0.48 x 0.34 |
+| `mop_bucket` | Lowpoly survival item pack / `Survival items/items.fbx` | 320 | 0.36 x 0.41 x 0.56 |
+| `papers` | PSX style office pack / `OFFICE/stationary/paper_stack.glb` | 12 | 0.33 x 0.44 x 0.03 |
+| `plant` | PSX Derelict Furniture (Standard) / `PSX-Derelict-Furniture-Standard/glb/vase.glb` | 242 | 0.67 x 0.83 x 0.63 |
+| `pylon` | Poly Haven / WetFloorSign_01 | 228 | 0.30 x 0.36 x 0.63 |
+| `recycle_bin` | Poly Haven / plastic_crate_02 | 1,336 | 0.48 x 0.39 x 0.24 |
+| `side_table` | PSX style office pack / `OFFICE/file_cabinets/file_cabinet_smallest.glb` | 20 | 0.48 x 0.52 x 0.71 |
+| `sofa` | PSX Derelict Furniture (Standard) / `PSX-Derelict-Furniture-Standard/glb/couch.glb` | 178 | 1.60 x 0.91 x 0.85 |
+| `student_desk` | Poly Haven / SchoolDesk_01 | 2,080 | 0.71 x 0.55 x 0.88 |
+| `trash_can` | Poly Haven / industrial_pastic_container | 713 | 0.34 x 0.47 x 0.31 |
+| `vending_machine` | PSX style office pack / `OFFICE/extras/coffee_machine.glb` | 244 | 1.00 x 1.03 x 1.70 |
+| `water_dispenser` | PSX style office pack / `OFFICE/extras/water_cooler.glb` | 256 | 0.38 x 0.45 x 1.40 |
 
 ### Pickups
 
-The six world pickups (`PickupKind` in `net/protocol.ts`) also moved off
-`gameplay/pickupModels.ts`'s procedural builders onto CC0 Poly Haven models,
-each picked and scaled to stay handheld-sized (roughly 0.2–0.4m in its
-largest dimension) and under ~2,500 triangles:
-
-| Pickup kind | Poly Haven asset | Author | Triangles |
+| Pickup kind | Source | Triangles | Size |
 |---|---|---|---|
-| `medkit` | medical_box | Ulan Cabanilla | 1,858 |
-| `potion` | multi_cleaner_bottle | James Ray Cock | 2,376 |
-| `compass` | seadogs_compass | Benny Weimer | 2,911 |
-| `tracker` | retro_multimeter | elli moeller | 2,685 |
-| `goggles` | old_gas_mask | Michał Wiśniewski | 2,731 |
-| `gps` | digital_wrist_watch | Adrian C | 2,632 |
+| `compass` | Lowpoly survival item pack / `Survival items/items.fbx` | 280 | 0.16 x 0.16 x 0.04 |
+| `goggles` | Gas Mask / `gasmask/gasmask.fbx` | 2,115 | 0.14 x 0.27 x 0.23 |
+| `gps` | Poly Haven / digital_wrist_watch | 2,632 | 0.04 x 0.26 x 0.01 |
+| `medkit` | First Aid Kit 3D / `FirstAid.obj` | 140 | 0.38 x 0.11 x 0.33 |
+| `potion` | N64 Potions / `N64 Potions/GLB/Red.glb` | 48 | 0.13 x 0.13 x 0.23 |
+| `tracker` | Poly Haven / retro_multimeter | 2,685 | 0.22 x 0.20 x 0.28 |
 
-Pickups are small, few, and already cheap.
+Pickups must stay between 0.05 and 0.6 m and under 3,000 triangles
+(`server/tests/domain/test_prop_footprint_sync.py`).
+
+### Kept as Poly Haven or procedural
+
+`student_desk`, `locker`, `laptop`, `microwave`, `microscope`, `bunsen_burner`,
+`cafeteria_table`, `bench`, `trash_can`, `recycle_bin` and `pylon` have no CC0
+PS1-style equivalent in the packs above and stay Poly Haven scans (the locker also
+needs a separate door node for its hinge). `whiteboard` stays procedural because the
+pack's whiteboard is a freestanding easel and the quest scribble texture needs a
+wall-mounted board face. `tracker` and `gps` keep their Poly Haven models. The OpenGameArt
+vending-machine and freestanding-sink packs are flat-coloured or untextured and were
+rejected; the Tech01 microscope ships only as a `.blend`.
 
 ## Non-uniform scale and the hinge contract
 
@@ -165,16 +155,29 @@ on this pass.
 
 ## Asset pipeline
 
-`tools/fetch_models.py` turns a Poly Haven asset slug into a game-ready
-`.glb`:
+`tools/fetch_models.py` turns a manifest entry into a game-ready `.glb`.
+`MANIFEST` and `PICKUP_MANIFEST` name Poly Haven slugs; `ITCH_MANIFEST` and
+`OPENGAMEART_MANIFEST` name a model inside a CC0 pack (`PACKS` holds each
+pack's page, author and quoted licence statement):
 
-1. Query the Poly Haven files API for the asset, and download the 1K glTF
-   plus its textures.
+1. Fetch the source. Poly Haven: the files API, 1K glTF plus textures.
+   Packs: `tools/asset_sources.py` downloads the archive (the scripted
+   itch.io free-download flow with a 6 s throttle, or a direct
+   OpenGameArt link with a browser User-Agent) and extracts only model and
+   texture files into its own directory with a path-traversal guard.
+   `tools/model_converters.py` turns GLB (embedded images unpacked), FBX
+   (`fbx2gltf` from `client/node_modules`) and OBJ (a small writer, with an
+   optional texture override for archives that ship no `.mtl`) into a loose
+   glTF. `pre_yaw` rotates the whole model by a quarter turn before packing,
+   `node` keeps one node of a multi-object file and drops the rest.
 2. Strip normal, occlusion and metallic-roughness textures and their
    material slots, force every remaining texture onto a nearest-neighbour
    sampler (no mipmaps), and downscale each one to at most 256px per side
-   (aspect kept, never upscaled, power of two per axis) as JPEG at quality 85
-   with Pillow, so every prop ships one low-resolution base colour image.
+   (aspect kept, never upscaled; textures already within 256 px keep their
+   exact size) as JPEG at quality 85, or PNG when the source is a PNG, with
+   Pillow, so every prop ships one low-resolution base colour image. A
+   `BLEND` material whose alpha comes from the texture becomes an alpha-tested
+   `MASK` material; `material_alpha` can pin the alpha of a named material.
 3. Run `gltfpack -c -vtf` (meshopt compression, float texture coordinates —
    see [Float UVs](#float-uvs-why-the-models-were-rendering-black) below)
    over the result, with a per-model `-si` simplification ratio where the
@@ -253,17 +256,16 @@ faces +Z, which is what `place_paired` in
 `server/app/domain/world/room_patterns.py` composes with when it tucks the
 teacher's chair behind the desk.
 
-The Poly Haven / ambientCG models are authored the other way round: their
-visible front faces +Z. That is what `yawOffset` is for. It lives in
-`tools/fetch_models.py`'s `MANIFEST` as `yaw_offset`, is written into
-`footprints.json`, and is a half turn (`math.pi`) for every model whose
-authored front points the wrong way: `bench`, `bookshelf`, `clock`,
-`cupboard`, `fire_extinguisher`, `laptop`, `locker`, `microscope`,
-`microwave`, `sofa`. `desk` and `chair` need no turn (the desk's modesty
-slab is already the face it shows the room, with the kneehole at +Z where
-the paired chair sits), and everything else is symmetric enough that a turn
-would be invisible. A half turn does not swap `along`/`out`, so the
-measured footprints are unaffected.
+Models are authored with their visible front on either side, so `yawOffset`
+(`yaw_offset` in `tools/fetch_models.py`) is a half turn (`math.pi`) wherever
+the authored front points the wrong way: `bench`, `chair`, `desk`, `laptop`, `locker`, `microscope`, `microwave`, `sofa`.
+For `desk` the "front" is the plain back of the double-pedestal desk; the
+drawer fronts face the paired chair at +Z. `chair` is the one sitter-facing
+type: its seat front points -Z in the source, so it takes the half turn to put the
+sitter on +Z. Models whose authored front is along X (the derelict couch, the
+fire extinguisher) are first turned a quarter with `pre_yaw` at fetch time, because
+`yawOffset` is only ever 0 or a half turn. A half turn does not swap `along`/`out`,
+so the measured footprints are unaffected.
 
 `normalizeModelTemplate()` in `client/src/world/modelPropStage.ts` bakes
 the offset into the template's vertices *before* it measures the bounding
@@ -380,4 +382,5 @@ Python dependency, it's resolved from `client/node_modules/.bin`, so run
 `bun install` in `client/` first. It's idempotent — re-running it skips
 anything already downloaded and converted — pass `--force` to redo
 everything regardless. Downloaded sources are cached under the gitignored
-`tools/.model-cache/`, so repeated runs don't re-hit the Poly Haven API.
+`tools/.model-cache/`, so repeated runs don't re-hit the Poly Haven API
+or the pack sites. Delete an output `.glb` to rebuild it.

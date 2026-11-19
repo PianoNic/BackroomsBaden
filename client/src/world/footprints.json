@@ -112,15 +112,15 @@
     },
     "fire_extinguisher": {
       "model": "wall/fire_extinguisher",
-      "asset": "korean_fire_extinguisher_01",
-      "scale": 1.0,
-      "scaleY": 1.0,
-      "scaleZ": 1.0,
-      "yawOffset": 3.141592653589793,
-      "along": 0.279,
-      "out": 0.3674,
-      "height": 0.6591,
-      "triangles": 1981
+      "asset": "fire_extinguisher_model",
+      "scale": 0.078,
+      "scaleY": 0.078,
+      "scaleZ": 0.078,
+      "yawOffset": 0.0,
+      "along": 0.5049,
+      "out": 0.1385,
+      "height": 0.4848,
+      "triangles": 330
     },
     "fridge": {
       "model": "appliances/fridge",
@@ -189,15 +189,15 @@
     },
     "mop_bucket": {
       "model": "clutter/mop_bucket",
-      "asset": "wooden_bucket_01",
-      "scale": 1.0,
-      "scaleY": 1.0,
-      "scaleZ": 1.0,
+      "asset": "bucket",
+      "scale": 0.2,
+      "scaleY": 0.2,
+      "scaleZ": 0.2,
       "yawOffset": 0.0,
-      "along": 0.3663,
-      "out": 0.3418,
-      "height": 0.5493,
-      "triangles": 1891
+      "along": 0.3642,
+      "out": 0.4142,
+      "height": 0.5585,
+      "triangles": 320
     },
     "papers": {
       "model": "clutter/papers",
@@ -323,27 +323,27 @@
   "pickups": {
     "compass": {
       "model": "pickups/compass",
-      "asset": "seadogs_compass",
-      "scale": 1.6,
-      "scaleY": 1.6,
-      "scaleZ": 1.6,
+      "asset": "compass",
+      "scale": 0.22,
+      "scaleY": 0.22,
+      "scaleZ": 0.22,
       "yawOffset": 0.0,
-      "along": 0.1297,
-      "out": 0.2295,
-      "height": 0.1386,
-      "triangles": 2911
+      "along": 0.1648,
+      "out": 0.1648,
+      "height": 0.0405,
+      "triangles": 280
     },
     "goggles": {
       "model": "pickups/goggles",
-      "asset": "old_gas_mask",
-      "scale": 0.3,
-      "scaleY": 0.3,
-      "scaleZ": 0.3,
+      "asset": "gasmask",
+      "scale": 0.05,
+      "scaleY": 0.05,
+      "scaleZ": 0.05,
       "yawOffset": 0.0,
-      "along": 0.0624,
-      "out": 0.0922,
-      "height": 0.3377,
-      "triangles": 2731
+      "along": 0.137,
+      "out": 0.2687,
+      "height": 0.2255,
+      "triangles": 2115
     },
     "gps": {
       "model": "pickups/gps",
@@ -359,27 +359,27 @@
     },
     "medkit": {
       "model": "pickups/medkit",
-      "asset": "medical_box",
-      "scale": 0.8,
-      "scaleY": 0.8,
-      "scaleZ": 0.8,
+      "asset": "FirstAid",
+      "scale": 0.3,
+      "scaleY": 0.3,
+      "scaleZ": 0.3,
       "yawOffset": 0.0,
-      "along": 0.4204,
-      "out": 0.2801,
-      "height": 0.078,
-      "triangles": 1858
+      "along": 0.3761,
+      "out": 0.1125,
+      "height": 0.3292,
+      "triangles": 140
     },
     "potion": {
       "model": "pickups/potion",
-      "asset": "multi_cleaner_bottle",
-      "scale": 1.0,
-      "scaleY": 1.0,
-      "scaleZ": 1.0,
+      "asset": "potion_red",
+      "scale": 0.032,
+      "scaleY": 0.032,
+      "scaleZ": 0.032,
       "yawOffset": 0.0,
-      "along": 0.0885,
-      "out": 0.0895,
-      "height": 0.2286,
-      "triangles": 2376
+      "along": 0.128,
+      "out": 0.128,
+      "height": 0.2304,
+      "triangles": 48
     },
     "tracker": {
       "model": "pickups/tracker",
