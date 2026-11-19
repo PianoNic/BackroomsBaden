@@ -59,6 +59,22 @@ nachsitzenDev.inspector(false)   // closes it again
 The inspector bundle is fetched on demand, so it costs nothing in a production build,
 and `window.nachsitzenDev` is stripped from production builds entirely.
 
+### Perf and screenshot harness
+`bun run test:perf` builds the client with `VITE_DEV_HOOKS=1` into a scratch directory, starts one
+Python server on port 8020 serving that build, then drives a headless Chromium (1280x720) through a
+solo xlarge round (seed 424242). It measures draw calls, active meshes, and frame time (median and p95
+over 240 frames after 60 warm-up frames) at fixed viewpoints, and saves screenshots plus `perf.json`
+and `sizes.txt`. It needs Playwright's Chromium, Python with the server requirements, and no other
+process on port 8020.
+```powershell
+cd client
+$env:PERF_OUT_DIR = "$env:TEMP\perf-after"
+bun run test:perf
+```
+`PERF_OUT_DIR` holds the results (default: a temp directory), `PERF_BUILD_DIR` the scratch client build,
+`PERF_PYTHON` the Python executable. To compare against another revision, run it from a worktree of that
+revision with a different `PERF_OUT_DIR`.
+
 ## Tests
 Service-level tests for the server live in `server/tests`. They build `Lobby`
 objects directly instead of going through a WebSocket, so they need no running
