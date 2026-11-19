@@ -73,7 +73,7 @@ bun run test:gallery     # all gallery specs
 bun run test:perf        # only the perf measurement
 bunx playwright test -c playwright.gallery.config.ts --project=gallery propGallery   # one spec
 ```
-- `cosmeticsGallery` renders the cosmetic pose sheets from the shop catalog and needs no backend.
+- `cosmeticsGallery`, `tallHats`, `tagOcclusion` and `titleLegibility` render cosmetics and name tags in the standalone gallery page and need no backend.
 - `propGallery` screenshots every prop type from the front and the back (the orientation probe), and
   `pickupGallery` screenshots every pickup kind; set `GALLERY_PROPS=clock,printer` to limit props.
 - `retroPerf` (the `perf` project, run with unlimited frame rate) measures draw calls, active meshes
