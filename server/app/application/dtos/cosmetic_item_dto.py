@@ -11,3 +11,6 @@ class CosmeticItemDto(BaseModel):
     rarity: str
     asset_ref: str = Field(serialization_alias="assetRef")
     default: bool
+    attach: dict | None = None
+    featured: bool = False
+    unlock: str = ""

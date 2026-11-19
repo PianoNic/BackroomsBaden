@@ -135,7 +135,9 @@ export function buildScene(
     corpses.add(c.id, c.x, c.z, owner?.color ?? init.selfColor, owner?.equipped);
   }
   const laptop = new LaptopOverlay(net);
-  const chairs = new Chairs(init.chairs ?? [], init.selfId, ctx.camera, remotes);
+  const chairs = new Chairs(
+    init.chairs ?? [], init.selfId, ctx.camera, remotes, init.selfCosmetics?.equipped,
+  );
   const pickups = new Pickups(init.pickups ?? []);
   const lockers = new Lockers(init.lockers ?? []);
   const doors = new Doors(init.doors ?? [], propColliders);

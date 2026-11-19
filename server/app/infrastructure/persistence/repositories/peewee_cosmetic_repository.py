@@ -1,16 +1,26 @@
 from __future__ import annotations
 
+from app.domain.achievements.achievement_repository import IAchievementRepository
 from app.domain.cosmetics.cosmetic_catalog import CosmeticCatalog
 from app.domain.cosmetics.cosmetic_item import CosmeticItem
 from app.domain.cosmetics.cosmetic_repository import ICosmeticRepository
 from app.infrastructure.persistence.engine import DatabaseEngine
 from app.infrastructure.persistence.models import CosmeticEquipped, CosmeticOwnership, Profile
+from app.infrastructure.persistence.repositories.peewee_achievement_repository import (
+    PeeweeAchievementRepository,
+)
 
 
 class PeeweeCosmeticRepository(ICosmeticRepository):
-    def __init__(self, engine: DatabaseEngine, catalog: CosmeticCatalog) -> None:
+    def __init__(
+        self,
+        engine: DatabaseEngine,
+        catalog: CosmeticCatalog,
+        achievements: IAchievementRepository | None = None,
+    ) -> None:
         self._engine = engine
         self._catalog = catalog
+        self._achievements = achievements or PeeweeAchievementRepository(engine)
 
     async def get_owned(self, account_id: int) -> set[str]:
         rows = await (
@@ -18,7 +28,12 @@ class PeeweeCosmeticRepository(ICosmeticRepository):
             .where(CosmeticOwnership.account == account_id)
             .aio_execute()
         )
-        return {r.cosmetic_id for r in rows} | self._catalog.default_ids()
+        unlocked = await self._achievements.get_unlocked(account_id)
+        return (
+            {r.cosmetic_id for r in rows}
+            | self._catalog.default_ids()
+            | self._catalog.ids_unlocked_by(unlocked)
+        )
 
     async def get_equipped(self, account_id: int) -> dict[str, str]:
         rows = await (

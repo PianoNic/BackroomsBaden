@@ -143,7 +143,7 @@ class WebcamStatePkt(BaseModel):
 
 class SetCosmeticPkt(BaseModel):
     type: Literal["set_cosmetic"]
-    category: Literal["body", "facePattern", "hat", "title"]
+    category: Literal["body", "facePattern", "hat", "title", "backpack", "mask", "handitem"]
     cosmeticId: str | None = Field(default=None, max_length=64)
 
 

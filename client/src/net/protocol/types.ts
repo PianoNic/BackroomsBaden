@@ -106,8 +106,17 @@ export type Objective = {
   min_players?: number;
 };
 
-export type CosmeticCategory = "body" | "facePattern" | "hat" | "title";
+export type CosmeticCategory =
+  | "body" | "facePattern" | "hat" | "title" | "backpack" | "mask" | "handitem";
 export type EquippedCosmetics = Partial<Record<CosmeticCategory, string>>;
+export type CosmeticAttach = {
+  x: number;
+  y: number;
+  z: number;
+  scale: number;
+  yaw: number;
+  pitch: number;
+};
 export type CatalogItem = {
   id: string;
   category: CosmeticCategory;
@@ -116,6 +125,9 @@ export type CatalogItem = {
   rarity: string;
   assetRef: string;
   default: boolean;
+  attach?: CosmeticAttach | null;
+  featured?: boolean;
+  unlock?: string | null;
 };
 export type SelfCosmetics = { owned: string[]; equipped: EquippedCosmetics };
 

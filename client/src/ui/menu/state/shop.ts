@@ -7,6 +7,9 @@ export const SHOP_CATEGORIES: { key: CosmeticCategory; label: string }[] = [
   { key: "body", label: "Body" },
   { key: "facePattern", label: "Face" },
   { key: "hat", label: "Hats" },
+  { key: "backpack", label: "Backpacks" },
+  { key: "mask", label: "Masks" },
+  { key: "handitem", label: "Hand items" },
   { key: "title", label: "Titles" },
 ];
 
@@ -14,6 +17,7 @@ export const SHOP_FAIL_TEXT: Record<string, string> = {
   insufficient: "Not enough coins.",
   guest: "Sign in to buy cosmetics.",
   owned: "Already owned.",
+  locked: "Unlock this item through its achievement.",
   unknown: "That item doesn't exist.",
   error: "Something went wrong — try again.",
 };

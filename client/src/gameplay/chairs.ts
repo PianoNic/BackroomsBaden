@@ -1,16 +1,23 @@
 import type { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
-import type { ChairInit, ChairStatePkt, ChairThrowStartPkt, ChairHitPkt } from "../net/protocol";
+import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
+import type {
+  ChairInit, ChairStatePkt, ChairThrowStartPkt, ChairHitPkt, EquippedCosmetics,
+} from "../net/protocol";
 import type { NetClient } from "../net/client";
 import type { RemotePlayers } from "./remotePlayers";
 import type { InteractTarget } from "../ui/interactPrompt";
 import { distanceSquaredXZ } from "../core/geom";
 import { Group, group, setEulerXYZ } from "../rendering/babylon";
 import { buildChairMesh } from "./chairMesh";
+import { resolveCosmetic } from "./cosmetics";
+import { CosmeticSlots } from "./cosmeticSlots";
+import { cosmeticModels } from "./cosmeticModels";
 
 export { buildChairMesh };
 
 const PICKUP_RADIUS = 1.8;
 const THROW_LIFETIME_MS = 1600;
+const HELD_CHAIR_Y = -0.55;
 
 type Entry = {
   state: ChairInit;
@@ -36,12 +43,16 @@ export class Chairs {
   private readonly heldMesh: Group;
   private heldChairId: string | null = null;
   private heldBob = 0;
+  private heldSkin: TransformNode | null = null;
+  private heldBaseY = HELD_CHAIR_Y;
+  private heldSkinToken = 0;
 
   constructor(
     initial: ChairInit[],
     private readonly selfId: string,
     private readonly camera: FreeCamera,
     private readonly remotes: RemotePlayers,
+    equipped: EquippedCosmetics = {},
   ) {
     for (const c of initial) {
       const mesh = buildChairMesh();
@@ -56,8 +67,46 @@ export class Chairs {
     setEulerXYZ(this.heldMesh, -0.2, Math.PI, 0); // back of chair facing forward
     this.heldMesh.visible = false;
     this.heldMesh.parent = this.camera;
+    this.setHandItem(equipped);
     // Carrier-side mesh for other players is rendered via the world mesh
     // floating at the player's position (cheap; no rig).
+  }
+
+  setHandItem(equipped: EquippedCosmetics): void {
+    const token = ++this.heldSkinToken;
+    this.clearHeldSkin();
+    const held = CosmeticSlots.heldModel(equipped, resolveCosmetic);
+    if (!held) return;
+    const place = () => {
+      if (token !== this.heldSkinToken) return;
+      const model = cosmeticModels.instantiate(held.url, `held_${held.item.id}`);
+      if (!model) return;
+      const pose = CosmeticSlots.pose(held.item.attach);
+      const node = group("heldSkin");
+      node.position.set(pose.x, pose.y, pose.z);
+      node.scaling.setAll(pose.scale);
+      node.rotation.set(pose.pitch, pose.yaw, 0);
+      model.parent = node;
+      node.parent = this.camera;
+      this.heldSkin = node;
+      this.heldBaseY = pose.y;
+      this.syncHeldVisibility();
+    };
+    if (cosmeticModels.has(held.url)) place();
+    else void cosmeticModels.load(held.url).then(place);
+  }
+
+  private clearHeldSkin(): void {
+    this.heldSkin?.dispose();
+    this.heldSkin = null;
+    this.heldBaseY = HELD_CHAIR_Y;
+    this.syncHeldVisibility();
+  }
+
+  private syncHeldVisibility(): void {
+    const holding = this.heldChairId !== null;
+    this.heldMesh.visible = holding && !this.heldSkin;
+    if (this.heldSkin) this.heldSkin.setEnabled(holding);
   }
 
   private applyMeshPose(mesh: Group, c: ChairInit): void {
@@ -95,11 +144,11 @@ export class Chairs {
     e.mesh.visible = p.heldBy !== this.selfId;
     if (p.heldBy === this.selfId) {
       this.heldChairId = p.chairId;
-      this.heldMesh.visible = true;
+      this.syncHeldVisibility();
     } else if (this.heldChairId === p.chairId) {
       // Server released our chair (drop/throw/death).
       this.heldChairId = null;
-      this.heldMesh.visible = false;
+      this.syncHeldVisibility();
     }
   }
 
@@ -111,7 +160,7 @@ export class Chairs {
     }
     if (p.ownerId === this.selfId && this.heldChairId === p.chairId) {
       this.heldChairId = null;
-      this.heldMesh.visible = false;
+      this.syncHeldVisibility();
     }
     const flightMesh = buildChairMesh();
     flightMesh.position.set(p.x, 0.9, p.z);
@@ -151,7 +200,9 @@ export class Chairs {
     if (held) {
       // Subtle bob so the chair feels carried.
       this.heldBob += dt * 4;
-      this.heldMesh.position.y = -0.55 + Math.sin(this.heldBob) * 0.015;
+      const bob = Math.sin(this.heldBob) * 0.015;
+      this.heldMesh.position.y = HELD_CHAIR_Y + bob;
+      if (this.heldSkin) this.heldSkin.position.y = this.heldBaseY + bob;
     }
     // Reposition chairs carried by other players to their mesh.
     for (const e of this.chairs.values()) {

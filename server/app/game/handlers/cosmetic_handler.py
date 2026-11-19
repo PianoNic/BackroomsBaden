@@ -64,6 +64,10 @@ class CosmeticHandler:
         if item is None:
             await self._broadcaster.send_safe(me, self._result(cosmetic_id, False, 0, "unknown"))
             return
+        rejection = self._catalog.purchase_rejection(item)
+        if rejection is not None:
+            await self._broadcaster.send_safe(me, self._result(cosmetic_id, False, 0, rejection))
+            return
         if me.account_id is None or not self._db_availability.is_available:
             await self._broadcaster.send_safe(me, self._result(cosmetic_id, False, 0, "guest"))
             return

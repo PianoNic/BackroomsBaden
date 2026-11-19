@@ -1,14 +1,18 @@
 import argparse
+import http.cookiejar
 import json
 import math
 import os
+import re
 import shutil
 import struct
 import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -16,6 +20,7 @@ from PIL import Image
 
 USER_AGENT = "Mozilla/5.0"
 TEXTURE_MAX_PX = 512
+COSMETIC_TEXTURE_MAX_PX = 256
 TEXTURE_QUALITY = 85
 SUB_CELL_METRES = 0.5
 
@@ -40,6 +45,67 @@ class ModelSpec:
             object.__setattr__(self, "scale_y", self.scale)
         if self.scale_z is None:
             object.__setattr__(self, "scale_z", self.scale)
+
+    def source_url(self) -> str:
+        return f"https://polyhaven.com/a/{self.asset}"
+
+    def source_name(self) -> str:
+        return "Poly Haven"
+
+    def asset_label(self) -> str:
+        return self.asset
+
+    def credited_author(self, info) -> str:
+        return info.author_for(self.asset)
+
+    def license_name(self) -> str:
+        return "CC0 1.0"
+
+
+@dataclass(frozen=True)
+class PolyPizzaSpec(ModelSpec):
+    glb_uuid: str = ""
+    title: str = ""
+    author: str = ""
+    pack: str = ""
+
+    def source_url(self) -> str:
+        return f"https://poly.pizza/m/{self.asset}"
+
+    def asset_label(self) -> str:
+        label = f"{self.title} ({self.asset})"
+        return f"{self.pack}: {label}" if self.pack else label
+
+    def source_name(self) -> str:
+        return "Poly Pizza"
+
+    def credited_author(self, info) -> str:
+        return self.author
+
+
+@dataclass(frozen=True)
+class ItchSpec(ModelSpec):
+    page_url: str = ""
+    upload_id: str = ""
+    title: str = ""
+    author: str = ""
+    pack: str = ""
+    model_member: str = ""
+    nodes: tuple[str, ...] = ()
+    texture_member: str = ""
+    texture_max_px: int = 256
+
+    def source_url(self) -> str:
+        return self.page_url
+
+    def source_name(self) -> str:
+        return "itch.io"
+
+    def asset_label(self) -> str:
+        return f"{self.pack}: {self.title}"
+
+    def credited_author(self, info) -> str:
+        return self.author
 
 
 MANIFEST: tuple[ModelSpec, ...] = (
@@ -81,6 +147,81 @@ PICKUP_MANIFEST: tuple[ModelSpec, ...] = (
     ModelSpec("tracker", "retro_multimeter", "pickups", 1.0, 0.3),
     ModelSpec("goggles", "old_gas_mask", "pickups", 0.3, 0.13),
     ModelSpec("gps", "digital_wrist_watch", "pickups", 1.2, 0.22),
+)
+
+
+COSMETICS_CATEGORY = "cosmetics"
+
+COSMETIC_MANIFEST: tuple[ModelSpec, ...] = (
+    ModelSpec("backpack_schwimmweste", "life_jacket", COSMETICS_CATEGORY, 1.0, 0.1),
+    ModelSpec("handitem_lupe", "magnifying_glass_01", COSMETICS_CATEGORY, 1.0, 0.1),
+    ModelSpec("handitem_megafon", "Megaphone_01", COSMETICS_CATEGORY, 1.0, 0.1, aggressive_simplify=True),
+    PolyPizzaSpec(
+        "backpack_koffer", "7DsKpns9FM", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="185b3169-8d50-4419-80ca-eab21d769a25", title="Suit Case", author="smallbigsquare",
+    ),
+    PolyPizzaSpec(
+        "backpack_abfallsack", "jYrMKg2Q7C", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="9cc89089-5f9a-4d6b-a7a1-57e2f78e3976", title="Trash Bag", author="Quaternius",
+    ),
+    ItchSpec(
+        "backpack_karton", "cardboard_box_1", COSMETICS_CATEGORY, 1.0,
+        page_url="https://dragon1freak.itch.io/psx-cardboard-boxes", upload_id="7460749",
+        title="CardboardBox_1", author="dragon1freak", pack="PSX Cardboard Boxes",
+        model_member="PSXCardboardBoxes/Models/GLB/CardboardBox_1.glb",
+    ),
+    PolyPizzaSpec(
+        "backpack_zement", "VRfAODZ0Xk", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="5c18a372-e0fb-490f-aa90-8bdd04d7e92f", title="Bag", author="Quaternius",
+    ),
+    PolyPizzaSpec(
+        "backpack_turnbeutel", "rysPhwuIP4", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="4f52d8a5-4ebb-4099-9686-d841a03d85dd", title="Duffel Bag", author="accidentallyc",
+    ),
+    ItchSpec(
+        "backpack_rucksack", "Backpack", COSMETICS_CATEGORY, 1.0,
+        page_url="https://elbolilloduro.itch.io/survival-psx", upload_id="6325866",
+        title="Backpack", author="Elbolilloduro", pack="Survival PSX",
+        model_member="Survival/Models/Survival.fbx", nodes=("Backpack",),
+        texture_member="Survival/Textures/Backpack.png",
+    ),
+    PolyPizzaSpec(
+        "mask_schutzbrille", "DBEk0SMQCt", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="ebadf2b5-3f28-4aa9-b0fd-942a4a6a06c5", title="Glasses", author="iPoly3D",
+    ),
+    PolyPizzaSpec(
+        "mask_rennbrille", "4YCjSY3U6H", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="d9c725b3-b39a-49c9-bc51-1159c1a747db", title="Ski Goggles", author="iPoly3D",
+    ),
+    PolyPizzaSpec(
+        "mask_papiertuete", "fLNcjJnsJi", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="4473a789-f73a-47d4-b73a-0e015b643325", title="Bag", author="Kenney", pack="Kenney Food Kit",
+    ),
+    PolyPizzaSpec(
+        "hat_fischer", "lNN3PlrjSa", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="5f6f5355-664d-4763-b1f6-71474caf2d52", title="Hat Stylised", author="hat_my_guy",
+    ),
+    PolyPizzaSpec(
+        "handitem_besen", "gwE8397gO3", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="32a3f78c-b0a0-4a9d-b88d-cd8b0652010b", title="Witch Broom", author="MiniPoly",
+    ),
+    ItchSpec(
+        "handitem_taschenlampe", "Flashlight", COSMETICS_CATEGORY, 1.0,
+        page_url="https://elbolilloduro.itch.io/exploration-objects", upload_id="10119862",
+        title="Flashlight", author="Elbolilloduro", pack="Exploration objects",
+        model_member="Exploration objects/Flashlight/Flashlight.fbx",
+    ),
+    PolyPizzaSpec(
+        "handitem_werkzeugkoffer", "3ImQcIK0Gp", COSMETICS_CATEGORY, 1.0,
+        glb_uuid="7c2b3946-0ee2-4626-b582-c280f1704dfc", title="Toolbox", author="CreativeTrio",
+    ),
+    ItchSpec(
+        "handitem_signal", "Lantern", COSMETICS_CATEGORY, 1.0,
+        page_url="https://elbolilloduro.itch.io/survival-psx", upload_id="6325866",
+        title="Lantern", author="Elbolilloduro", pack="Survival PSX",
+        model_member="Survival/Models/Survival.fbx", nodes=("Lantern",),
+        texture_member="Survival/Textures/Lantern.png",
+    ),
 )
 
 
@@ -250,6 +391,39 @@ class GlbAnalyzer:
         return total
 
 
+class GlbOrigin:
+    JSON_TYPE = 0x4E4F534A
+
+    @staticmethod
+    def centre_on_base(path: Path) -> bool:
+        data = path.read_bytes()
+        document = _read_json_chunk(data)
+        scenes = document.get("scenes", [])
+        if len(scenes) != 1:
+            return False
+        lo, hi = GlbAnalyzer.bounding_box(path)
+        shift = [-(lo[0] + hi[0]) / 2, -lo[1], -(lo[2] + hi[2]) / 2]
+        if all(abs(v) < 1e-6 for v in shift):
+            return False
+        nodes = document["nodes"]
+        nodes.append({"name": "origin", "translation": shift, "children": list(scenes[0]["nodes"])})
+        scenes[0]["nodes"] = [len(nodes) - 1]
+        payload = json.dumps(document, separators=(",", ":")).encode("utf-8")
+        payload += b" " * ((4 - len(payload) % 4) % 4)
+        out = bytearray(data[:12])
+        offset = 12
+        while offset < len(data):
+            chunk_length, chunk_type = struct.unpack_from("<II", data, offset)
+            if chunk_type == GlbOrigin.JSON_TYPE:
+                out += struct.pack("<II", len(payload), chunk_type) + payload
+            else:
+                out += data[offset: offset + 8 + chunk_length + ((4 - chunk_length % 4) % 4)]
+            offset += 8 + chunk_length + ((4 - chunk_length % 4) % 4)
+        struct.pack_into("<I", out, 8, len(out))
+        path.write_bytes(bytes(out))
+        return True
+
+
 class Downloader:
     def __init__(self, cache_dir: Path):
         self.cache_dir = cache_dir
@@ -291,6 +465,10 @@ class PolyHavenAsset:
         self.spec = spec
         self.downloader = downloader
 
+    @property
+    def cache_name(self) -> str:
+        return self.spec.asset
+
     def fetch_gltf(self, lod: str = "1k") -> Path:
         files = self.downloader.fetch_json(self.FILES_URL.format(asset=self.spec.asset))
         entry = files["gltf"][lod]["gltf"]
@@ -298,6 +476,328 @@ class PolyHavenAsset:
         for rel, info in (entry.get("include") or {}).items():
             self.downloader.fetch(info["url"], f"{self.spec.asset}/{rel}")
         return main
+
+
+class PolyPizzaAsset:
+    GLB_URL = "https://static.poly.pizza/{uuid}.glb"
+
+    def __init__(self, spec: PolyPizzaSpec, downloader: Downloader):
+        self.spec = spec
+        self.downloader = downloader
+
+    @property
+    def cache_name(self) -> str:
+        return f"polypizza/{self.spec.asset}"
+
+    def fetch_gltf(self) -> Path:
+        return self.downloader.fetch(
+            self.GLB_URL.format(uuid=self.spec.glb_uuid),
+            f"{self.cache_name}/{self.spec.asset}.glb",
+        )
+
+
+class ItchDownloader:
+    REQUEST_GAP_SECONDS = 3.0
+    RETRY_WAIT_SECONDS = 25.0
+    MAX_ATTEMPTS = 5
+
+    def __init__(self, cache_dir: Path):
+        self.cache_dir = cache_dir
+        self.cookies = http.cookiejar.CookieJar()
+        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookies))
+        self.opener.addheaders = [("User-Agent", USER_AGENT)]
+
+    def _open(self, request) -> bytes:
+        for attempt in range(1, self.MAX_ATTEMPTS + 1):
+            time.sleep(self.REQUEST_GAP_SECONDS)
+            try:
+                return self.opener.open(request, timeout=240).read()
+            except urllib.error.HTTPError as error:
+                if error.code != 429 or attempt == self.MAX_ATTEMPTS:
+                    raise
+                time.sleep(self.RETRY_WAIT_SECONDS * attempt)
+        raise RuntimeError("unreachable")
+
+    def _get(self, url: str) -> str:
+        return self._open(url).decode("utf-8", "replace")
+
+    def _post(self, url: str, fields: dict) -> str:
+        body = urllib.parse.urlencode(fields).encode("utf-8")
+        return self._open(urllib.request.Request(url, body)).decode("utf-8", "replace")
+
+    @staticmethod
+    def _csrf(html: str) -> str:
+        match = re.search(r'csrf_token" value="([^"]*)', html)
+        if not match:
+            raise RuntimeError("itch.io page has no csrf token")
+        return match.group(1)
+
+    def fetch(self, spec: "ItchSpec") -> Path:
+        dest = self.cache_dir / "itch" / f"{spec.upload_id}.bin"
+        if dest.exists() and dest.stat().st_size > 0:
+            return dest
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        token = self._csrf(self._get(spec.page_url))
+        download_page = json.loads(self._post(spec.page_url + "/download_url", {"csrf_token": token}))["url"]
+        token = self._csrf(self._get(download_page))
+        link = json.loads(self._post(
+            f"{spec.page_url}/file/{spec.upload_id}?source=view_game&as_props=1",
+            {"csrf_token": token},
+        ))["url"]
+        data = self._open(link)
+        if not data:
+            raise RuntimeError(f"empty itch.io download for upload {spec.upload_id}")
+        part = dest.parent / (dest.name + ".part")
+        part.write_bytes(data)
+        part.replace(dest)
+        return dest
+
+
+class ArchiveExtractor:
+    SEVEN_ZIP_CANDIDATES = (
+        "7z", "7za", r"C:\Program Files\7-Zip\7z.exe", r"C:\Program Files (x86)\7-Zip\7z.exe",
+    )
+
+    def extract(self, archive: Path, dest: Path) -> Path:
+        if dest.is_dir() and any(dest.iterdir()):
+            return dest
+        dest.mkdir(parents=True, exist_ok=True)
+        if archive.read_bytes()[:2] == b"PK":
+            self._extract_zip(archive, dest)
+        else:
+            self._extract_with_seven_zip(archive, dest)
+        return dest
+
+    @staticmethod
+    def _extract_zip(archive: Path, dest: Path) -> None:
+        root = dest.resolve()
+        with zipfile.ZipFile(archive) as bundle:
+            for member in bundle.namelist():
+                target = (dest / member).resolve()
+                if root != target and root not in target.parents:
+                    raise RuntimeError(f"unsafe path in archive: {member}")
+            bundle.extractall(dest)
+
+    def _extract_with_seven_zip(self, archive: Path, dest: Path) -> None:
+        binary = next(
+            (c for c in self.SEVEN_ZIP_CANDIDATES if shutil.which(c) or Path(c).exists()), None,
+        )
+        if binary is None:
+            raise RuntimeError("7-Zip is required to unpack rar archives")
+        result = subprocess.run(
+            [binary, "x", "-y", f"-o{dest}", str(archive)], capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"7-Zip failed for {archive.name}: {result.stdout[-300:]}")
+
+
+class Fbx2GltfConverter:
+    PACKAGE = "fbx2gltf@0.9.7-p1"
+
+    def __init__(self, cache_dir: Path):
+        self.root = cache_dir / "fbx2gltf"
+
+    def _binary(self) -> Path:
+        if sys.platform == "darwin":
+            folder = "Darwin"
+        elif os.name == "nt":
+            folder = "Windows_NT"
+        else:
+            folder = "Linux"
+        name = "FBX2glTF.exe" if os.name == "nt" else "FBX2glTF"
+        return self.root / "node_modules" / "fbx2gltf" / "bin" / folder / name
+
+    def _ensure_installed(self) -> Path:
+        binary = self._binary()
+        if binary.exists():
+            return binary
+        self.root.mkdir(parents=True, exist_ok=True)
+        (self.root / "package.json").write_text('{"name":"fbx2gltf-host","private":true}\n', encoding="utf-8")
+        result = subprocess.run(
+            ["bun", "add", self.PACKAGE], cwd=self.root, capture_output=True, text=True,
+            shell=os.name == "nt",
+        )
+        if result.returncode != 0 or not binary.exists():
+            raise RuntimeError(f"could not install {self.PACKAGE}: {result.stderr[-300:]}")
+        return binary
+
+    def convert(self, source: Path, dest: Path) -> Path:
+        binary = self._ensure_installed()
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        result = subprocess.run(
+            [str(binary), "--binary", "--input", str(source), "--output", str(dest.with_suffix(""))],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0 or not dest.exists():
+            raise RuntimeError(f"FBX2glTF failed for {source.name}: {result.stderr[-300:]}")
+        return dest
+
+
+class GlbRewriter:
+    JSON_TYPE = 0x4E4F534A
+
+    def __init__(self, path: Path):
+        self.path = path
+        data = path.read_bytes()
+        if data[:4] != b"glTF":
+            raise RuntimeError(f"{path} is not a binary glTF")
+        self.chunks: list[tuple[int, bytes]] = []
+        self.document: dict = {}
+        offset = 12
+        while offset < len(data):
+            length, kind = struct.unpack_from("<II", data, offset)
+            body = data[offset + 8: offset + 8 + length]
+            if kind == self.JSON_TYPE:
+                self.document = json.loads(body.decode("utf-8"))
+            self.chunks.append((kind, body))
+            offset += 8 + length + ((4 - length % 4) % 4)
+
+    def keep_nodes(self, names: tuple[str, ...]) -> None:
+        nodes = self.document["nodes"]
+        scene = self.document["scenes"][self.document.get("scene", 0)]
+        roots = [nodes[i] for i in scene["nodes"]]
+        if len(roots) == 1 and "mesh" not in roots[0] and roots[0].get("children"):
+            holder = roots[0]
+            holder["children"] = [i for i in holder["children"] if nodes[i].get("name") in names]
+            if not holder["children"]:
+                raise RuntimeError(f"none of {names} found in {self.path.name}")
+        else:
+            scene["nodes"] = [i for i in scene["nodes"] if nodes[i].get("name") in names]
+        self._prune_unreachable()
+
+    def _prune_unreachable(self) -> None:
+        nodes = self.document["nodes"]
+        scene = self.document["scenes"][self.document.get("scene", 0)]
+        reachable: list[int] = []
+        pending = list(scene["nodes"])
+        while pending:
+            index = pending.pop(0)
+            if index in reachable:
+                continue
+            reachable.append(index)
+            pending.extend(nodes[index].get("children", []))
+        reachable.sort()
+        node_map = {old: new for new, old in enumerate(reachable)}
+        used_meshes = sorted({nodes[i]["mesh"] for i in reachable if "mesh" in nodes[i]})
+        mesh_map = {old: new for new, old in enumerate(used_meshes)}
+        kept = []
+        for old in reachable:
+            node = dict(nodes[old])
+            if "children" in node:
+                node["children"] = [node_map[c] for c in node["children"]]
+            if "mesh" in node:
+                node["mesh"] = mesh_map[node["mesh"]]
+            kept.append(node)
+        used_materials = sorted({
+            primitive["material"]
+            for mesh_index in used_meshes
+            for primitive in self.document["meshes"][mesh_index]["primitives"]
+            if "material" in primitive
+        })
+        material_map = {old: new for new, old in enumerate(used_materials)}
+        meshes = []
+        for mesh_index in used_meshes:
+            mesh = dict(self.document["meshes"][mesh_index])
+            mesh["primitives"] = [dict(p) for p in mesh["primitives"]]
+            for primitive in mesh["primitives"]:
+                if "material" in primitive:
+                    primitive["material"] = material_map[primitive["material"]]
+            meshes.append(mesh)
+        self.document["nodes"] = kept
+        self.document["meshes"] = meshes
+        self.document["materials"] = [self.document["materials"][i] for i in used_materials]
+        scene["nodes"] = [node_map[i] for i in scene["nodes"]]
+
+    def bind_texture(self, uri: str) -> None:
+        self.document["images"] = [{"uri": uri}]
+        self.document["textures"] = [{"sampler": 0, "source": 0}]
+        self.document["samplers"] = [
+            {"magFilter": 9728, "minFilter": 9728, "wrapS": 10497, "wrapT": 10497},
+        ]
+        for material in self.document.get("materials", []):
+            pbr = material.setdefault("pbrMetallicRoughness", {})
+            pbr["baseColorTexture"] = {"index": 0, "texCoord": 0}
+            pbr["baseColorFactor"] = [1.0, 1.0, 1.0, 1.0]
+            pbr["metallicFactor"] = 0.0
+            pbr["roughnessFactor"] = 1.0
+
+    def drop_emissive(self) -> None:
+        for material in self.document.get("materials", []):
+            material.pop("emissiveTexture", None)
+            material.pop("emissiveFactor", None)
+
+    def save(self, dest: Path) -> None:
+        payload = json.dumps(self.document, separators=(",", ":")).encode("utf-8")
+        payload += b" " * ((4 - len(payload) % 4) % 4)
+        out = bytearray(b"glTF" + struct.pack("<II", 2, 0))
+        for kind, body in self.chunks:
+            body = payload if kind == self.JSON_TYPE else body
+            out += struct.pack("<II", len(body), kind) + body + b"\x00" * ((4 - len(body) % 4) % 4)
+        struct.pack_into("<I", out, 8, len(out))
+        dest.write_bytes(bytes(out))
+
+
+class PsxTexture:
+    @staticmethod
+    def downscale(source: Path, dest: Path, max_px: int) -> None:
+        image = Image.open(source)
+        if max(image.size) > max_px:
+            ratio = max_px / max(image.size)
+            size = (max(1, round(image.width * ratio)), max(1, round(image.height * ratio)))
+            image = image.resize(size, Image.LANCZOS)
+        image = image.convert("RGBA") if "A" in image.getbands() else image.convert("RGB")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        image.save(dest, "PNG")
+
+
+class ItchAsset:
+    def __init__(self, spec: ItchSpec, downloader: Downloader):
+        self.spec = spec
+        self.downloader = downloader
+        self.itch = ItchDownloader(downloader.cache_dir)
+        self.extractor = ArchiveExtractor()
+        self.converter = Fbx2GltfConverter(downloader.cache_dir)
+
+    @property
+    def cache_name(self) -> str:
+        return f"itch/{self.spec.prop_type}"
+
+    def fetch_gltf(self) -> Path:
+        cache = self.downloader.cache_dir
+        archive = self.itch.fetch(self.spec)
+        unpacked = self.extractor.extract(archive, cache / "itch" / f"{self.spec.upload_id}_files")
+        source = unpacked / self.spec.model_member
+        if not source.is_file():
+            raise RuntimeError(f"{self.spec.model_member} missing from upload {self.spec.upload_id}")
+        work = cache / self.cache_name
+        work.mkdir(parents=True, exist_ok=True)
+        prepared = work / f"{self.spec.prop_type}.glb"
+        if source.suffix.lower() == ".fbx":
+            self.converter.convert(source, prepared)
+        else:
+            shutil.copyfile(source, prepared)
+        rewriter = GlbRewriter(prepared)
+        if self.spec.nodes:
+            rewriter.keep_nodes(self.spec.nodes)
+        if self.spec.texture_member:
+            texture_name = f"{self.spec.prop_type}.png"
+            PsxTexture.downscale(
+                unpacked / self.spec.texture_member, work / texture_name, self.spec.texture_max_px,
+            )
+            rewriter.bind_texture(texture_name)
+        rewriter.drop_emissive()
+        rewriter.save(prepared)
+        return prepared
+
+
+class AssetFactory:
+    @staticmethod
+    def create(spec: ModelSpec, downloader: Downloader):
+        if isinstance(spec, ItchSpec):
+            return ItchAsset(spec, downloader)
+        if isinstance(spec, PolyPizzaSpec):
+            return PolyPizzaAsset(spec, downloader)
+        return PolyHavenAsset(spec, downloader)
 
 
 class AuthorCache:
@@ -469,17 +969,19 @@ class ModelProcessor:
             )
 
     def process(self, force: bool) -> ModelResult:
-        asset = PolyHavenAsset(self.spec, self.downloader)
+        asset = AssetFactory.create(self.spec, self.downloader)
 
         if force or not self.is_complete():
             main_gltf = asset.fetch_gltf()
-            self.downscaler.process(self.downloader.cache_dir / self.spec.asset)
+            self.downscaler.process(self.downloader.cache_dir / asset.cache_name)
             extra_args = []
             if self.spec.hinge_node:
                 extra_args.append("-kn")
             if self.spec.aggressive_simplify:
                 extra_args.append("-sa")
             self.packer.pack(main_gltf, self.output_path, self.spec.simplify, extra_args or None)
+            if self.spec.category == COSMETICS_CATEGORY:
+                GlbOrigin.centre_on_base(self.output_path)
             result = self._measure()
         else:
             result = self._measure()
@@ -492,32 +994,57 @@ class ModelProcessor:
 
 
 class LicenseGenerator:
-    def __init__(self, results, info: PolyHavenInfo, sketchfab):
-        self.results = results
+    TABLE_HEADER = (
+        "| Prop type | Model file | Source asset | Source URL | Author | License |",
+        "|---|---|---|---|---|---|",
+    )
+
+    def __init__(self, specs, info: PolyHavenInfo, sketchfab):
+        self.specs = specs
         self.info = info
         self.sketchfab = sketchfab
 
+    def _rows(self, specs) -> list[str]:
+        rows = []
+        for spec in sorted(specs, key=lambda s: s.prop_type):
+            model_file = f"{spec.category}/{spec.prop_type}.glb"
+            rows.append(
+                f"| `{spec.prop_type}` | `{model_file}` | {spec.asset_label()} | {spec.source_url()} | "
+                f"{spec.credited_author(self.info)} | {spec.license_name()} |"
+            )
+        return rows
+
     def build(self) -> str:
+        core = [s for s in self.specs if s.category != COSMETICS_CATEGORY]
+        cosmetics = [s for s in self.specs if s.category == COSMETICS_CATEGORY]
         lines = []
         lines.append("# Model Licenses")
         lines.append("")
         lines.append(
-            "Every model in this directory is CC0 1.0 from Poly Haven and requires no "
-            "attribution to use, modify or redistribute; the table below credits the "
-            "original authors anyway."
+            "Every model in this directory is CC0 1.0 from Poly Haven, Poly Pizza or itch.io and "
+            "requires no attribution to use, modify or redistribute; the tables below "
+            "credit the original authors anyway."
         )
         lines.append("")
-        lines.append("| Prop type | Model file | Source asset | Source URL | Author | License |")
-        lines.append("|---|---|---|---|---|---|")
-        for result in sorted(self.results, key=lambda r: r.spec.prop_type):
-            spec = result.spec
-            model_file = f"{spec.category}/{spec.prop_type}.glb"
-            url = f"https://polyhaven.com/a/{spec.asset}"
-            author = self.info.author_for(spec.asset)
-            lines.append(
-                f"| `{spec.prop_type}` | `{model_file}` | {spec.asset} | {url} | {author} | "
-                f"CC0 1.0 |"
-            )
+        lines.extend(self.TABLE_HEADER)
+        lines.extend(self._rows(core))
+        lines.append("")
+        lines.append("## Cosmetics")
+        lines.append("")
+        lines.append(
+            "Player cosmetic models in `cosmetics/` (backpacks, masks, hats, hand items). "
+            "CC0 1.0 only. Most models come from low-poly packs and authors on Poly Pizza "
+            "(Kenney, Quaternius, Kay Lousberg and others), with the CC0 licence checked on "
+            "each model page and the original textures and palettes kept. Three items "
+            "(life vest, magnifier, megaphone) have no CC0 low-poly equivalent and stay "
+            "Poly Haven scans. Four items (rucksack, flashlight, lantern, cardboard box) are "
+            "PS1-style low-poly models with native low-resolution bitmap textures from "
+            "itch.io packs (Survival PSX and Exploration objects by Elbolilloduro, PSX "
+            "Cardboard Boxes by dragon1freak), each page stating CC0."
+        )
+        lines.append("")
+        lines.extend(self.TABLE_HEADER)
+        lines.extend(self._rows(cosmetics))
         lines.append("")
         lines.append("## Not fetched — Sketchfab (CC-BY, requires `SKETCHFAB_API_TOKEN`)")
         lines.append("")
@@ -538,7 +1065,7 @@ class LicenseGenerator:
             )
         lines.append("")
         lines.append(
-            "Run `tools/fetch_models.py` to regenerate the Poly Haven table (author names "
+            "Run `tools/fetch_models.py` to regenerate the tables (Poly Haven author names "
             "are cached in `tools/.model-cache/authors.json`)."
         )
         lines.append("")
@@ -591,15 +1118,17 @@ class FootprintsWriter:
 
 
 class ModelFetcher:
-    def __init__(self, repo_root: Path, force: bool):
+    def __init__(self, repo_root: Path, force: bool, cosmetics_only: bool = False):
         self.repo_root = repo_root
         self.force = force
+        self.cosmetics_only = cosmetics_only
         self.client_dir = repo_root / "client"
         self.cache_dir = repo_root / "tools" / ".model-cache"
         self.output_root = self.client_dir / "public" / "models"
         self.downloader = Downloader(self.cache_dir)
         self.packer = GltfPacker(self.client_dir)
         self.downscaler = TextureDownscaler()
+        self.cosmetic_downscaler = TextureDownscaler(COSMETIC_TEXTURE_MAX_PX)
         self.author_cache = AuthorCache(self.cache_dir / "authors.json")
         self.info = PolyHavenInfo(self.downloader, self.author_cache)
 
@@ -643,8 +1172,10 @@ class ModelFetcher:
 
         results = []
         errors = []
-        for spec in MANIFEST + PICKUP_MANIFEST:
-            processor = ModelProcessor(spec, self.output_root, self.downloader, self.packer, self.downscaler)
+        specs = COSMETIC_MANIFEST if self.cosmetics_only else MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST
+        for spec in specs:
+            downscaler = self.cosmetic_downscaler if spec.category == COSMETICS_CATEGORY else self.downscaler
+            processor = ModelProcessor(spec, self.output_root, self.downloader, self.packer, downscaler)
             try:
                 result = processor.process(self.force)
                 results.append(result)
@@ -657,14 +1188,17 @@ class ModelFetcher:
         decoder_path = DecoderInstaller(self.client_dir).install()
         print(f"[decoder] meshopt_decoder.js installed at {decoder_path}")
 
-        license_text = LicenseGenerator(results, self.info, SKETCHFAB_MANIFEST).build()
+        license_text = LicenseGenerator(
+            MANIFEST + PICKUP_MANIFEST + COSMETIC_MANIFEST, self.info, SKETCHFAB_MANIFEST
+        ).build()
         self.output_root.mkdir(parents=True, exist_ok=True)
         (self.output_root / "LICENSES.md").write_text(license_text, encoding="utf-8")
 
-        prop_results = [r for r in results if r.spec.category != "pickups"]
-        pickup_results = [r for r in results if r.spec.category == "pickups"]
-        footprints_path = self.client_dir / "src" / "world" / "footprints.json"
-        FootprintsWriter(footprints_path).write(prop_results, pickup_results)
+        if not self.cosmetics_only:
+            prop_results = [r for r in results if r.spec.category not in ("pickups", COSMETICS_CATEGORY)]
+            pickup_results = [r for r in results if r.spec.category == "pickups"]
+            footprints_path = self.client_dir / "src" / "world" / "footprints.json"
+            FootprintsWriter(footprints_path).write(prop_results, pickup_results)
 
         self._print_summary(results)
 
@@ -677,9 +1211,10 @@ class ModelFetcher:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--cosmetics", action="store_true")
     args = parser.parse_args()
     repo_root = Path(__file__).resolve().parent.parent
-    return ModelFetcher(repo_root, args.force).run()
+    return ModelFetcher(repo_root, args.force, args.cosmetics).run()
 
 
 if __name__ == "__main__":

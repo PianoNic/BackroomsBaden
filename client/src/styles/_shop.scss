@@ -60,3 +60,30 @@
 }
 
 .shop-note { min-height: 1.4em; font-size: var(--bb-fs-xs); color: var(--bb-dim); letter-spacing: 0.08em; }
+
+.shop-featured { display: flex; flex-direction: column; gap: var(--bb-space-2); }
+
+.shop-featured-title {
+  font-size: var(--bb-fs-xs);
+  color: #ffd24a;
+  letter-spacing: 0.14em;
+}
+
+.shop-featured-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(130px, 150px);
+  gap: var(--bb-space-2);
+  overflow-x: auto;
+  padding-bottom: var(--bb-space-1);
+
+  .shop-card-preview { aspect-ratio: 2; }
+}
+
+.shop-locked {
+  margin-top: auto;
+  font-size: var(--bb-fs-xs);
+  color: var(--bb-dim);
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+}
