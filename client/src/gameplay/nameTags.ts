@@ -6,8 +6,8 @@ import { resolveCosmetic } from "./cosmetics";
 import { parseTitleRef, rarityColor } from "./cosmeticStyle";
 
 const TEX_W = 512;
-const TEX_H = 160;
-const PLANE_W = 1.6;
+const TEX_H = 192;
+const PLANE_W = 3.2;
 const PLANE_H = PLANE_W * (TEX_H / TEX_W);
 const CLEARANCE = 0.28;
 const FALLBACK_OFFSET = 1.15;
@@ -134,25 +134,25 @@ function drawNameTag(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  const nameY = title ? TEX_H * 0.36 : TEX_H * 0.5;
-  ctx.font = "bold 56px sans-serif";
-  ctx.lineWidth = 8;
+  const nameY = title ? TEX_H * 0.34 : TEX_H * 0.5;
+  ctx.font = "bold 88px sans-serif";
+  ctx.lineWidth = 12;
   ctx.strokeStyle = "rgba(0,0,0,0.85)";
-  ctx.strokeText(name, TEX_W / 2, nameY);
+  ctx.strokeText(name, TEX_W / 2, nameY, TEX_W - 24);
   ctx.fillStyle = "#ffffff";
-  ctx.fillText(name, TEX_W / 2, nameY);
+  ctx.fillText(name, TEX_W / 2, nameY, TEX_W - 24);
 
   if (title) {
-    const titleY = TEX_H * 0.74;
-    ctx.font = "italic bold 42px sans-serif";
-    ctx.lineWidth = 7;
+    const titleY = TEX_H * 0.76;
+    ctx.font = "italic bold 58px sans-serif";
+    ctx.lineWidth = 9;
     ctx.strokeStyle = "rgba(0,0,0,0.85)";
-    ctx.strokeText(title.text, TEX_W / 2, titleY);
+    ctx.strokeText(title.text, TEX_W / 2, titleY, TEX_W - 24);
     ctx.fillStyle = title.color;
-    ctx.fillText(title.text, TEX_W / 2, titleY);
+    ctx.fillText(title.text, TEX_W / 2, titleY, TEX_W - 24);
     const half = ctx.measureText(title.text).width / 2;
     ctx.fillStyle = accent;
-    ctx.fillRect(TEX_W / 2 - half, titleY + 26, half * 2, 4);
+    ctx.fillRect(TEX_W / 2 - half, titleY + 34, half * 2, 5);
   }
 
   tex.update(false);
