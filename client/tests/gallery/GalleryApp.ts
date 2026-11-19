@@ -5,6 +5,7 @@ import type { EquippedCosmetics } from "../../src/net/protocol";
 import { AmbientLights, createRenderContext, type RenderContext } from "../../src/rendering/renderer";
 import { box, lambertMaterial, plane } from "../../src/rendering/babylon";
 import { Corpses } from "../../src/gameplay/corpses";
+import { BodyShapes } from "../../src/gameplay/bodyShapes";
 import { Chairs } from "../../src/gameplay/chairs";
 import { RemotePlayers } from "../../src/gameplay/remotePlayers";
 import { CosmeticSlots } from "../../src/gameplay/cosmeticSlots";
@@ -16,10 +17,12 @@ import { LeakProbe } from "./LeakProbe";
 
 type Vec3 = [number, number, number];
 
+export type RemoteLook = { avatar?: boolean };
+
 export type GalleryApi = {
   ready: Promise<void>;
   probe: LeakProbe;
-  showRemote(equipped: EquippedCosmetics, yaw?: number): Promise<void>;
+  showRemote(equipped: EquippedCosmetics, yaw?: number, look?: RemoteLook): Promise<void>;
   showCorpse(equipped: EquippedCosmetics): Promise<void>;
   showHand(equipped: EquippedCosmetics, eyeHeight: number): Promise<void>;
   eyeHeights: { standing: number; crouching: number };
@@ -32,6 +35,25 @@ export type GalleryApi = {
 class CosmeticGallery implements GalleryApi {
   static readonly SELF_ID = "self";
   static readonly BODY_COLOR = "#a9b4c2";
+
+  private static faceAvatar(): string {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 64;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#3c8fd8";
+    ctx.fillRect(0, 0, 64, 64);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(10, 14, 14, 14);
+    ctx.fillRect(40, 14, 14, 14);
+    ctx.fillStyle = "#101010";
+    ctx.fillRect(14, 18, 6, 6);
+    ctx.fillRect(44, 18, 6, 6);
+    ctx.fillStyle = "#ff3030";
+    ctx.fillRect(16, 44, 32, 6);
+    ctx.fillStyle = "#ffe040";
+    ctx.fillRect(0, 0, 12, 6);
+    return canvas.toDataURL("image/png");
+  }
 
   readonly eyeHeights = { standing: EyeHeight.STANDING, crouching: EyeHeight.CROUCHING };
   readonly ready: Promise<void>;
@@ -56,6 +78,7 @@ class CosmeticGallery implements GalleryApi {
     this.lights = new AmbientLights(scene);
     const floor = plane(200, 200, lambertMaterial(0x6b6a55), true, "galleryFloor");
     floor.rotation.x = -Math.PI / 2;
+    await BodyShapes.load();
     this.remotes = new RemotePlayers(camera);
     this.corpses = new Corpses();
     this.probe = new LeakProbe(scene, this.remotes);
@@ -162,12 +185,13 @@ class CosmeticGallery implements GalleryApi {
     this.crosshair.style.display = "none";
   }
 
-  async showRemote(equipped: EquippedCosmetics, yaw = 0): Promise<void> {
+  async showRemote(equipped: EquippedCosmetics, yaw = 0, look: RemoteLook = {}): Promise<void> {
     await this.ready;
     this.clearAll();
     this.remotes.add({
       id: "p1", color: CosmeticGallery.BODY_COLOR, x: 0, z: 0, yaw,
       equipped, name: "Testschueler",
+      avatar: look.avatar ? CosmeticGallery.faceAvatar() : null,
     });
     await this.load(equipped);
   }
