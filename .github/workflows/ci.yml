@@ -107,11 +107,6 @@ jobs:
         working-directory: client
         run: bun run build
 
-      # `--with-deps` runs apt-get, which refreshes every source on the runner
-      # image — including Google's Chrome repo, whose index periodically fails
-      # its own hash check and takes the whole step down with it. Nothing here
-      # uses that repo (Playwright ships its own Chromium; --with-deps only
-      # needs the Ubuntu archives), so drop it before installing.
       - name: Install Playwright browser
         working-directory: client
         run: |
