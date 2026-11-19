@@ -1,9 +1,16 @@
 import type { Grid } from "../net/protocol";
+import { MinimapTiles } from "./minimapTiles";
+import type { Side } from "./minimapTiles";
 
 const DISPLAY = 200;
 const ZOOM = 8;
 const DOT_SIZE = 5;
 const FACING_LEN = 10;
+const WALL_THICKNESS = 2;
+const VOID_COLOR = "#05060a";
+const FLOOR_COLOR = "#39404f";
+const WALL_COLOR = "#cfd6e4";
+const DOOR_COLOR = "#e8952c";
 
 export type RemoteDot = { x: number; z: number; color: string };
 export type WorldPos = { x: number; z: number };
@@ -19,21 +26,39 @@ export class Minimap {
   private readonly base: OffscreenCanvas;
   private readonly grid: Grid;
 
-  constructor(grid: Grid) {
+  constructor(grid: Grid, doors: WorldPos[] = []) {
     this.grid = grid;
 
     this.base = new OffscreenCanvas(grid.width * ZOOM, grid.height * ZOOM);
     const b = this.base.getContext("2d")!;
-    b.fillStyle = "black";
+    b.fillStyle = VOID_COLOR;
     b.fillRect(0, 0, this.base.width, this.base.height);
-    b.fillStyle = "white";
     for (let y = 0; y < grid.height; y++) {
       for (let x = 0; x < grid.width; x++) {
-        if (grid.cells[y * grid.width + x] === 1) {
-          b.fillRect(x * ZOOM, y * ZOOM, ZOOM, ZOOM);
+        if (!MinimapTiles.isFloor(grid.cells, grid.width, grid.height, x, y)) continue;
+        b.fillStyle = FLOOR_COLOR;
+        b.fillRect(x * ZOOM, y * ZOOM, ZOOM, ZOOM);
+        b.fillStyle = WALL_COLOR;
+        for (const side of MinimapTiles.wallSides(grid.cells, grid.width, grid.height, x, y)) {
+          this.drawWall(b, x, y, side);
         }
       }
     }
+    b.fillStyle = DOOR_COLOR;
+    for (const d of doors) {
+      const cx = Math.floor(d.x / grid.cellSize);
+      const cz = Math.floor(d.z / grid.cellSize);
+      b.fillRect(cx * ZOOM, cz * ZOOM, ZOOM, ZOOM);
+    }
+  }
+
+  private drawWall(b: OffscreenCanvasRenderingContext2D, x: number, y: number, side: Side): void {
+    const px = x * ZOOM;
+    const py = y * ZOOM;
+    if (side === "north") b.fillRect(px, py, ZOOM, WALL_THICKNESS);
+    else if (side === "south") b.fillRect(px, py + ZOOM - WALL_THICKNESS, ZOOM, WALL_THICKNESS);
+    else if (side === "west") b.fillRect(px, py, WALL_THICKNESS, ZOOM);
+    else b.fillRect(px + ZOOM - WALL_THICKNESS, py, WALL_THICKNESS, ZOOM);
   }
 
   update(
@@ -48,7 +73,7 @@ export class Minimap {
   ): void {
     const ctx = publishedCtx;
     if (!ctx) return;
-    ctx.fillStyle = "black";
+    ctx.fillStyle = VOID_COLOR;
     ctx.fillRect(0, 0, DISPLAY, DISPLAY);
 
     const px = (worldX / this.grid.cellSize) * ZOOM;
