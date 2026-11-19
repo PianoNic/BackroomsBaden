@@ -78,7 +78,7 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "backpack_schul", "backpack", "Schulrucksack", 200, "common",
         "models/cosmetics/backpack_rucksack",
-        attachment=CosmeticAttachment(x=0, y=0.05, z=0.4, scale=0.14),
+        attachment=CosmeticAttachment(x=0, y=-0.02, z=0.3, scale=0.6, yaw=-1.5708),
     ),
     CosmeticItem(
         "backpack_turnbeutel", "backpack", "Turnbeutel", 250, "common", "models/cosmetics/backpack_turnbeutel",
@@ -97,7 +97,7 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "backpack_karton", "backpack", "Umzugskarton", 800, "epic",
         "models/cosmetics/backpack_karton",
-        attachment=CosmeticAttachment(x=0, y=-0.02, z=0.46, scale=1.7),
+        attachment=CosmeticAttachment(x=0, y=-0.05, z=0.5, scale=0.8),
     ),
     CosmeticItem(
         "backpack_schwimmweste", "backpack", "Schwimmweste", 900, "epic",
@@ -154,7 +154,7 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "handitem_taschenlampe", "handitem", "Taschenlampe", 550, "rare",
         "models/cosmetics/handitem_taschenlampe",
-        attachment=CosmeticAttachment(x=0.3, y=-0.4, z=-0.55, scale=0.2, pitch=-0.6),
+        attachment=CosmeticAttachment(x=0.3, y=-0.3, z=-0.6, scale=1.6),
     ),
     CosmeticItem(
         "handitem_werkzeugkoffer", "handitem", "Werkzeugkoffer", 800, "epic",
@@ -169,7 +169,7 @@ _ITEMS: list[CosmeticItem] = [
     CosmeticItem(
         "handitem_signal", "handitem", "Signal-Lampe", 0, "epic",
         "models/cosmetics/handitem_signal", unlock="ach_houdini",
-        attachment=CosmeticAttachment(x=0.3, y=-0.36, z=-0.65, scale=0.45),
+        attachment=CosmeticAttachment(x=0.3, y=-0.3, z=-0.6, scale=0.9, yaw=1.5708, pitch=0.15),
     ),
 ]
 
