@@ -2,10 +2,13 @@ import { PointerLockGate } from "../core/pointerLockGate";
 import type { NetClient } from "../net/client";
 import type { ScoreboardData } from "../net/protocol";
 import { mountMenuApp } from "./menu/mount";
-import { endgame } from "./menu/state/overlays";
+import { closeLaptop } from "./laptop/state";
+import { endgame, pauseMenu } from "./menu/state/overlays";
 
 function releaseLock(): void {
   PointerLockGate.releaseForGame();
+  pauseMenu.value = null;
+  closeLaptop();
 }
 
 export function showVictory(
