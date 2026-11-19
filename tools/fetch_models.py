@@ -46,6 +46,7 @@ class ModelSpec:
     aggressive_simplify: bool = False
     source: "PackSource | None" = None
     pre_yaw: float = 0.0
+    material_alpha: tuple = ()
 
     def __post_init__(self) -> None:
         if self.scale_y is None:
@@ -122,8 +123,6 @@ MANIFEST: tuple[ModelSpec, ...] = (
     ModelSpec("trash_can", "industrial_pastic_container", "clutter", 0.75, 0.13, aggressive_simplify=True),
     ModelSpec("recycle_bin", "plastic_crate_02", "clutter", 0.95, 0.25, aggressive_simplify=True),
     ModelSpec("pylon", "WetFloorSign_01", "clutter", 1.0),
-    ModelSpec("mop_bucket", "wooden_bucket_01", "clutter", 1.0, 0.37),
-    ModelSpec("fire_extinguisher", "korean_fire_extinguisher_01", "wall", 1.0, 0.2, yaw_offset=math.pi),
     ModelSpec("microscope", "industrial_microscope", "lab", 0.95, 0.2, yaw_offset=math.pi),
     ModelSpec("bunsen_burner", "bunsen_burner", "lab", 1.0, 0.25),
     ModelSpec("microwave", "vintage_microwave", "appliances", 0.65, 0.3, yaw_offset=math.pi),
@@ -138,11 +137,7 @@ MANIFEST: tuple[ModelSpec, ...] = (
 
 
 PICKUP_MANIFEST: tuple[ModelSpec, ...] = (
-    ModelSpec("medkit", "medical_box", "pickups", 0.8, 0.5),
-    ModelSpec("potion", "multi_cleaner_bottle", "pickups", 1.0, 0.35),
-    ModelSpec("compass", "seadogs_compass", "pickups", 1.6, 0.25),
     ModelSpec("tracker", "retro_multimeter", "pickups", 1.0, 0.3),
-    ModelSpec("goggles", "old_gas_mask", "pickups", 0.3, 0.13),
     ModelSpec("gps", "digital_wrist_watch", "pickups", 1.2, 0.22),
 )
 
@@ -307,6 +302,7 @@ class PackSource:
     pack_id: str
     member: str
     node: str | None = None
+    texture: str | None = None
 
 
 PACKS: dict[str, PackInfo] = {
@@ -321,6 +317,36 @@ PACKS: dict[str, PackInfo] = {
         "https://daniel-jurys.itch.io/psx-derelict-furniture", "CC0 1.0",
         "Licence: Creative Commons Zero v1.0 Universal",
         (".glb",), "PSX-Derelict-Furniture-Standard.zip", itch_listing="PSX-Derelict-Furniture-Standard.zip",
+    ),
+    "oga_fire_extinguisher": PackInfo(
+        "oga_fire_extinguisher", "Fire Extinguisher", "jameswhite",
+        "https://opengameart.org/content/fire-extinguisher", "CC0 1.0", "License(s): CC0",
+        (".obj", ".tif"), "fire_extinguisher_model_0.zip",
+        direct_url="https://opengameart.org/sites/default/files/fire_extinguisher_model_0.zip",
+    ),
+    "oga_first_aid_kit": PackInfo(
+        "oga_first_aid_kit", "First Aid Kit 3D", "ggbotnet",
+        "https://opengameart.org/content/first-aid-kit-3d", "CC0 1.0", "License(s): CC0",
+        (".obj", ".mtl", ".png"), "first_aid_kit_3d_v1.1.zip",
+        direct_url="https://opengameart.org/sites/default/files/_first_aid_kit_3d_v1.1.zip",
+    ),
+    "oga_n64_potions": PackInfo(
+        "oga_n64_potions", "N64 Potions", "n64guy",
+        "https://opengameart.org/content/n64-potions", "CC0 1.0", "License(s): CC0",
+        (".glb",), "n64_potions.zip",
+        direct_url="https://opengameart.org/sites/default/files/n64_potions.zip",
+    ),
+    "oga_gas_mask": PackInfo(
+        "oga_gas_mask", "Gas Mask", "stratofortress",
+        "https://opengameart.org/content/gas-mask", "CC0 1.0", "License(s): CC0",
+        (".fbx", ".png"), "gasmask.zip",
+        direct_url="https://opengameart.org/sites/default/files/gasmask.zip",
+    ),
+    "oga_survival_items": PackInfo(
+        "oga_survival_items", "Lowpoly survival item pack", "nateonus",
+        "https://opengameart.org/content/lowpoly-survival-item-pack", "CC0 1.0", "License(s): CC0",
+        (".fbx", ".png"), "survival_items.zip",
+        direct_url="https://opengameart.org/sites/default/files/Survival%20items.zip",
     ),
 }
 
@@ -381,7 +407,32 @@ ITCH_MANIFEST: tuple[ModelSpec, ...] = (
 )
 
 
-OPENGAMEART_MANIFEST: tuple[ModelSpec, ...] = ()
+OPENGAMEART_MANIFEST: tuple[ModelSpec, ...] = (
+    ModelSpec(
+        "fire_extinguisher", "fire_extinguisher_model", "wall", 0.078, pre_yaw=math.pi / 2,
+        pack=PackSource("oga_fire_extinguisher", "fire_extinguisher_model.obj", texture="fire_extinguisher_diffuse.tif"),
+    ),
+    ModelSpec(
+        "mop_bucket", "bucket", "clutter", 0.2,
+        pack=PackSource("oga_survival_items", "Survival items/items.fbx", node="bucket"),
+    ),
+    ModelSpec(
+        "medkit", "FirstAid", "pickups", 0.3,
+        pack=PackSource("oga_first_aid_kit", "FirstAid.obj"),
+    ),
+    ModelSpec(
+        "potion", "potion_red", "pickups", 0.032, material_alpha=(("Liquid", 1.0),),
+        pack=PackSource("oga_n64_potions", "N64 Potions/GLB/Red.glb"),
+    ),
+    ModelSpec(
+        "goggles", "gasmask", "pickups", 0.05, 0.5,
+        pack=PackSource("oga_gas_mask", "gasmask/gasmask.fbx"),
+    ),
+    ModelSpec(
+        "compass", "compass", "pickups", 0.22,
+        pack=PackSource("oga_survival_items", "Survival items/items.fbx", node="compass"),
+    ),
+)
 
 
 _IDENTITY = (1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0)
@@ -942,7 +993,7 @@ class PackAsset:
             Fbx2GltfConverter(self.store.cache_dir).convert(member, glb)
             gltf = GlbUnpacker().unpack(glb, work, stem)
         elif suffix == ".obj":
-            gltf = ObjToGltf().convert(member, work, stem)
+            gltf = ObjToGltf().convert(member, work, stem, source.texture)
         else:
             raise RuntimeError(f"unsupported model format {suffix}")
         SceneEditor().edit(gltf, source.node, self.spec.pre_yaw)
@@ -1011,7 +1062,7 @@ class GltfMaterialStripper:
     REMOVED_SLOTS = ("normalTexture", "occlusionTexture")
     REMOVED_PBR_SLOTS = ("metallicRoughnessTexture",)
 
-    def strip(self, source: Path, dest: Path) -> list[str]:
+    def strip(self, source: Path, dest: Path, alpha: dict | None = None) -> list[str]:
         document = json.loads(source.read_text(encoding="utf-8"))
         for material in document.get("materials", []):
             for slot in self.REMOVED_SLOTS:
@@ -1021,7 +1072,11 @@ class GltfMaterialStripper:
                 pbr.pop(slot, None)
             pbr["metallicFactor"] = 0.0
             pbr["roughnessFactor"] = 1.0
-            if material.get("alphaMode") == "BLEND":
+            if alpha and material.get("name") in alpha:
+                factor = list(pbr.get("baseColorFactor", [1, 1, 1, 1]))
+                factor[3] = alpha[material["name"]]
+                pbr["baseColorFactor"] = factor
+            if material.get("alphaMode") == "BLEND" and pbr.get("baseColorFactor", [1, 1, 1, 1])[3] >= 1.0:
                 material["alphaMode"] = "MASK"
                 material["alphaCutoff"] = 0.5
         kept = self._compact(document)
@@ -1243,7 +1298,7 @@ class ModelProcessor:
             source_gltf = self._as_gltf(asset.fetch_gltf())
             asset_root = source_gltf.parent
             main_gltf = asset_root / f"{self.spec.asset}.psx.gltf"
-            kept = self.stripper.strip(source_gltf, main_gltf)
+            kept = self.stripper.strip(source_gltf, main_gltf, dict(self.spec.material_alpha))
             self.downscaler.process(asset_root, kept)
             extra_args = []
             if self.spec.hinge_node:

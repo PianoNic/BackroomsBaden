@@ -70,7 +70,10 @@ class ObjMaterial:
 
 
 class ObjToGltf:
-    def convert(self, obj: Path, out_dir: Path, stem: str) -> Path:
+    texture_override: str | None = None
+
+    def convert(self, obj: Path, out_dir: Path, stem: str, texture: str | None = None) -> Path:
+        self.texture_override = texture
         out_dir.mkdir(parents=True, exist_ok=True)
         positions, uvs, normals = [], [], []
         groups: dict[str, list] = {}
@@ -173,6 +176,8 @@ class ObjToGltf:
             view = add_view(struct.pack(f"<{len(indices)}I", *indices), 34963)
             accessors.append({"bufferView": view, "componentType": 5125, "count": len(indices), "type": "SCALAR"})
             material = materials.get(name) or ObjMaterial(name or "default")
+            if self.texture_override:
+                material.texture = self.texture_override
             pbr = {"baseColorFactor": [*material.diffuse, 1.0], "metallicFactor": 0.0, "roughnessFactor": 1.0}
             if material.texture:
                 if material.texture not in texture_index:
@@ -245,6 +250,18 @@ class SceneEditor:
         scene["nodes"] = [chain[0]]
         for parent, child in zip(chain, chain[1:]):
             nodes[parent]["children"] = [child]
+        kept = set()
+        self._collect(nodes, chain[-1], kept)
+        kept.update(chain)
+        for index, entry in enumerate(nodes):
+            if index not in kept:
+                for key in ("mesh", "children", "skin"):
+                    entry.pop(key, None)
+
+    def _collect(self, nodes: list, index: int, kept: set) -> None:
+        kept.add(index)
+        for child in nodes[index].get("children", []):
+            self._collect(nodes, child, kept)
 
     def _find(self, nodes: list, candidates: list, name: str, trail: list):
         for index in candidates:
