@@ -1,7 +1,6 @@
 /** Per-player voxel renderer, footstep audio, and live-video swapping.
  *  Mesh material factories live in `remotePlayerMaterials.ts`. */
 import type { Mesh } from "@babylonjs/core/Meshes/mesh";
-import type { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import type { VideoTexture } from "@babylonjs/core/Materials/Textures/videoTexture";
 import type { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
@@ -12,17 +11,20 @@ import { getSettings, onSettingsChange } from "../core/settings";
 import { withinRadiusXZ } from "../core/geom";
 import { group } from "../rendering/babylon";
 import {
-  buildHat, buildVoxelMesh, disposeHat, disposeVoxelMaterial, makeAvatarMaterials,
+  buildVoxelMesh, disposeVoxelMaterial, makeAvatarMaterials,
   makeColorMaterial, makeFacePatternMaterials, makeVideoMaterials, setVoxelMaterial,
 } from "./remotePlayerMaterials";
 import { resolveCosmetic } from "./cosmetics";
 import { bodyColor } from "./cosmeticStyle";
 import { NameTags } from "./nameTags";
+import { CosmeticLoadout } from "./cosmeticLoadout";
 
 const Y = 0.85;
 const STEP_DISTANCE = 1.1;
 const REF_DISTANCE = 2.5;
 const MAX_DISTANCE = 25;
+const COSMETIC_CULL_DIST = 35;
+const COSMETIC_CULL_DIST_SQ = COSMETIC_CULL_DIST * COSMETIC_CULL_DIST;
 const ROLLOFF = 1.8;
 const FOOTSTEP_URLS = [1, 2, 3, 4, 5].map((i) => `/sounds/footsteps/step-${i}.ogg`);
 
@@ -38,7 +40,7 @@ type Entry = {
   video: HTMLVideoElement | null;
   videoTex: VideoTexture | null;
   equipped: EquippedCosmetics;
-  hat: TransformNode | null;
+  loadout: CosmeticLoadout;
   name: string;
 };
 
@@ -118,24 +120,22 @@ export class RemotePlayers {
       lastStepX: p.x, lastStepZ: p.z,
       avatarUrl: avatar,
       video: null, videoTex: null,
-      equipped, hat: null, name,
+      equipped, name,
+      loadout: new CosmeticLoadout(mesh, () => {
+        const entry = this.entries.get(p.id);
+        if (entry) this.nameTags.set(p.id, entry.name, entry.equipped, entry.mesh);
+      }),
     });
-    this.updateHat(p.id);
+    this.updateLoadout(p.id);
     if (avatar) this.applyAvatar(p.id, avatar);
     else this.applyFacePattern(p.id);
     this.nameTags.set(p.id, name, equipped, mesh);
   }
 
-  /** Swap the player's hat to match their equipped cosmetic. */
-  private updateHat(id: string): void {
+  /** Sync the hat / backpack / mask slots with the equipped cosmetics. */
+  private updateLoadout(id: string): void {
     const e = this.entries.get(id);
-    if (!e) return;
-    if (e.hat) { e.mesh.remove(e.hat); disposeHat(e.hat); e.hat = null; }
-    const key = resolveCosmetic(e.equipped.hat)?.assetRef;
-    if (key) {
-      const hat = buildHat(key);
-      if (hat) { e.mesh.add(hat); e.hat = hat; }
-    }
+    if (e) e.loadout.set(e.equipped);
   }
 
   /** Draw the equipped face pattern on the front face (only when no avatar or
@@ -174,7 +174,7 @@ export class RemotePlayers {
       return;
     }
     e.equipped = equipped ?? {};
-    this.updateHat(id);
+    this.updateLoadout(id);
     this.repaintBody(id);
     this.nameTags.set(id, e.name, e.equipped, e.mesh);
   }
@@ -278,7 +278,7 @@ export class RemotePlayers {
   remove(id: string): void {
     const e = this.entries.get(id);
     if (!e) return;
-    if (e.hat) disposeHat(e.hat);
+    e.loadout.dispose();
     this.group.remove(e.mesh);
     disposeVoxelMaterial(e.mesh);
     e.audio?.dispose();
@@ -298,9 +298,13 @@ export class RemotePlayers {
 
   update(dt: number): void {
     const lerp = Math.min(1, dt * 12);
+    const cam = this.camera.position;
     for (const e of this.entries.values()) {
       Vector3.LerpToRef(e.mesh.position, e.target, lerp, e.mesh.position);
       e.mesh.rotation.y += (e.targetYaw - e.mesh.rotation.y) * lerp;
+      const dx = e.mesh.position.x - cam.x;
+      const dz = e.mesh.position.z - cam.z;
+      e.loadout.setEnabled(dx * dx + dz * dz <= COSMETIC_CULL_DIST_SQ);
     }
     this.nameTags.update(
       this.camera.position, (id) => this.entries.get(id)?.mesh.position ?? null,

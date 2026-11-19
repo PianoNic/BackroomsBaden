@@ -1,17 +1,16 @@
 import type { InteractTarget } from "../ui/interactPrompt";
-import type { Mesh, TransformNode } from "../rendering/babylon";
+import type { Mesh } from "../rendering/babylon";
 import { Color3, box, group, lambertMaterial } from "../rendering/babylon";
 import type { EquippedCosmetics } from "../net/protocol";
 import { bodyColor } from "./cosmeticStyle";
-import { resolveCosmetic } from "./cosmetics";
-import { buildHat, disposeHat } from "./remotePlayerMaterials";
+import { CosmeticLoadout } from "./cosmeticLoadout";
 
 const REVIVE_RADIUS = 2.2;
 const HEAD_X = 0.7;
 const HAT_BASE_Y = 0.85;
 
 type Entry = {
-  id: string; x: number; z: number; mesh: Mesh; hat: TransformNode | null;
+  id: string; x: number; z: number; mesh: Mesh; loadout: CosmeticLoadout;
 };
 
 /** Tracks downed-player markers. Each corpse keeps its server id so the
@@ -31,24 +30,20 @@ export class Corpses {
     mesh.rotation.y = Math.random() * Math.PI * 2;
     this.group.add(mesh);
 
-    let hat: TransformNode | null = null;
-    const hatKey = resolveCosmetic(equipped.hat)?.assetRef;
-    if (hatKey) {
-      hat = buildHat(hatKey);
-      if (hat) {
-        hat.rotation.z = -Math.PI / 2;
-        hat.position.set(HEAD_X - HAT_BASE_Y, 0.15, 0);
-        mesh.add(hat);
-      }
-    }
+    const pivot = group("corpseBody");
+    pivot.rotation.z = -Math.PI / 2;
+    pivot.position.set(HEAD_X - HAT_BASE_Y, 0.15, 0);
+    mesh.add(pivot);
+    const loadout = new CosmeticLoadout(pivot);
+    loadout.set(equipped);
 
-    this.entries.set(id, { id, x, z, mesh, hat });
+    this.entries.set(id, { id, x, z, mesh, loadout });
   }
 
   remove(id: string): void {
     const e = this.entries.get(id);
     if (!e) return;
-    if (e.hat) disposeHat(e.hat);
+    e.loadout.dispose();
     this.group.remove(e.mesh);
     e.mesh.dispose(false, true);
     this.entries.delete(id);

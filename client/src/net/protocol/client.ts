@@ -1,5 +1,7 @@
 /** Client → server packet definitions and the discriminated union. */
 
+import type { CosmeticCategory } from "./types";
+
 export type ClientMovePkt = { type: "move"; x: number; z: number; yaw: number };
 export type ClientSetAvatarPkt = { type: "set_avatar"; avatar: string };
 export type ClientInteractPkt = { type: "interact" };
@@ -32,7 +34,7 @@ export type ClientLockerOpenPkt = { type: "locker_open"; lockerId: string };
 export type ClientDoorTogglePkt = { type: "door_toggle"; doorId: string };
 export type ClientSetCosmeticPkt = {
   type: "set_cosmetic";
-  category: "body" | "facePattern" | "hat" | "title";
+  category: CosmeticCategory;
   cosmeticId: string | null;
 };
 export type ClientBuyCosmeticPkt = { type: "buy_cosmetic"; cosmeticId: string };
