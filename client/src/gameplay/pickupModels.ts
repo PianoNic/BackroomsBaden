@@ -10,6 +10,7 @@ import {
   activeScene, basicMaterial, box, cone, cylinder, disc, group, lambertMaterial, plane, sphere,
 } from "../rendering/babylon";
 import { activeModelLibrary } from "../rendering/modelLoader";
+import { PickupEmissiveLift } from "../rendering/pickupEmissiveLift";
 import { RetroTextureStyle } from "../rendering/retroTextureStyle";
 import { normalizeModelTemplate } from "../world/modelPropStage";
 import { PICKUP_MODELS } from "../world/modelProps";
@@ -236,7 +237,8 @@ function getPickupTemplate(kind: PickupKind): Mesh[] | null {
   const container = activeModelLibrary()?.getPickup(kind);
   const spec = PICKUP_MODELS[kind];
   if (!container || !spec) return null;
-  const template = normalizeModelTemplate(container, spec);
+  const template = normalizeModelTemplate(container, spec, true);
+  PickupEmissiveLift.apply(template);
   for (const mesh of template) mesh.setEnabled(false);
   pickupTemplates.set(kind, template);
   return template;
