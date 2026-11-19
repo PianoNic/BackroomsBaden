@@ -307,7 +307,7 @@ export class ViewpointPlanner {
   pickup(kind: PickupKind, x: number, z: number, fromX: number, fromZ: number): Viewpoint | null {
     const len = Math.hypot(x - fromX, z - fromZ) || 1;
     const dir = { dx: (x - fromX) / len, dz: (z - fromZ) / len };
-    return this.facing(`pickup-${kind}`, x, z, 1.2, 0.45, [dir, ...ALL_DIRS]);
+    return this.facing(`pickup-${kind}`, x, z, 0.8, 0.45, [dir, ...ALL_DIRS]);
   }
 
   lockersBySpawnDistance(): { id: string; x: number; z: number }[] {

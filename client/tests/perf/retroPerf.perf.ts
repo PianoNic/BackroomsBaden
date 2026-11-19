@@ -74,7 +74,10 @@ class RetroPerfRun {
   }
 
   private async visitTeacher(name: string, distance: number): Promise<void> {
-    const live = (await this.probe.teacherPositions())[0];
+    const all = await this.probe.teacherPositions();
+    const reachOf = (t: { x: number; z: number }): number =>
+      this.planner.longestClear(t.x, t.z, distance).distance;
+    const live = distance > 4 ? all.reduce((a, b) => (reachOf(b) > reachOf(a) ? b : a)) : all[0];
     let view: Viewpoint | null;
     if (distance > 4) {
       const clear = this.planner.longestClear(live.x, live.z, distance);
