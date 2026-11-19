@@ -12,7 +12,7 @@ const TEX_H = 168;
 const PLANE_W = 2.4;
 const PLANE_H = PLANE_W * (TEX_H / TEX_W);
 const CLEARANCE = 0.28;
-const FALLBACK_OFFSET = 1.15;
+const FALLBACK_TOP = 1.15;
 const CULL_DIST = 12;
 const CULL_DIST_SQ = CULL_DIST * CULL_DIST;
 
@@ -23,7 +23,7 @@ type Tag = {
   lastKey: string;
   inRange: boolean;
   hiddenByOwner: boolean;
-  offsetY: number;
+  top: number;
 };
 
 export class NameTags {
@@ -70,7 +70,9 @@ export class NameTags {
         tag.mesh.setEnabled(inRange);
       }
       if (!inRange) continue;
-      tag.mesh.position.set(pos.x, NameTagPlacement.centerY(pos.y + tag.offsetY, PLANE_H), pos.z);
+      const placed = NameTagPlacement.place(pos.y + tag.top, PLANE_H, CLEARANCE);
+      tag.mesh.position.set(pos.x, placed.centerY, pos.z);
+      if (tag.mesh.scaling.x !== placed.scale) tag.mesh.scaling.setAll(placed.scale);
     }
   }
 
@@ -98,7 +100,7 @@ export class NameTags {
     this.group.add(mesh);
     const tag: Tag = {
       mesh, tex, material, lastKey: "", inRange: false, hiddenByOwner: false,
-      offsetY: FALLBACK_OFFSET,
+      top: FALLBACK_TOP,
     };
     this.tags.set(id, tag);
     return tag;
@@ -111,7 +113,7 @@ export class NameTags {
     } catch {
       top = 0;
     }
-    tag.offsetY = (top > 0 ? top : FALLBACK_OFFSET) + CLEARANCE + PLANE_H / 2;
+    tag.top = top > 0 ? top : FALLBACK_TOP;
   }
 
   private redraw(tag: Tag, name: string, equipped: EquippedCosmetics): void {
