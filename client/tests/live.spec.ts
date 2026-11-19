@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 import { test, expect, PointerLockStub } from "./pointerLockStub";
 
 const PNG_BUFFER = Buffer.from(
@@ -49,39 +49,82 @@ async function releasePointerLockAndOpenPause(page: Page): Promise<void> {
   await expect(page.locator("#pause-overlay")).toBeVisible({ timeout: 15_000 });
 }
 
-async function runPauseMenuStep(page: Page, mark: (label: string) => void): Promise<void> {
+class RoundEndWatch {
+  private stopped = false;
+  private readonly loop: Promise<boolean>;
+
+  constructor(victory: Locator) {
+    this.loop = this.poll(victory);
+  }
+
+  get ended(): Promise<boolean> {
+    return this.loop;
+  }
+
+  async stop(): Promise<void> {
+    this.stopped = true;
+    await this.loop;
+  }
+
+  private async poll(victory: Locator): Promise<boolean> {
+    while (!this.stopped) {
+      if (await victory.isVisible().catch(() => false)) return true;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    return false;
+  }
+}
+
+async function pauseMenuBody(page: Page, mark: (label: string) => void): Promise<void> {
   const pauseOverlay = page.locator("#pause-overlay");
-  const victory = page.locator("#victory");
   await releasePointerLockAndOpenPause(page);
   mark("pause opened");
   await expect(pauseOverlay.getByRole("button", { name: "RESUME" })).toBeVisible();
   await expect(pauseOverlay.getByRole("button", { name: "OPTIONS" })).toBeVisible();
   await expect(pauseOverlay.getByRole("button", { name: "LEAVE" })).toBeVisible();
-  await pauseOverlay.getByRole("button", { name: "OPTIONS" }).click();
+  await pauseOverlay.getByRole("button", { name: "OPTIONS" }).click({ timeout: 5_000 });
   await expect(page.locator("#settings-overlay")).toBeVisible();
   await expect(pauseOverlay).not.toBeAttached();
-  await page.locator("#settings-overlay .bb-btn.back").click();
+  await page.locator("#settings-overlay .bb-btn.back").click({ timeout: 5_000 });
   await expect(pauseOverlay).toBeVisible();
   mark("pause options round trip");
   const micButton = pauseOverlay.locator("button", { hasText: /^MIC/ });
   const micLabelBefore = await micButton.textContent();
-  await micButton.click();
+  await micButton.click({ timeout: 5_000 });
   await expect(micButton).not.toHaveText(micLabelBefore ?? "", { timeout: 15_000 });
   mark("pause mic toggled");
   const camButton = pauseOverlay.locator("button", { hasText: /^CAM/ });
   const camLabelBefore = await camButton.textContent();
-  await camButton.click();
+  await camButton.click({ timeout: 5_000 });
   await expect(camButton).not.toHaveText(camLabelBefore ?? "", { timeout: 15_000 });
   mark("pause cam toggled");
-  const resumeButton = pauseOverlay.getByRole("button", { name: "RESUME" });
-  await expect(async () => {
-    if (!(await victory.isVisible())) {
-      await resumeButton.click({ timeout: 1_500 }).catch(() => undefined);
+  await pauseOverlay.getByRole("button", { name: "RESUME" }).click({ timeout: 5_000 });
+  await expect(pauseOverlay).not.toBeAttached();
+}
+
+async function runPauseMenuStep(page: Page, mark: (label: string) => void): Promise<void> {
+  const watch = new RoundEndWatch(page.locator("#victory"));
+  const body = pauseMenuBody(page, mark).then(() => "resumed" as const);
+  const ended = watch.ended.then((hit) => (hit ? ("ended" as const) : new Promise<never>(() => undefined)));
+  const first = await Promise.race([body.catch((error: unknown) => error as Error), ended]);
+  await watch.stop();
+  if (first === "ended") {
+    await body.catch(() => undefined);
+    await expect(page.locator("#pause-overlay")).not.toBeAttached();
+    await expect(page.locator("#settings-overlay")).not.toBeAttached();
+    mark("pause step closed by round end");
+    return;
+  }
+  if (first instanceof Error) {
+    if (await page.locator("#victory").isVisible()) {
+      await expect(page.locator("#pause-overlay")).not.toBeAttached();
+      await expect(page.locator("#settings-overlay")).not.toBeAttached();
+      mark("pause step closed by round end");
+      return;
     }
-    await expect(pauseOverlay).not.toBeAttached({ timeout: 1_000 });
-  }).toPass({ timeout: 30_000 });
-  const endedWhilePaused = await victory.isVisible();
-  mark(endedWhilePaused ? "pause menu closed by round end" : "pause menu resumed");
+    throw first;
+  }
+  mark("pause step resumed");
 }
 
 async function leaveToTitle(page: Page): Promise<void> {
